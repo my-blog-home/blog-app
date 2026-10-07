@@ -47,11 +47,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setMe(null)
   }
 
-  const requireLogin = (then?: () => void) => {
-    if (me) return true
-    setLoginPrompt({ open: true, then })
-    return false
-  }
+  // 화면의 effect가 기대므로 me가 바뀔 때만 새로 만든다
+  const requireLogin = useCallback(
+    (then?: () => void) => {
+      if (me) return true
+      setLoginPrompt({ open: true, then })
+      return false
+    },
+    [me],
+  )
 
   return (
     <AuthContext.Provider
