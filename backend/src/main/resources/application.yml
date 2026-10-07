@@ -1,0 +1,56 @@
+spring:
+  application:
+    name: myblog
+  profiles:
+    default: dev
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate.jdbc.time_zone: UTC
+  flyway:
+    enabled: true
+  session:
+    jdbc:
+      initialize-schema: never
+    timeout: 7d
+  jackson:
+    time-zone: UTC
+
+server:
+  servlet:
+    session:
+      cookie:
+        name: SESSION
+        http-only: true
+        same-site: lax
+        max-age: 7d
+        secure: false
+
+# 원천 문서 각 파일의 '기본값' 표와 같은 값. 바꿀 때는 여기만 고친다 (NF-08).
+blog:
+  zone: Asia/Seoul
+  limits:
+    nickname-min: 2
+    nickname-max: 10
+    password-min: 8
+    password-max: 10
+    verification-code-ttl: 10m
+    verification-resend-interval: 1m
+    verification-daily-max: 5
+    verification-max-failures: 5
+    verified-ttl: 30m
+    login-max-failures: 5
+    login-lock-duration: 10m
+    blog-name-max: 30
+    blog-description-max: 200
+    category-name-max: 20
+    post-title-max: 100
+    post-body-max: 10000
+    page-size: 10
+    excerpt-length: 100
+    search-min: 2
+    search-max: 50
+  mail:
+    from: no-reply@myblog.local

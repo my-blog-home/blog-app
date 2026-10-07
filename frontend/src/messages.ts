@@ -1,0 +1,20 @@
+// 화면 안내 문구. 원천 문서 각 파일의 '안내 문구' 표와 같아야 한다 (FR-057)
+export const M = {
+  emailFormat: '이메일 형식이 올바르지 않습니다',
+  nicknameRule: '닉네임은 한글, 영문, 숫자로 2~10자여야 합니다',
+  passwordMismatch: '비밀번호가 일치하지 않습니다',
+  codeSent: '인증번호를 보냈습니다. 10분 안에 입력해 주세요',
+  verified: '이메일 인증이 완료되었습니다',
+  signupDone: '가입이 완료되었습니다. 로그인해 주세요',
+  titleRequired: '제목을 입력해 주세요',
+  bodyRequired: '본문을 입력해 주세요',
+  leaveConfirm: '저장하지 않은 내용이 있습니다. 나갈까요?',
+  deleteConfirm: '삭제하면 되돌릴 수 없습니다. 삭제할까요?',
+  makePublicConfirm: '공개로 바꾸면 누구나 볼 수 있습니다',
+  postNotFound: '존재하지 않는 글입니다',
+  emptyList: '글이 없습니다',
+  firstPost: '첫 글을 써 보세요',
+  searchTooShort: '검색어를 2자 이상 입력해 주세요',
+  noResults: '검색 결과가 없습니다',
+  categoryNameRequired: '분류 이름을 입력해 주세요',
+} as const

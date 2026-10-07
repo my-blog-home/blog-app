@@ -1,0 +1,19 @@
+# 개발용 부품. Docker를 쓰지 않으면 brew의 postgresql@16, redis로 대신 켠다 (README 참고).
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: myblog
+      POSTGRES_USER: myblog
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-myblog}
+    ports: ["127.0.0.1:5432:5432"]
+    volumes: [db-data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U myblog"]
+      interval: 10s
+      retries: 5
+  redis:
+    image: redis:7
+    ports: ["127.0.0.1:6379:6379"]
+volumes:
+  db-data:

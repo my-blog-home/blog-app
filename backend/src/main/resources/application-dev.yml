@@ -1,0 +1,14 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/myblog
+    username: ${DB_USERNAME:myblog}
+    password: ${DB_PASSWORD:myblog}
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+# 개발 중에는 메일 대신 서버 로그에 인증번호를 찍는다 (research R-06)
+blog:
+  mail:
+    mode: log

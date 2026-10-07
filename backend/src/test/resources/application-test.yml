@@ -1,0 +1,14 @@
+# 테스트는 로컬 PostgreSQL의 myblog_test DB와 Redis 15번 DB를 쓴다
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/myblog_test
+    username: ${DB_USERNAME:myblog}
+    password: ${DB_PASSWORD:myblog}
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 15
+blog:
+  mail:
+    mode: log
