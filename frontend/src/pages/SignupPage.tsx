@@ -125,8 +125,7 @@ export default function SignupPage() {
     setErrors({})
     try {
       await post('/api/auth/signup', { nickname, email, password, passwordConfirm })
-      alert(M.signupDone)
-      navigate('/login', { replace: true })
+      navigate('/login', { replace: true, state: { notice: M.signupDone } })
     } catch (err) {
       if (err instanceof ApiError && err.code === 'NOT_VERIFIED') {
         setVerified(false)

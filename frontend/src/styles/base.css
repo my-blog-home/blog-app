@@ -118,7 +118,7 @@ button.link.active { font-weight: 700; }
 
 @media (max-width: 640px) {
   .blog-layout { flex-direction: column; gap: 1rem; }
-  .sidebar { width: 100%; }
+  .sidebar, .blog-layout > .grow { width: 100%; }
   .row { flex-wrap: wrap; }
   .header-nav { width: 100%; justify-content: flex-end; }
 }
