@@ -15,7 +15,7 @@ class CategoryAuthorizationIT extends IntegrationTestBase {
     @Test
     void 남의_블로그에_분류를_추가할_수_없다() throws Exception {
         LoggedIn owner = signupAndLogin("주인", "owner@example.com");
-        LoggedIn other = signupAndLogin("남", "other@example.com");
+        LoggedIn other = signupAndLogin("다른회원", "other@example.com");
         mvc.perform(jsonPost("/api/blogs/" + owner.blogId() + "/categories", Map.of("name", "여행"))
                         .cookie(other.session()))
                 .andExpect(status().isNotFound());
