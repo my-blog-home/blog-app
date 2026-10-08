@@ -42,29 +42,36 @@ export default function PostDetailPage() {
   }
 
   return (
-    <article className="post">
-      <p className="meta">
-        <Link to={`/blogs/${post.blog.id}?category=${post.category.id}`}>{post.category.name}</Link>
-        {post.visibility === 'PRIVATE' && <span className="badge">비공개</span>}
-      </p>
-      <h1>{post.title}</h1>
-      <p className="meta">
-        <Link to={`/blogs/${post.blog.id}`}>{post.blog.name}</Link>
-        <span>{formatDateTime(post.createdAt)}</span>
-        {post.updatedAt && <span>수정 {formatDateTime(post.updatedAt)}</span>}
-        <a href="#comments">댓글 {commentCount || post.commentCount}</a>
-      </p>
-      {post.editable && (
-        <div className="actions">
-          <Link to={`/posts/${post.id}/edit`}>수정</Link>
-          <button className="link danger" onClick={remove}>
-            삭제
-          </button>
+    <article className="reading">
+      <header className="article-head">
+        <Link to={`/blogs/${post.blog.id}?category=${post.category.id}`} className="category">
+          {post.category.name}
+        </Link>
+        {post.visibility === 'PRIVATE' && <span className="badge" style={{ marginLeft: 8 }}>비공개</span>}
+        <h1>{post.title}</h1>
+        <div className="meta">
+          <Link to={`/blogs/${post.blog.id}`} className="card-blog">
+            <span className="avatar sm">{[...post.blog.name][0]}</span>
+            <span>{post.blog.name}</span>
+          </Link>
+          <span>{formatDateTime(post.createdAt)}</span>
+          {post.updatedAt && <span>수정 {formatDateTime(post.updatedAt)}</span>}
+          <a href="#comments">댓글 {commentCount || post.commentCount}</a>
+          {post.editable && (
+            <span className="owner-actions">
+              <Link to={`/posts/${post.id}/edit`} className="button sm">
+                수정
+              </Link>
+              <button className="sm danger" onClick={remove}>
+                삭제
+              </button>
+            </span>
+          )}
         </div>
-      )}
+      </header>
       <MarkdownView source={post.body} />
       {post.tags.length > 0 && (
-        <p className="tags">
+        <p className="tags article-tags">
           {post.tags.map((t) => (
             <Link key={t} to={`/tags/${encodeURIComponent(t)}`} className="tag">
               #{t}
@@ -74,18 +81,28 @@ export default function PostDetailPage() {
       )}
       <div className="reactions">
         <LikeButton key={post.id} postId={post.id} initialCount={post.likeCount} initialLiked={post.likedByMe} isMine={post.editable} />
-        {!post.editable && (
-          <button className="link muted" onClick={() => requireLogin(() => setReporting(true)) && setReporting(true)}>
-            신고
-          </button>
-        )}
+        {!post.editable && <button onClick={() => requireLogin(() => setReporting(true)) && setReporting(true)}>신고</button>}
       </div>
       {reporting && <ReportModal postId={post.id} onClose={() => setReporting(false)} />}
-      <nav className="post-nav">
-        {post.prevPostId ? <Link to={`/posts/${post.prevPostId}`}>← 이전 글</Link> : <span />}
-        <Link to={`/blogs/${post.blog.id}?category=${post.category.id}`}>목록으로</Link>
-        {post.nextPostId ? <Link to={`/posts/${post.nextPostId}`}>다음 글 →</Link> : <span />}
+      <nav className="prev-next" aria-label="이전 글과 다음 글">
+        {post.prevPostId && (
+          <Link to={`/posts/${post.prevPostId}`}>
+            <small>이전 글</small>
+            <span>← 이전 글 보기</span>
+          </Link>
+        )}
+        {post.nextPostId && (
+          <Link to={`/posts/${post.nextPostId}`} className="next">
+            <small>다음 글</small>
+            <span>다음 글 보기 →</span>
+          </Link>
+        )}
       </nav>
+      <p className="to-list">
+        <Link to={`/blogs/${post.blog.id}?category=${post.category.id}`} className="button">
+          목록으로
+        </Link>
+      </p>
       <CommentSection postId={post.id} onCountChange={onCountChange} />
     </article>
   )

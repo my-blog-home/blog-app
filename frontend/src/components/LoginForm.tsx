@@ -47,8 +47,11 @@ export default function LoginForm({ onSuccess }: { onSuccess: () => void }) {
       <button type="submit" className="primary" disabled={submitting || !email.trim() || !password}>
         로그인
       </button>
-      <p className="muted small">
-        <Link to="/password-reset">비밀번호를 잊으셨나요?</Link> · <Link to="/signup">회원가입</Link>
+      <p className="auth-foot">
+        <Link to="/password-reset">비밀번호를 잊으셨나요?</Link>
+      </p>
+      <p className="auth-foot" style={{ marginTop: 0 }}>
+        아직 회원이 아니신가요? <Link to="/signup">회원가입</Link>
       </p>
     </form>
   )

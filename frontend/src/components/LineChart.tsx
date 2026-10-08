@@ -18,8 +18,10 @@ export default function LineChart({ labels, series, height = 200 }: { labels: st
   const pad = { top: 12, right: 12, bottom: 24, left: 36 }
   const max = Math.max(1, ...series.flatMap((s) => s.values))
   const niceMax = useMemo(() => {
+    // 눈금이 정수가 되도록 짝수로 올린다
     const step = Math.pow(10, Math.floor(Math.log10(max)))
-    return Math.ceil(max / step) * step
+    const nice = Math.ceil(max / step) * step
+    return nice % 2 === 0 ? nice : nice + (step >= 1 ? step : 1)
   }, [max])
   const innerW = width - pad.left - pad.right
   const innerH = height - pad.top - pad.bottom

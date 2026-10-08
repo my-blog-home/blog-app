@@ -29,31 +29,37 @@ export default function Header() {
   return (
     <header className="header">
       <div className="header-inner">
-        <Link to="/" className="logo">
-          내 블로그
+        <Link to="/" className="logo" aria-label="Ylog 첫 화면">
+          Y<span>log</span>
         </Link>
         <form className="search-box" onSubmit={search} role="search">
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="검색" aria-label="검색어" />
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.5-3.5" />
+          </svg>
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="글 검색" aria-label="검색어" />
         </form>
         <nav className="header-nav">
-          <button className="link" onClick={write}>
-            글쓰기
-          </button>
+          <button onClick={write}>글쓰기</button>
           {me ? (
             <>
-              {me.blogId && <Link to={`/blogs/${me.blogId}`}>{me.nickname}</Link>}
+              {me.blogId && (
+                <Link to={`/blogs/${me.blogId}`} className="hide-mobile">
+                  {me.nickname}
+                </Link>
+              )}
               <Link to="/manage">
                 블로그 관리{newCommentCount > 0 && <span className="count-badge" aria-label={`새 댓글 ${newCommentCount}개`}>{newCommentCount}</span>}
               </Link>
               <Link to="/me">마이페이지</Link>
-              <button className="link" onClick={onLogout}>
-                로그아웃
-              </button>
+              <button onClick={onLogout}>로그아웃</button>
             </>
           ) : (
             <>
-              <Link to={`/login?redirect=${encodeURIComponent(location.pathname + location.search)}`}>로그인</Link>
               <Link to="/signup">회원가입</Link>
+              <Link to={`/login?redirect=${encodeURIComponent(location.pathname + location.search)}`} className="button primary">
+                로그인
+              </Link>
             </>
           )}
         </nav>

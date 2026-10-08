@@ -16,6 +16,7 @@ export interface PostItem {
   categoryName: string
   createdAt: string
   visibility: Visibility
+  thumbnailUrl: string | null
 }
 
 export interface PageResult {

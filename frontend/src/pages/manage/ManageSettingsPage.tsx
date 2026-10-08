@@ -27,7 +27,7 @@ export default function ManageSettingsPage() {
   return (
     <>
       <h1>설정</h1>
-      <form className="form narrow-left" onSubmit={submit}>
+      <form className="form panel-card" style={{ maxWidth: 520 }} onSubmit={submit}>
         <label>
           블로그 이름
           <input value={name} onChange={(e) => setName(e.target.value)} maxLength={30} />
@@ -38,7 +38,7 @@ export default function ManageSettingsPage() {
           <span className="hint muted">{[...description].length}/200</span>
         </label>
         {message && <p className={message.ok ? 'notice' : 'error'}>{message.text}</p>}
-        <button className="primary">저장</button>
+        <button className="primary" style={{ alignSelf: 'flex-start' }}>저장</button>
       </form>
     </>
   )

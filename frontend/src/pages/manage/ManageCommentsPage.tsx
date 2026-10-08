@@ -61,9 +61,9 @@ export default function ManageCommentsPage() {
       {data.items.length === 0 ? (
         <p className="empty">아직 달린 댓글이 없습니다</p>
       ) : (
-        <ul className="post-list">
+        <ul className="comment-rows">
           {data.items.map((c) => (
-            <li key={c.id}>
+            <li key={c.id} className={newIds.current.has(c.id) ? 'is-new' : undefined}>
               <div className="meta">
                 {newIds.current.has(c.id) && <span className="badge new">NEW</span>}
                 <strong>{c.authorNickname ?? M.withdrawnUser}</strong>
@@ -73,7 +73,7 @@ export default function ManageCommentsPage() {
                 </button>
               </div>
               <p className="comment-body">{c.excerpt}</p>
-              <Link to={`/posts/${c.postId}#comment-${c.id}`} className="small">
+              <Link to={`/posts/${c.postId}#comment-${c.id}`} className="post-link">
                 {c.postTitle}
               </Link>
             </li>

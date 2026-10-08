@@ -53,7 +53,10 @@ export default function DashboardPage() {
           </Link>
         </div>
       </div>
-      <h2>최근 30일</h2>
+      <div className="panel-card">
+      <h2>
+        최근 30일 <Link to="/manage/stats">통계 더 보기</Link>
+      </h2>
       <LineChart
         labels={data.daily30.map((d) => shortDate(d.date))}
         series={[
@@ -61,11 +64,9 @@ export default function DashboardPage() {
           { name: '방문자', color: SERIES_COLORS[1], values: data.daily30.map((d) => d.visitors) },
         ]}
       />
-      <p className="small">
-        <Link to="/manage/stats">통계 더 보기</Link>
-      </p>
+      </div>
       <div className="two-col">
-        <div>
+        <div className="panel-card">
           <h2>인기 글 (최근 7일)</h2>
           {data.popular7.length === 0 ? (
             <p className="muted">아직 조회된 글이 없습니다</p>
@@ -80,7 +81,7 @@ export default function DashboardPage() {
             </ol>
           )}
         </div>
-        <div>
+        <div className="panel-card">
           <h2>최근 글</h2>
           {data.recent.length === 0 ? (
             <p className="muted">아직 쓴 글이 없습니다</p>

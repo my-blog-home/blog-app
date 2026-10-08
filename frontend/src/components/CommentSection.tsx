@@ -55,24 +55,27 @@ export default function CommentSection({ postId, onCountChange }: { postId: numb
       <ul>
         {comments.map((c) => (
           <li key={c.id} id={`comment-${c.id}`}>
-            <div className="meta">
-              <strong>{c.authorNickname ?? M.withdrawnUser}</strong>
-              <span>{formatDateTime(c.createdAt)}</span>
-              {c.deletable && (
-                <button className="link danger" onClick={() => remove(c.id)}>
-                  삭제
-                </button>
-              )}
+            <span className="avatar sm">{c.authorNickname ? [...c.authorNickname][0] : '?'}</span>
+            <div className="body">
+              <div className="meta">
+                <strong>{c.authorNickname ?? M.withdrawnUser}</strong>
+                <span>{formatDateTime(c.createdAt)}</span>
+                {c.deletable && (
+                  <button className="link danger" onClick={() => remove(c.id)}>
+                    삭제
+                  </button>
+                )}
+              </div>
+              <p className="comment-body">{c.content}</p>
             </div>
-            <p className="comment-body">{c.content}</p>
           </li>
         ))}
       </ul>
       {me ? (
         <form className="comment-form" onSubmit={submit}>
-          <textarea value={content} onChange={(e) => setContent(e.target.value)} maxLength={500} rows={3} aria-label="댓글" />
+          <textarea value={content} onChange={(e) => setContent(e.target.value)} maxLength={500} rows={3} aria-label="댓글" placeholder="댓글을 남겨 보세요" />
           <div className="row">
-            <span className="muted small grow">{[...content].length} / 500</span>
+            <span className="faint small">{[...content].length} / 500</span>
             <button className="primary" disabled={busy}>
               등록
             </button>

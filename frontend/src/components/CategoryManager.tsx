@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { ApiError, del, patch, post } from '../api/client'
 import type { CategoryView } from '../api/types'
+import { categoryColor } from '../colors'
 import { M } from '../messages'
 
 /** 블로그 주인의 분류 관리: 추가, 이름 변경, 순서, 삭제 (CF-08) */
@@ -35,13 +36,12 @@ export default function CategoryManager({ blogId, categories, onChanged }: { blo
 
   return (
     <div className="category-manager">
-      <h3>분류 관리</h3>
       <ul>
         {categories.map((c, i) => (
           <li key={c.id}>
-            <span className={`dot color-${c.colorIndex}`} />
+            <span className="dot" style={{ ['--c' as string]: categoryColor(c.colorIndex) }} />
             <span className="grow">
-              {c.name} ({c.postCount})
+              {c.name} <span className="count">글 {c.postCount}개</span>
             </span>
             <button className="link" onClick={() => rename(c)}>
               이름
@@ -70,7 +70,7 @@ export default function CategoryManager({ blogId, categories, onChanged }: { blo
         <button>추가</button>
       </form>
       {error && <p className="error">{error}</p>}
-      <p className="muted small">글이 하나라도 있는 분류는 삭제할 수 없습니다. 글은 글 수정에서 다른 분류로 옮길 수 있습니다.</p>
+      <p className="note">글이 하나라도 있는 분류는 삭제할 수 없습니다. 글은 글 수정에서 다른 분류로 옮길 수 있습니다.</p>
     </div>
   )
 }

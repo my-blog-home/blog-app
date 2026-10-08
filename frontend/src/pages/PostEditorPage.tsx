@@ -122,59 +122,69 @@ export default function PostEditorPage() {
   }
 
   return (
-    <section>
-      <h1>{editing ? '글 수정' : '글쓰기'}</h1>
-      <form className="form editor" onSubmit={submit}>
-        <label>
-          제목
-          <input value={draft.title} onChange={(e) => update('title', e.target.value)} maxLength={100} />
-          {errors.title && <span className="hint error">{errors.title}</span>}
-        </label>
-        <div className="row">
-          <label className="grow">
-            분류
-            <select value={draft.categoryId ?? ''} onChange={(e) => update('categoryId', Number(e.target.value))}>
-              {blog.categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <fieldset className="visibility">
-            <legend>공개 여부</legend>
-            <label>
-              <input type="radio" checked={draft.visibility === 'PUBLIC'} onChange={() => update('visibility', 'PUBLIC')} /> 공개
-            </label>
-            <label>
-              <input type="radio" checked={draft.visibility === 'PRIVATE'} onChange={() => update('visibility', 'PRIVATE')} /> 비공개
-            </label>
-          </fieldset>
-        </div>
-        <div className="tabs">
-          <button type="button" className={!preview ? 'current' : ''} onClick={() => setPreview(false)}>
-            쓰기
-          </button>
-          <button type="button" className={preview ? 'current' : ''} onClick={() => setPreview(true)}>
-            미리보기
-          </button>
+    <form className="write-layout" onSubmit={submit}>
+      <div className="write-main">
+        <input className="title-input" value={draft.title} onChange={(e) => update('title', e.target.value)} maxLength={100} placeholder="제목을 입력하세요" aria-label="제목" />
+        {errors.title && <span className="hint error">{errors.title}</span>}
+        <div className="editor-toolbar">
+          <div className="tabs">
+            <button type="button" className={!preview ? 'current' : ''} onClick={() => setPreview(false)}>
+              쓰기
+            </button>
+            <button type="button" className={preview ? 'current' : ''} onClick={() => setPreview(true)}>
+              미리보기
+            </button>
+          </div>
           <ImageUploadButton onUploaded={(md) => update('body', draft.body + (draft.body && !draft.body.endsWith('\n') ? '\n' : '') + md + '\n')} />
-          <span className="muted small">{[...draft.body].length.toLocaleString()} / 10,000</span>
+          <span className="count">{[...draft.body].length.toLocaleString()} / 10,000</span>
         </div>
-        {preview ? (
-          <MarkdownView source={draft.body} />
-        ) : (
-          <textarea value={draft.body} onChange={(e) => update('body', e.target.value)} rows={18} placeholder="마크다운으로 쓸 수 있습니다" />
-        )}
+        <div className="editor">
+          {preview ? (
+            <MarkdownView source={draft.body} />
+          ) : (
+            <textarea value={draft.body} onChange={(e) => update('body', e.target.value)} placeholder="마크다운으로 쓸 수 있습니다" aria-label="본문" />
+          )}
+        </div>
         {errors.body && <span className="hint error">{errors.body}</span>}
-        <TagInput tags={draft.tags} onChange={(tags) => update('tags', tags)} />
-        {errors.tags && <span className="hint error">{errors.tags}</span>}
-        {errors.categoryId && <span className="hint error">{errors.categoryId}</span>}
-        {errors.form && <p className="error">{errors.form}</p>}
-        <button type="submit" className="primary" disabled={saving}>
-          저장
-        </button>
-      </form>
-    </section>
+      </div>
+      <aside className="write-side">
+        <div className="panel">
+          <h4>{editing ? '글 수정' : '새 글'}</h4>
+          {errors.form && <p className="error">{errors.form}</p>}
+          <button type="submit" className="primary" disabled={saving}>
+            저장
+          </button>
+        </div>
+        <div className="panel">
+          <h4>분류</h4>
+          <select value={draft.categoryId ?? ''} onChange={(e) => update('categoryId', Number(e.target.value))} aria-label="분류">
+            {blog.categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+          {errors.categoryId && <span className="hint error">{errors.categoryId}</span>}
+        </div>
+        <div className="panel">
+          <h4>공개 여부</h4>
+          <div className="radio-row">
+            <label>
+              <input type="radio" checked={draft.visibility === 'PUBLIC'} onChange={() => update('visibility', 'PUBLIC')} />
+              공개
+            </label>
+            <label>
+              <input type="radio" checked={draft.visibility === 'PRIVATE'} onChange={() => update('visibility', 'PRIVATE')} />
+              비공개
+            </label>
+          </div>
+        </div>
+        <div className="panel">
+          <h4>태그</h4>
+          <TagInput tags={draft.tags} onChange={(tags) => update('tags', tags)} />
+          {errors.tags && <span className="hint error">{errors.tags}</span>}
+        </div>
+      </aside>
+    </form>
   )
 }

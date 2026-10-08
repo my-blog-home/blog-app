@@ -14,6 +14,7 @@ export default function LoginPage() {
   return (
     <section className="narrow">
       <h1>로그인</h1>
+      <p className="muted" style={{ textAlign: 'center', marginTop: -12 }}>다시 오신 걸 환영합니다</p>
       {notice && <p className="notice">{notice}</p>}
       <LoginForm onSuccess={() => navigate(target, { replace: true })} />
     </section>

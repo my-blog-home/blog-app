@@ -24,8 +24,13 @@ import org.springframework.transaction.annotation.Transactional;
 public class PostQueryService {
 
     public record PostItem(long id, String title, String excerpt, long blogId, String blogName,
-                           long categoryId, String categoryName, Instant createdAt, Visibility visibility) {
+                           long categoryId, String categoryName, Instant createdAt, Visibility visibility,
+                           String thumbnailUrl) {
     }
+
+    /** 본문의 첫 이미지를 목록 썸네일로 쓴다 */
+    private static final java.util.regex.Pattern FIRST_IMAGE =
+            java.util.regex.Pattern.compile("!\\[[^\\]]*]\\((/images/[0-9a-f\\-]{36}\\.(?:jpg|png|gif|webp))\\)");
 
     public record PageResult(long totalCount, int page, int totalPages, List<PostItem> items) {
     }
@@ -165,7 +170,13 @@ public class PostQueryService {
                 Excerpts.of(rs.getString("body"), limits.excerptLength()),
                 rs.getLong("blog_id"), rs.getString("blog_name"),
                 rs.getLong("category_id"), rs.getString("category_name"),
-                rs.getTimestamp("created_at").toInstant(), Visibility.valueOf(rs.getString("visibility")));
+                rs.getTimestamp("created_at").toInstant(), Visibility.valueOf(rs.getString("visibility")),
+                thumbnail(rs.getString("body")));
+    }
+
+    private static String thumbnail(String body) {
+        java.util.regex.Matcher m = FIRST_IMAGE.matcher(body);
+        return m.find() ? m.group(1) : null;
     }
 
     private static Long first(List<Long> ids) {

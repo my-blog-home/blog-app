@@ -36,10 +36,16 @@ export default function ManageLayout() {
   return (
     <div className="manage">
       <aside className="manage-menu">
-        <p className="blog-name">{blog.name}</p>
-        <div className="row small">
-          <Link to={`/blogs/${blog.id}`}>내 블로그 보기</Link>
-          <Link to="/write">글쓰기</Link>
+        <div className="manage-top">
+          <strong>{blog.name}</strong>
+          <div className="row">
+            <Link to={`/blogs/${blog.id}`} className="button sm">
+              내 블로그 보기
+            </Link>
+            <Link to="/write" className="button sm primary">
+              글쓰기
+            </Link>
+          </div>
         </div>
         <nav>
           <NavLink to="/manage" end>

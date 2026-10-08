@@ -48,6 +48,9 @@ export default function App() {
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
+      <footer className="footer">
+        <div>Ylog · 내 블로그</div>
+      </footer>
       <LoginModal />
     </>
   )
