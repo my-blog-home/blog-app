@@ -52,5 +52,7 @@ blog:
     excerpt-length: 100
     search-min: 2
     search-max: 50
+    comment-max: 500
+    comment-interval: 5s
   mail:
     from: no-reply@myblog.local

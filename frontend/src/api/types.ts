@@ -61,6 +61,9 @@ export interface PostDetail {
   prevPostId: number | null
   nextPostId: number | null
   editable: boolean
+  likeCount: number
+  likedByMe: boolean
+  commentCount: number
 }
 
 export interface PostSource {
@@ -84,4 +87,12 @@ export interface Limits {
   categoryNameMax: number
   searchMin: number
   searchMax: number
+}
+
+export interface CommentView {
+  id: number
+  authorNickname: string | null
+  content: string
+  createdAt: string
+  deletable: boolean
 }

@@ -33,7 +33,8 @@ public class PostQueryService {
     }
 
     public record PostDetail(long id, Ref blog, Ref category, String title, String body, Visibility visibility,
-                             Instant createdAt, Instant updatedAt, Long prevPostId, Long nextPostId, boolean editable) {
+                             Instant createdAt, Instant updatedAt, Long prevPostId, Long nextPostId, boolean editable,
+                             long likeCount, boolean likedByMe, long commentCount) {
     }
 
     private static final String SELECT_ITEMS = """
@@ -119,7 +120,19 @@ public class PostQueryService {
                 """, params, Long.class));
         return new PostDetail(post.getId(), new Ref(blog.getId(), blog.getName()),
                 new Ref(post.getCategoryId(), categoryName), post.getTitle(), post.getBody(), post.getVisibility(),
-                post.getCreatedAt(), post.getUpdatedAt(), prev, next, blog.isOwnedBy(viewerId));
+                post.getCreatedAt(), post.getUpdatedAt(), prev, next, blog.isOwnedBy(viewerId),
+                count("select count(*) from post_like where post_id = :id", post.getId(), null),
+                viewerId != null && count("select count(*) from post_like where post_id = :id and member_id = :viewer",
+                        post.getId(), viewerId) > 0,
+                count("select count(*) from comment where post_id = :id", post.getId(), null));
+    }
+
+    /** 좋아요·댓글 수는 표에서 직접 센다 (post가 comment 모듈을 부르지 않도록) */
+    private long count(String sql, long postId, Long viewerId) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("id", postId);
+        params.put("viewer", viewerId);
+        return jdbc.queryForObject(sql, params, Long.class);
     }
 
     RowMapper<PostItem> itemMapper() {

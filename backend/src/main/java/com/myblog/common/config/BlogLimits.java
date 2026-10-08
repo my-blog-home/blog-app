@@ -27,5 +27,7 @@ public record BlogLimits(
         int pageSize,
         int excerptLength,
         int searchMin,
-        int searchMax) {
+        int searchMax,
+        int commentMax,
+        Duration commentInterval) {
 }

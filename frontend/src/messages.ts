@@ -16,5 +16,8 @@ export const M = {
   firstPost: '첫 글을 써 보세요',
   searchTooShort: '검색어를 2자 이상 입력해 주세요',
   noResults: '검색 결과가 없습니다',
+  commentLoginRequired: '로그인한 회원만 댓글을 쓸 수 있습니다',
+  commentDeleteConfirm: '댓글을 삭제할까요?',
+  withdrawnUser: '탈퇴한 사용자',
   categoryNameRequired: '분류 이름을 입력해 주세요',
 } as const

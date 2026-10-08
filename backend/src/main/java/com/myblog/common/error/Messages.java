@@ -37,6 +37,10 @@ public final class Messages {
     public static final String CATEGORY_HAS_POSTS = "이 분류에 글이 %d개 있어 삭제할 수 없습니다. 글을 다른 분류로 옮긴 뒤 삭제해 주세요";
     public static final String CATEGORY_DEFAULT_UNDELETABLE = "미분류는 삭제할 수 없습니다";
     public static final String BLOG_NAME_REQUIRED = "블로그 이름을 입력해 주세요";
+    public static final String COMMENT_REQUIRED = "댓글을 입력해 주세요";
+    public static final String COMMENT_TOO_FAST = "잠시 뒤에 다시 등록해 주세요";
+    public static final String COMMENT_NOT_FOUND = "존재하지 않는 댓글입니다";
+    public static final String LIKE_OWN_POST = "내 글에는 좋아요를 누를 수 없습니다";
     public static final String SEARCH_TOO_SHORT = "검색어를 2자 이상 입력해 주세요";
 
     private Messages() {

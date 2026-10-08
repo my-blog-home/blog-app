@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ApiError, del, get } from '../api/client'
 import type { PostDetail } from '../api/types'
+import CommentSection from '../components/CommentSection'
+import LikeButton from '../components/LikeButton'
 import MarkdownView from '../components/MarkdownView'
 import { formatDateTime } from '../format'
 import { M } from '../messages'
@@ -13,6 +15,8 @@ export default function PostDetailPage() {
   const navigate = useNavigate()
   const [post, setPost] = useState<PostDetail | null>(null)
   const [missing, setMissing] = useState(false)
+  const [commentCount, setCommentCount] = useState(0)
+  const onCountChange = useCallback((n: number) => setCommentCount(n), [])
 
   useEffect(() => {
     setPost(null)
@@ -44,6 +48,7 @@ export default function PostDetailPage() {
         <Link to={`/blogs/${post.blog.id}`}>{post.blog.name}</Link>
         <span>{formatDateTime(post.createdAt)}</span>
         {post.updatedAt && <span>수정 {formatDateTime(post.updatedAt)}</span>}
+        <a href="#comments">댓글 {commentCount || post.commentCount}</a>
       </p>
       {post.editable && (
         <div className="actions">
@@ -54,11 +59,15 @@ export default function PostDetailPage() {
         </div>
       )}
       <MarkdownView source={post.body} />
+      <div className="reactions">
+        <LikeButton key={post.id} postId={post.id} initialCount={post.likeCount} initialLiked={post.likedByMe} isMine={post.editable} />
+      </div>
       <nav className="post-nav">
         {post.prevPostId ? <Link to={`/posts/${post.prevPostId}`}>← 이전 글</Link> : <span />}
         <Link to={`/blogs/${post.blog.id}?category=${post.category.id}`}>목록으로</Link>
         {post.nextPostId ? <Link to={`/posts/${post.nextPostId}`}>다음 글 →</Link> : <span />}
       </nav>
+      <CommentSection postId={post.id} onCountChange={onCountChange} />
     </article>
   )
 }
