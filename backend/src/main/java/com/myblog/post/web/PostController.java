@@ -79,8 +79,10 @@ public class PostController {
     @GetMapping("/api/blogs/{blogId}/posts")
     public PostQueryService.PageResult blogPosts(@PathVariable long blogId,
                                                  @RequestParam(required = false) Long categoryId,
+                                                 @RequestParam(required = false) String q,
                                                  @RequestParam(defaultValue = "1") int page) {
-        return postQuery.blogPosts(blogId, categoryId, page, CurrentMember.idIfPresent().orElse(null));
+        // q가 있으면 블로그 안 검색 (FR-070)
+        return postQuery.blogPosts(blogId, categoryId, q, page, CurrentMember.idIfPresent().orElse(null));
     }
 
     @PostMapping("/api/blogs/{blogId}/posts")

@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type ClipboardEvent, type DragEvent, type FormEvent } from 'react'
 import { useBlocker, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ApiError, get, post as httpPost, put } from '../api/client'
 import { loadTopics } from '../api/topics'
 import type { BlogView, PostSource, PostStatus, Topic, Visibility } from '../api/types'
 import { useAuth } from '../auth/AuthContext'
-import ImageUploadButton from '../components/ImageUploadButton'
+import ImageUploadButton, { isAllowedImage, upload } from '../components/ImageUploadButton'
+import { applyFormat, countImages, insertBlock, TOOLBAR, type Format } from '../editor/markdownTools'
 import MarkdownView from '../components/MarkdownView'
 import TagInput from '../components/TagInput'
 import { M } from '../messages'
@@ -19,9 +20,12 @@ interface Draft {
   tags: string[]
 }
 
+const IMAGES_PER_POST = 10
+
 /**
  * 글쓰기·글 수정 (CF-05, CF-13). 권한은 서버가 최종 확인한다.
  * [임시저장]은 제목·본문을 비워도 저장하고 화면에 남는다. [작성완료]는 올린다 (FR-09, FR-11, CR-06)
+ * 본문 위의 마크다운 도구 버튼으로 서식을 넣고, 이미지 파일을 붙여 넣거나 끌어다 놓으면 올려서 커서 자리에 넣는다 (FR-084)
  */
 export default function PostEditorPage() {
   const { postId } = useParams()
@@ -41,6 +45,9 @@ export default function PostEditorPage() {
   const [saving, setSaving] = useState(false)
   const [preview, setPreview] = useState(false)
   const done = useRef(false)
+  const textarea = useRef<HTMLTextAreaElement>(null)
+  const [imageBusy, setImageBusy] = useState(false)
+  const [imageError, setImageError] = useState<string | null>(null)
 
   useEffect(() => {
     if (loading) return
@@ -118,6 +125,71 @@ export default function PostEditorPage() {
 
   const published = editing && status === 'PUBLISHED'
 
+  const select = (start: number, end: number) =>
+    requestAnimationFrame(() => {
+      textarea.current?.focus()
+      textarea.current?.setSelectionRange(start, end)
+    })
+
+  // 도구 버튼: 고른 글자를 감싸거나 줄 앞에 기호를 붙인다
+  const format = (f: Format) => {
+    const ta = textarea.current
+    const edit = applyFormat(draft.body, ta?.selectionStart ?? draft.body.length, ta?.selectionEnd ?? draft.body.length, f)
+    update('body', edit.text)
+    select(edit.selectionStart, edit.selectionEnd)
+  }
+
+  // 커서 자리(미리보기 중이면 맨 끝)에 마크다운을 넣는다
+  const insertAtCursor = (markdown: string, at?: number) => {
+    const position = at ?? (preview ? undefined : textarea.current?.selectionStart)
+    setDraft((d) => {
+      const edit = insertBlock(d.body, Math.min(position ?? d.body.length, d.body.length), markdown)
+      select(edit.selectionStart, edit.selectionEnd)
+      return { ...d, body: edit.text }
+    })
+  }
+
+  // 붙여 넣거나 끌어다 놓은 이미지 파일을 같은 규칙(jpg·png·gif·webp, 5MB, 글마다 10장)으로 올린다
+  const uploadImages = async (files: File[], at: number) => {
+    if (imageBusy) return
+    if (files.some((f) => !isAllowedImage(f))) {
+      setImageError(M.imageRule)
+      return
+    }
+    if (countImages(draft.body) + files.length > IMAGES_PER_POST) {
+      setImageError(M.imageTooMany)
+      return
+    }
+    setImageBusy(true)
+    setImageError(null)
+    try {
+      const urls: string[] = []
+      for (const file of files) urls.push(await upload(file))
+      insertAtCursor(urls.map((url) => `![](${url})`).join('\n'), at)
+    } catch (e) {
+      setImageError(e instanceof ApiError ? e.fieldErrors[0]?.message ?? e.message : M.imageRule)
+    } finally {
+      setImageBusy(false)
+    }
+  }
+
+  const imageFiles = (list: FileList | null | undefined) => Array.from(list ?? []).filter((f) => f.type.startsWith('image/'))
+
+  // HTML(다른 문서에서 복사한 글)이 함께 있으면 이미지는 빼고 글자만 붙여 넣는다
+  const onPaste = (e: ClipboardEvent<HTMLTextAreaElement>) => {
+    const files = imageFiles(e.clipboardData.files)
+    if (files.length === 0 || e.clipboardData.getData('text/html')) return
+    e.preventDefault()
+    uploadImages(files, e.currentTarget.selectionStart)
+  }
+
+  const onDrop = (e: DragEvent<HTMLTextAreaElement>) => {
+    const files = imageFiles(e.dataTransfer.files)
+    if (files.length === 0) return
+    e.preventDefault()
+    uploadImages(files, e.currentTarget.selectionStart)
+  }
+
   // asDraft: 임시저장. 이미 작성완료한 글이면 서버가 작성완료 상태를 그대로 두고 내용만 저장한다 (BR-04)
   const save = async (asDraft: boolean) => {
     if (saving) return
@@ -183,14 +255,44 @@ export default function PostEditorPage() {
               미리보기
             </button>
           </div>
-          <ImageUploadButton onUploaded={(md) => update('body', draft.body + (draft.body && !draft.body.endsWith('\n') ? '\n' : '') + md + '\n')} />
+          <ImageUploadButton onUploaded={(md) => insertAtCursor(md)} />
           <span className="count">{[...draft.body].length.toLocaleString()} / 10,000</span>
         </div>
+        {!preview && (
+          <div className="md-toolbar" role="toolbar" aria-label="서식">
+            {TOOLBAR.map((t) => (
+              <button
+                key={t.format}
+                type="button"
+                className={`md-btn md-${t.format}`}
+                title={t.title}
+                aria-label={t.title}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => format(t.format)}
+              >
+                {t.label}
+              </button>
+            ))}
+            {imageBusy && <span className="hint">이미지를 올리는 중…</span>}
+          </div>
+        )}
+        {imageError && <span className="hint error">{imageError}</span>}
         <div className="editor">
           {preview ? (
             <MarkdownView source={draft.body} />
           ) : (
-            <textarea value={draft.body} onChange={(e) => update('body', e.target.value)} placeholder="마크다운으로 쓸 수 있습니다" aria-label="본문" />
+            <textarea
+              ref={textarea}
+              value={draft.body}
+              onChange={(e) => update('body', e.target.value)}
+              onPaste={onPaste}
+              onDrop={onDrop}
+              onDragOver={(e) => {
+                if (Array.from(e.dataTransfer.types).includes('Files')) e.preventDefault()
+              }}
+              placeholder="마크다운으로 쓸 수 있습니다. 이미지는 붙여 넣거나 끌어다 놓아도 됩니다"
+              aria-label="본문"
+            />
           )}
         </div>
         {errors.body && <span className="hint error">{errors.body}</span>}

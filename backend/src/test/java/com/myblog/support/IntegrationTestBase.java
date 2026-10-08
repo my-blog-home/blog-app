@@ -45,7 +45,7 @@ public abstract class IntegrationTestBase {
 
     @BeforeEach
     void cleanUp() {
-        jdbc.execute("TRUNCATE member, spring_session RESTART IDENTITY CASCADE");
+        jdbc.execute("TRUNCATE member, spring_session, search_log RESTART IDENTITY CASCADE");
         redis.execute((org.springframework.data.redis.core.RedisCallback<Object>) connection -> {
             connection.serverCommands().flushDb();
             return null;

@@ -3,7 +3,10 @@ import { ApiError } from '../api/client'
 
 const IMAGE_RULE = '이미지는 5MB 이하의 jpg, png, gif, webp만 올릴 수 있습니다'
 
-async function upload(file: File): Promise<string> {
+/** 올릴 수 있는 이미지인지: jpg·png·gif·webp, 5MB 이하 (CF-22) */
+export const isAllowedImage = (file: File) => file.size <= 5 * 1024 * 1024 && /^image\/(jpeg|png|gif|webp)$/.test(file.type)
+
+export async function upload(file: File): Promise<string> {
   const token = decodeURIComponent(document.cookie.split('; ').find((c) => c.startsWith('XSRF-TOKEN='))?.split('=')[1] ?? '')
   const form = new FormData()
   form.append('file', file)
@@ -23,7 +26,7 @@ export default function ImageUploadButton({ onUploaded }: { onUploaded: (markdow
     const file = files?.[0]
     if (input.current) input.current.value = ''
     if (!file) return
-    if (file.size > 5 * 1024 * 1024 || !/^image\/(jpeg|png|gif|webp)$/.test(file.type)) {
+    if (!isAllowedImage(file)) {
       setError(IMAGE_RULE)
       return
     }

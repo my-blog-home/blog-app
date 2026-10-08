@@ -14,6 +14,9 @@ import PostEditorPage from './pages/PostEditorPage'
 import SearchPage from './pages/SearchPage'
 import SignupPage from './pages/SignupPage'
 import TagPage from './pages/TagPage'
+import NoticeDetailPage from './pages/NoticeDetailPage'
+import NoticesPage from './pages/NoticesPage'
+import UserProfilePage from './pages/UserProfilePage'
 import DashboardPage from './pages/manage/DashboardPage'
 import ManageCategoriesPage from './pages/manage/ManageCategoriesPage'
 import ManageCommentsPage from './pages/manage/ManageCommentsPage'
@@ -39,6 +42,9 @@ export default function App() {
           <Route path="/me" element={<MyPage />} />
           <Route path="/me/activity" element={<ActivityPage />} />
           <Route path="/tags/:name" element={<TagPage />} />
+          <Route path="/users/:userId" element={<UserProfilePage />} />
+          <Route path="/notices" element={<NoticesPage />} />
+          <Route path="/notices/:noticeId" element={<NoticeDetailPage />} />
           <Route path="/manage" element={<ManageLayout />}>
             <Route index element={<DashboardPage />} />
             <Route path="posts" element={<ManagePostsPage />} />

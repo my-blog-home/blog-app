@@ -5,6 +5,8 @@ import { loadTopics } from '../api/topics'
 import type { MySubscriptions, PageResult, Topic } from '../api/types'
 import { useAuth } from '../auth/AuthContext'
 import Pagination from '../components/Pagination'
+import HotPostsSlider from '../components/home/HotPostsSlider'
+import { HotBloggersPanel, NoticePanel, PopularKeywordsPanel } from '../components/home/HomeSidePanels'
 import { PostCards, ThumbRow } from '../components/PostList'
 import { M } from '../messages'
 
@@ -15,6 +17,8 @@ type Tab = 'all' | 'feed'
  * 첫 화면: 주제 버튼(글의 주제로 모아 보기)과 새 글 썸네일 줄, 아래에 전체 글을 카드로.
  * 주제(?topic=)와 정렬(?sort=)은 주소에 남는다 (FR-34, BR-07, CR-37)
  * "구독 피드" 탭(?tab=feed)은 구독한 블로그의 공개 글만 모은다. 비회원에게는 로그인 안내, 구독이 없으면 구독 안내 (FR-067, CR-19)
+ * 오른쪽 칸(좁은 화면에서는 아래)에 지금 핫한 글, 실시간 인기 검색어, 이번 주 인기 블로거, 공지를 둔다.
+ * 고른 주제는 핫한 글과 인기 블로거에도 적용한다 (FR-072~074, FR-077)
  */
 export default function HomePage() {
   const [params, setParams] = useSearchParams()
@@ -77,8 +81,10 @@ export default function HomePage() {
 
   if (!latest || (tab === 'all' && !result)) return null
   const current = topics.find((t) => String(t.id) === topicId)
+  const sideTopic = tab === 'feed' ? null : topicId
   return (
-    <>
+    <div className="home-layout">
+      <div className="home-main">
       {notice && <p className="notice">{notice}</p>}
       <div className="hero">
         <div className="hero-head">
@@ -184,6 +190,13 @@ export default function HomePage() {
             )
           ))}
       </section>
-    </>
+      </div>
+      <aside className="home-side" aria-label="안내">
+        <HotPostsSlider topicId={sideTopic} />
+        <PopularKeywordsPanel />
+        <HotBloggersPanel topicId={sideTopic} />
+        <NoticePanel />
+      </aside>
+    </div>
   )
 }

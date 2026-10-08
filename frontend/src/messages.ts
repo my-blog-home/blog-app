@@ -30,4 +30,13 @@ export const M = {
   feedLoginRequired: '로그인하면 구독한 블로그의 새 글을 모아 볼 수 있습니다',
   feedEmpty: '아직 구독한 블로그가 없습니다. 마음에 드는 블로그에서 "구독"을 눌러 보세요.',
   noSubscriptions: '아직 구독한 블로그가 없습니다. 마음에 드는 블로그에서 "구독"을 눌러 보세요.',
+  noPopularKeywords: '최근 24시간 동안 검색 기록이 없습니다.',
+  noHotBloggers: '최근 7일 안에 올라온 글이 아직 없습니다.',
+  memberNotFound: '존재하지 않는 회원입니다',
+  noticeNotFound: '존재하지 않는 공지입니다',
+  noNotices: '등록된 안내가 없습니다.',
+  linkCopied: '링크를 복사했어요',
+  linkCopyFailed: '링크를 복사하지 못했어요. 주소창의 주소를 복사해 주세요',
+  imageRule: '이미지는 5MB 이하의 jpg, png, gif, webp만 올릴 수 있습니다',
+  imageTooMany: '이미지는 글마다 10장까지 넣을 수 있습니다',
 } as const

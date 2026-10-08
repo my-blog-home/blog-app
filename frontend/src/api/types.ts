@@ -29,6 +29,11 @@ export interface PostItem {
   visibility: Visibility
   thumbnailUrl: string | null
   authorColor: string
+  // 좋아요 수와 댓글 수(답글 포함) (FR-085)
+  likeCount: number
+  commentCount: number
+  authorId: number
+  authorNickname: string
 }
 
 export interface PageResult {
@@ -54,6 +59,7 @@ export interface BlogView {
   name: string
   description: string | null
   topic: Ref
+  ownerId: number
   ownerNickname: string
   ownerColor: string
   owner: boolean
@@ -89,6 +95,9 @@ export interface PostDetail {
   likedByMe: boolean
   commentCount: number
   tags: string[]
+  viewCount: number
+  authorId: number
+  authorNickname: string
 }
 
 export interface PostSource {
@@ -164,4 +173,73 @@ export interface CommentedPostPage {
   page: number
   totalPages: number
   items: CommentedPost[]
+}
+
+// 첫 화면의 지금 핫한 글 (FR-072)
+export interface HotPost {
+  id: number
+  title: string
+  blogId: number
+  blogName: string
+  categoryName: string
+  authorNickname: string
+  authorColor: string
+  viewCount: number
+  likeCount: number
+  commentCount: number
+  topicName: string
+}
+
+// 이번 주 인기 블로거 (FR-074)
+export interface HotBlogger {
+  rank: number
+  blogId: number
+  blogName: string
+  ownerId: number
+  ownerNickname: string
+  ownerColor: string
+  subscriberCount: number
+  score: number
+}
+
+// 실시간 인기 검색어 (FR-073). change: 1시간 전보다 오른 단계(내리면 음수)
+export interface PopularKeywords {
+  asOf: string
+  items: { rank: number; keyword: string; change: number; isNew: boolean }[]
+}
+
+// 공지·이용 안내 (FR-077)
+export type NoticeType = 'NOTICE' | 'GUIDE'
+
+export interface NoticeItem {
+  id: number
+  type: NoticeType
+  title: string
+  pinned: boolean
+  createdAt: string
+}
+
+export interface NoticePage {
+  totalCount: number
+  page: number
+  totalPages: number
+  items: NoticeItem[]
+}
+
+export interface NoticeDetail extends NoticeItem {
+  content: string
+  updatedAt: string | null
+  others: NoticeItem[]
+}
+
+// 작성자 프로필 (FR-075). privatePostCount는 내 프로필일 때만 있다
+export interface UserProfile {
+  id: number
+  nickname: string
+  bio: string | null
+  profileColor: string
+  publicPostCount: number
+  privatePostCount: number | null
+  isMe: boolean
+  blog: { id: number; name: string; description: string | null; topicName: string; subscriberCount: number } | null
 }

@@ -67,6 +67,8 @@ public final class Messages {
     public static final String TOPIC_INVALID = "주제를 다시 골라 주세요";
     public static final String PROFILE_COLOR_INVALID = "프로필 색을 다시 골라 주세요";
     public static final String DRAFT_TITLE = "제목 없음";
+    public static final String MEMBER_NOT_FOUND = "존재하지 않는 회원입니다";
+    public static final String NOTICE_NOT_FOUND = "존재하지 않는 공지입니다";
 
     private Messages() {
     }

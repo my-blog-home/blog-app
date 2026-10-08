@@ -65,6 +65,17 @@ blog:
     image-max-bytes: 5242880
     images-per-post: 10
     drawer-subscription-max: 8
+    hot-post-days: 14
+    hot-post-count: 3
+    hot-blogger-days: 7
+    hot-blogger-count: 5
+    hot-comment-weight: 5
+    popular-keyword-count: 10
+    popular-keyword-window: 24h
+    popular-keyword-compare: 1h
+    search-log-keyword-max: 30
+    search-log-retention: 2d
+    notice-related-count: 5
   mail:
     from: no-reply@myblog.local
   image:

@@ -25,9 +25,9 @@ public class BlogQueryService {
                                boolean isDefault, long postCount, long publicPostCount) {
     }
 
-    /** subscriberCount·subscribedByMe: 구독자 수와 내가 구독했는지 (FR-067) */
+    /** subscriberCount·subscribedByMe: 구독자 수와 내가 구독했는지 (FR-067). ownerId는 작성자 프로필로 가는 데 쓴다 (FR-075) */
     public record BlogView(long id, String name, String description, TopicService.TopicRef topic,
-                           String ownerNickname, String ownerColor, boolean owner, long totalPostCount,
+                           long ownerId, String ownerNickname, String ownerColor, boolean owner, long totalPostCount,
                            Long lastUsedCategoryId, Long lastUsedTopicId, List<CategoryView> categories,
                            long subscriberCount, boolean subscribedByMe) {
     }
@@ -92,7 +92,7 @@ public class BlogQueryService {
         }
         SubscriptionService.SubscriptionState subscription = subscriptions.state(blogId, viewerId);
         return new BlogView(blog.getId(), blog.getName(), blog.getDescription(), topics.ref(blog.getTopicId()),
-                (String) ownerRow.get("nickname"), (String) ownerRow.get("profile_color"), owner, total,
+                blog.getOwnerId(), (String) ownerRow.get("nickname"), (String) ownerRow.get("profile_color"), owner, total,
                 lastUsedCategoryId, lastUsedTopicId, categoryViews, subscription.subscriberCount(),
                 subscription.subscribed());
     }

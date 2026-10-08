@@ -34,7 +34,8 @@ public class PostQueryService {
     public record PostItem(long id, String title, String excerpt, long blogId, String blogName,
                            long categoryId, String categoryName, String categoryVisibility, long topicId,
                            String topicName, Instant createdAt, Visibility visibility, String thumbnailUrl,
-                           String authorColor) {
+                           String authorColor, long likeCount, long commentCount, long authorId,
+                           String authorNickname) {
     }
 
     /** 메인 글 정렬: 최신순(작성일), 인기순(조회수 + 좋아요 × 10, 같으면 최근 글 먼저). 모르는 값은 최신순 (BR-07) */
@@ -67,13 +68,16 @@ public class PostQueryService {
     public record PostDetail(long id, Ref blog, Ref category, Ref topic, String title, String body,
                              Visibility visibility, PostStatus status, Instant createdAt, Instant updatedAt,
                              Long prevPostId, Long nextPostId, boolean editable, String authorColor,
-                             long likeCount, boolean likedByMe, long commentCount, List<String> tags) {
+                             long likeCount, boolean likedByMe, long commentCount, List<String> tags,
+                             long viewCount, long authorId, String authorNickname) {
     }
 
     private static final String SELECT_ITEMS = """
             select p.id, p.title, p.body, p.blog_id, b.name as blog_name, p.category_id, c.name as category_name,
                    c.visibility as category_visibility, p.topic_id, t.name as topic_name,
-                   p.published_at, p.visibility, m.profile_color
+                   p.published_at, p.visibility, m.profile_color, m.id as author_id, m.nickname as author_nickname,
+                   (select count(*) from post_like pl where pl.post_id = p.id) as like_count,
+                   (select count(*) from comment cm where cm.post_id = p.id) as comment_count
             from post p
             join blog b on b.id = p.blog_id
             join category c on c.id = p.category_id
@@ -119,6 +123,15 @@ public class PostQueryService {
      */
     @Transactional(readOnly = true)
     public PageResult blogPosts(long blogId, Long categoryId, int page, Long viewerId) {
+        return blogPosts(blogId, categoryId, null, page, viewerId);
+    }
+
+    /**
+     * q가 있으면 블로그 안 검색: 그 블로그에서 볼 수 있는 글의 제목·본문·태그에서 모든 단어가 들어 있는 글 (FR-070, BR-10).
+     * 검색어 규칙은 전체 검색과 같다
+     */
+    @Transactional(readOnly = true)
+    public PageResult blogPosts(long blogId, Long categoryId, String q, int page, Long viewerId) {
         Blog blog = blogService.get(blogId);
         boolean owner = blog.isOwnedBy(viewerId);
         if (categoryId != null) {
@@ -135,6 +148,24 @@ public class PostQueryService {
                 where p.blog_id = :blogId
                   and %s
                   and (cast(:categoryId as bigint) is null or p.category_id = :categoryId)
+                """.formatted(PostVisibilitySql.visibleTo("p", "includePrivate"));
+        if (q != null) {
+            where += SearchWords.conditions(SearchWords.check(q, limits), "p", true, params);
+        }
+        return page(where, params, page);
+    }
+
+    /**
+     * 작성자 프로필의 글 목록: 그 회원 블로그의 글. 남이 보면 공개 조건, 내가 보면 비공개 글까지(임시저장은 빼고) (FR-075, BR-28)
+     */
+    @Transactional(readOnly = true)
+    public PageResult authorPosts(long memberId, int page, Long viewerId) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("memberId", memberId);
+        params.put("includePrivate", viewerId != null && viewerId == memberId);
+        String where = """
+                where p.blog_id in (select ab.id from blog ab where ab.owner_id = :memberId)
+                  and %s
                 """.formatted(PostVisibilitySql.visibleTo("p", "includePrivate"));
         return page(where, params, page);
     }
@@ -209,8 +240,9 @@ public class PostQueryService {
                 Map.of("id", post.getCategoryId()), String.class);
         String topicName = jdbc.queryForObject("select name from topic where id = :id",
                 Map.of("id", post.getTopicId()), String.class);
-        String authorColor = jdbc.queryForObject("select profile_color from member where id = :id",
-                Map.of("id", blog.getOwnerId()), String.class);
+        Map<String, Object> author = jdbc.queryForMap("select nickname, profile_color from member where id = :id",
+                Map.of("id", blog.getOwnerId()));
+        String authorColor = (String) author.get("profile_color");
         Long prev = null;
         Long next = null;
         if (post.isPublished()) {
@@ -238,7 +270,8 @@ public class PostQueryService {
                 viewerId != null && count("select count(*) from post_like where post_id = :id and member_id = :viewer",
                         post.getId(), viewerId) > 0,
                 count("select count(*) from comment where post_id = :id", post.getId(), null),
-                tagService.tagsOf(post.getId()));
+                tagService.tagsOf(post.getId()), post.getViewCount(), blog.getOwnerId(),
+                (String) author.get("nickname"));
     }
 
     /** 좋아요·댓글 수는 표에서 직접 센다 (post가 comment 모듈을 부르지 않도록) */
@@ -260,7 +293,9 @@ public class PostQueryService {
                 rs.getLong("category_id"), rs.getString("category_name"), rs.getString("category_visibility"),
                 rs.getLong("topic_id"), rs.getString("topic_name"),
                 rs.getTimestamp("published_at").toInstant(), Visibility.valueOf(rs.getString("visibility")),
-                thumbnail(rs.getString("body")), rs.getString("profile_color"));
+                thumbnail(rs.getString("body")), rs.getString("profile_color"),
+                rs.getLong("like_count"), rs.getLong("comment_count"), rs.getLong("author_id"),
+                rs.getString("author_nickname"));
     }
 
     private static String thumbnail(String body) {
