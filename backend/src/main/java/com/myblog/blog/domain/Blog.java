@@ -25,6 +25,9 @@ public class Blog {
     @Column(length = 200)
     private String description;
 
+    @Column(name = "topic_id", nullable = false)
+    private Long topicId;
+
     @Column(name = "comments_last_viewed_at")
     private Instant commentsLastViewedAt;
 
@@ -37,9 +40,10 @@ public class Blog {
     protected Blog() {
     }
 
-    public Blog(long ownerId, String name, Instant now) {
+    public Blog(long ownerId, String name, long topicId, Instant now) {
         this.ownerId = ownerId;
         this.name = name;
+        this.topicId = topicId;
         this.createdAt = now;
         this.updatedAt = now;
     }
@@ -48,9 +52,10 @@ public class Blog {
         return memberId != null && ownerId.equals(memberId);
     }
 
-    public void update(String name, String description, Instant now) {
+    public void update(String name, String description, long topicId, Instant now) {
         this.name = name;
         this.description = description;
+        this.topicId = topicId;
         this.updatedAt = now;
     }
 
@@ -68,5 +73,9 @@ public class Blog {
 
     public String getDescription() {
         return description;
+    }
+
+    public Long getTopicId() {
+        return topicId;
     }
 }

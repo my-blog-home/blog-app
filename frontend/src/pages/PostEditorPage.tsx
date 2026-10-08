@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { useBlocker, useNavigate, useParams } from 'react-router-dom'
+import { useBlocker, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ApiError, get, post as httpPost, put } from '../api/client'
-import type { BlogView, PostSource, Visibility } from '../api/types'
+import { loadTopics } from '../api/topics'
+import type { BlogView, PostSource, PostStatus, Topic, Visibility } from '../api/types'
 import { useAuth } from '../auth/AuthContext'
 import ImageUploadButton from '../components/ImageUploadButton'
 import MarkdownView from '../components/MarkdownView'
@@ -13,18 +14,26 @@ interface Draft {
   title: string
   body: string
   categoryId: number | null
+  topicId: number | null
   visibility: Visibility
   tags: string[]
 }
 
-/** 글쓰기·글 수정 (CF-05, CF-13). 권한은 서버가 최종 확인한다 */
+/**
+ * 글쓰기·글 수정 (CF-05, CF-13). 권한은 서버가 최종 확인한다.
+ * [임시저장]은 제목·본문을 비워도 저장하고 화면에 남는다. [작성완료]는 올린다 (FR-09, FR-11, CR-06)
+ */
 export default function PostEditorPage() {
   const { postId } = useParams()
   const editing = postId !== undefined
   const { me, loading, requireLogin } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+  const [notice, setNotice] = useState<string | null>((location.state as { notice?: string } | null)?.notice ?? null)
   const [blog, setBlog] = useState<BlogView | null>(null)
-  const [draft, setDraft] = useState<Draft>({ title: '', body: '', categoryId: null, visibility: 'PUBLIC', tags: [] })
+  const [topics, setTopics] = useState<Topic[]>([])
+  const [status, setStatus] = useState<PostStatus>('DRAFT')
+  const [draft, setDraft] = useState<Draft>({ title: '', body: '', categoryId: null, topicId: null, visibility: 'PUBLIC', tags: [] })
   const [saved, setSaved] = useState<Draft | null>(null)
   const [originalVisibility, setOriginalVisibility] = useState<Visibility>('PUBLIC')
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -43,18 +52,35 @@ export default function PostEditorPage() {
       try {
         let blogId = me.blogId
         let initial: Draft | null = null
+        setTopics(await loadTopics())
         if (editing) {
           const source = await get<PostSource>(`/api/posts/${postId}/edit`)
           blogId = source.blogId
-          initial = { title: source.title, body: source.body, categoryId: source.categoryId, visibility: source.visibility, tags: source.tags }
+          initial = {
+            title: source.title,
+            body: source.body,
+            categoryId: source.categoryId,
+            topicId: source.topicId,
+            visibility: source.visibility,
+            tags: source.tags,
+          }
           setOriginalVisibility(source.visibility)
+          setStatus(source.status)
         }
         const view = await get<BlogView>(`/api/blogs/${blogId}`)
         setBlog(view)
         if (!initial) {
           // 분류 기본값은 마지막에 쓴 글의 분류, 처음이면 "미분류" (CF-05-5)
+          // 주제 기본값은 마지막에 쓴 글의 주제, 처음이면 블로그의 대표 주제 (FR-09)
           const fallback = view.categories.find((c) => c.isDefault)?.id ?? null
-          initial = { title: '', body: '', categoryId: view.lastUsedCategoryId ?? fallback, visibility: 'PUBLIC', tags: [] }
+          initial = {
+            title: '',
+            body: '',
+            categoryId: view.lastUsedCategoryId ?? fallback,
+            topicId: view.lastUsedTopicId ?? view.topic.id,
+            visibility: 'PUBLIC',
+            tags: [],
+          }
         }
         setDraft(initial)
         setSaved(initial)
@@ -90,21 +116,38 @@ export default function PostEditorPage() {
 
   const update = <K extends keyof Draft>(key: K, value: Draft[K]) => setDraft({ ...draft, [key]: value })
 
-  const submit = async (e: FormEvent) => {
-    e.preventDefault()
+  const published = editing && status === 'PUBLISHED'
+
+  // asDraft: 임시저장. 이미 작성완료한 글이면 서버가 작성완료 상태를 그대로 두고 내용만 저장한다 (BR-04)
+  const save = async (asDraft: boolean) => {
     if (saving) return
+    const publishing = !asDraft || published
     const next: Record<string, string> = {}
-    if (!draft.title.trim()) next.title = M.titleRequired
-    if (!draft.body.trim()) next.body = M.bodyRequired
+    if (publishing && !draft.title.trim()) next.title = M.titleRequired
+    if (publishing && !draft.body.trim()) next.body = M.bodyRequired
     setErrors(next)
+    setNotice(null)
     if (Object.keys(next).length > 0) return
-    if (draft.visibility === 'PUBLIC' && originalVisibility === 'PRIVATE' && !confirm(M.makePublicConfirm)) return
+    if (!asDraft && draft.visibility === 'PUBLIC' && originalVisibility === 'PRIVATE' && !confirm(M.makePublicConfirm)) return
 
     setSaving(true)
     try {
+      const body = { ...draft, draft: asDraft }
       const result = editing
-        ? await put<{ id: number }>(`/api/posts/${postId}`, draft)
-        : await httpPost<{ id: number }>(`/api/blogs/${blog.id}/posts`, draft)
+        ? await put<{ id: number }>(`/api/posts/${postId}`, body)
+        : await httpPost<{ id: number }>(`/api/blogs/${blog.id}/posts`, body)
+      if (asDraft) {
+        // 임시저장하면 안내를 띄우고 글쓰기 화면에 남는다. 주소는 이 글의 수정 주소로 바뀐다
+        const kept = { ...draft, title: draft.title.trim() ? draft.title : published ? draft.title : M.draftTitle }
+        setDraft(kept)
+        setSaved(kept)
+        setNotice(M.draftSaved)
+        if (!editing) {
+          done.current = true
+          navigate(`/posts/${result.id}/edit`, { replace: true, state: { notice: M.draftSaved } })
+        }
+        return
+      }
       done.current = true
       navigate(`/posts/${result.id}`, { replace: true })
     } catch (err) {
@@ -119,6 +162,11 @@ export default function PostEditorPage() {
     } finally {
       setSaving(false)
     }
+  }
+
+  const submit = (e: FormEvent) => {
+    e.preventDefault()
+    save(false)
   }
 
   return (
@@ -149,11 +197,31 @@ export default function PostEditorPage() {
       </div>
       <aside className="write-side">
         <div className="panel">
-          <h4>{editing ? '글 수정' : '새 글'}</h4>
+          <h4>
+            {editing ? '글 수정' : '새 글'}
+            {editing && status === 'DRAFT' && <span className="badge" style={{ marginLeft: 8 }}>임시저장</span>}
+          </h4>
+          {notice && <p className="notice" role="status">{notice}</p>}
           {errors.form && <p className="error">{errors.form}</p>}
-          <button type="submit" className="primary" disabled={saving}>
-            저장
-          </button>
+          <div className="row">
+            <button type="button" disabled={saving} onClick={() => save(true)}>
+              임시저장
+            </button>
+            <button type="submit" className="primary" disabled={saving}>
+              {published ? '수정 완료' : '작성완료'}
+            </button>
+          </div>
+        </div>
+        <div className="panel">
+          <h4>주제</h4>
+          <select value={draft.topicId ?? ''} onChange={(e) => update('topicId', Number(e.target.value))} aria-label="주제">
+            {topics.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+              </option>
+            ))}
+          </select>
+          {errors.topicId && <span className="hint error">{errors.topicId}</span>}
         </div>
         <div className="panel">
           <h4>분류</h4>
@@ -161,9 +229,13 @@ export default function PostEditorPage() {
             {blog.categories.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
+                {c.visibility === 'PRIVATE' ? ' (비공개)' : ''}
               </option>
             ))}
           </select>
+          {blog.categories.find((c) => c.id === draft.categoryId)?.visibility === 'PRIVATE' && (
+            <span className="hint muted">비공개 분류의 글은 나만 볼 수 있습니다</span>
+          )}
           {errors.categoryId && <span className="hint error">{errors.categoryId}</span>}
         </div>
         <div className="panel">

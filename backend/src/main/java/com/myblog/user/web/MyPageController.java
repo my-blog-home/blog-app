@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class MyPageController {
 
-    public record ProfileRequest(String nickname, String bio) {
+    public record ProfileRequest(String nickname, String bio, String profileColor) {
     }
 
     public record PasswordRequest(String currentPassword, String newPassword, String newPasswordConfirm) {
@@ -39,7 +39,7 @@ public class MyPageController {
 
     @PatchMapping("/api/me")
     public MyPageService.MyInfo update(@RequestBody ProfileRequest request) {
-        return myPage.updateProfile(CurrentMember.id(), request.nickname(), request.bio());
+        return myPage.updateProfile(CurrentMember.id(), request.nickname(), request.bio(), request.profileColor());
     }
 
     @PutMapping("/api/me/password")

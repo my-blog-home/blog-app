@@ -17,6 +17,7 @@ export default function BlogPage() {
   const [blog, setBlog] = useState<BlogView | null>(null)
   const [posts, setPosts] = useState<PageResult | null>(null)
   const [missing, setMissing] = useState(false)
+  const [categoryMissing, setCategoryMissing] = useState(false)
 
   const loadBlog = useCallback(() => {
     get<BlogView>(`/api/blogs/${blogId}`)
@@ -29,20 +30,33 @@ export default function BlogPage() {
   useEffect(() => {
     const query = new URLSearchParams({ page: String(page) })
     if (categoryId) query.set('categoryId', categoryId)
-    get<PageResult>(`/api/blogs/${blogId}/posts?${query}`).then(setPosts)
+    setCategoryMissing(false)
+    get<PageResult>(`/api/blogs/${blogId}/posts?${query}`)
+      .then(setPosts)
+      .catch((e) => {
+        // 없는 분류와 방문자에게 숨긴 비공개 분류는 같은 안내 (BR-46)
+        if (e instanceof ApiError && e.status === 404 && categoryId) setCategoryMissing(true)
+      })
   }, [blogId, categoryId, page, blog?.owner])
 
   if (missing) return <NotFoundPage />
+  if (categoryMissing) return <NotFoundPage message={M.categoryNotFound} />
   if (!blog || !posts) return null
 
   const selectCategory = (id: number | null) => setParams(id ? { category: String(id) } : {})
+  const selected = blog.categories.find((c) => String(c.id) === categoryId)
 
   return (
     <>
       <section className="blog-cover">
         <div className="blog-cover-inner">
-          <span className="avatar">{[...blog.ownerNickname][0]}</span>
+          <span className="avatar" style={{ background: blog.ownerColor }}>
+            {[...blog.ownerNickname][0]}
+          </span>
           <div className="grow">
+            <Link to={`/?topic=${blog.topic.id}`} className="topic-badge">
+              {blog.topic.name}
+            </Link>
             <h1>{blog.name}</h1>
             {blog.description && <p>{blog.description}</p>}
             <p className="stats">
@@ -73,10 +87,19 @@ export default function BlogPage() {
             </li>
             {blog.categories.map((c) => (
               <li key={c.id}>
-                <button className={categoryId === String(c.id) ? 'active' : ''} onClick={() => selectCategory(c.id)}>
+                <button
+                  className={categoryId === String(c.id) ? 'active' : ''}
+                  onClick={() => selectCategory(c.id)}
+                  title={c.description ?? undefined}
+                >
                   <span className="cat-name">
                     <span className="dot" style={{ ['--c' as string]: categoryColor(c.colorIndex) }} />
                     {c.name}
+                    {blog.owner && c.visibility === 'PRIVATE' && (
+                      <span className="lock" aria-label="비공개 분류" title="비공개 분류">
+                        🔒
+                      </span>
+                    )}
                   </span>
                   <span className="count">{c.postCount}</span>
                 </button>
@@ -93,8 +116,13 @@ export default function BlogPage() {
         </aside>
         <section className="grow">
           <div className="list-head">
-            <span>{posts.totalCount}개의 글</span>
+            <span>
+              {selected ? `${selected.name} ` : ''}
+              {posts.totalCount}개의 글
+            </span>
           </div>
+          {/* 분류를 열면 이름 아래에 그 분류의 소개글을 한 줄로 보인다. 없으면 칸을 만들지 않는다 (BR-34) */}
+          {selected?.description && <p className="category-intro">{selected.description}</p>}
           {posts.items.length === 0 ? (
             <div className="empty">
               <p>{M.emptyList}</p>

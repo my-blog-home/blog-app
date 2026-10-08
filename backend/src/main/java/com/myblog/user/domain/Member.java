@@ -8,10 +8,15 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 
 @Entity
 @Table(name = "member")
 public class Member {
+
+    /** 프로필 색은 정해진 6가지 중 하나. 첫 번째가 기본값 (FR-05) */
+    public static final List<String> PROFILE_COLORS =
+            List.of("#c9dcfb", "#e2d8f8", "#cdeee4", "#f8d6c6", "#f5e3ad", "#f9dbe8");
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,6 +33,9 @@ public class Member {
 
     @Column(name = "password_hash", nullable = false, length = 100)
     private String passwordHash;
+
+    @Column(name = "profile_color", nullable = false, length = 7)
+    private String profileColor;
 
     @Column(name = "failed_login_count", nullable = false)
     private short failedLoginCount;
@@ -48,6 +56,7 @@ public class Member {
         this.email = email;
         this.nickname = nickname;
         this.passwordHash = passwordHash;
+        this.profileColor = PROFILE_COLORS.get(0);
         this.createdAt = now;
         this.updatedAt = now;
     }
@@ -82,9 +91,10 @@ public class Member {
         }
     }
 
-    public void updateProfile(String nickname, String bio, Instant now) {
+    public void updateProfile(String nickname, String bio, String profileColor, Instant now) {
         this.nickname = nickname;
         this.bio = bio;
+        this.profileColor = profileColor;
         this.updatedAt = now;
     }
 
@@ -107,6 +117,10 @@ public class Member {
 
     public String getBio() {
         return bio;
+    }
+
+    public String getProfileColor() {
+        return profileColor;
     }
 
     public String getPasswordHash() {

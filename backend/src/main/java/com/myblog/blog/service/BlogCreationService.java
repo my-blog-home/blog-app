@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 가입이 끝나면 블로그와 "미분류" 분류를 함께 만든다 (CF-03-1~3).
+ * 가입이 끝나면 블로그와 "미분류" 분류를 함께 만든다 (CF-03-1~3). 대표 주제는 처음에 "일상"이다.
  */
 @Service
 public class BlogCreationService {
@@ -28,8 +28,8 @@ public class BlogCreationService {
         if (blogs.existsByOwnerId(memberId)) {
             throw new IllegalStateException("회원당 블로그는 1개입니다");
         }
-        Blog blog = blogs.save(new Blog(memberId, nickname + "의 블로그", now));
-        categories.save(new Category(blog.getId(), Category.DEFAULT_NAME, 1, 0, true, now));
+        Blog blog = blogs.save(new Blog(memberId, nickname + "의 블로그", TopicService.DEFAULT_TOPIC_ID, now));
+        categories.save(new Category(blog.getId(), Category.DEFAULT_NAME, null, 1, 0, true, now));
         return blog;
     }
 }

@@ -36,7 +36,7 @@ public class AuthController {
     public record LoginRequest(String email, String password) {
     }
 
-    public record Me(long id, String nickname, Long blogId) {
+    public record Me(long id, String nickname, Long blogId, String profileColor) {
     }
 
     private final LoginService loginService;
@@ -86,7 +86,7 @@ public class AuthController {
         Member member = members.findById(memberId)
                 .orElseThrow(() -> new ApiException(ErrorCode.UNAUTHORIZED, Messages.LOGIN_REQUIRED));
         Long blogId = blogs.findFirstByOwnerIdOrderByIdAsc(memberId).map(Blog::getId).orElse(null);
-        return new Me(member.getId(), member.getNickname(), blogId);
+        return new Me(member.getId(), member.getNickname(), blogId, member.getProfileColor());
     }
 
     /** 로그인할 때마다 세션 ID를 새로 발급한다 (NF-12) */

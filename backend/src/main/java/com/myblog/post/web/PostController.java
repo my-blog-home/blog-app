@@ -4,6 +4,7 @@ import com.myblog.common.security.CurrentMember;
 import com.myblog.common.web.VisitorKeyFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import com.myblog.post.domain.Post;
+import com.myblog.post.domain.PostStatus;
 import com.myblog.post.domain.Visibility;
 import com.myblog.post.service.PostEditingService;
 import com.myblog.post.service.PostQueryService;
@@ -25,14 +26,16 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class PostController {
 
-    public record PostRequest(String title, String body, Long categoryId, Visibility visibility, List<String> tags) {
+    /** draft: true면 임시저장 (FR-11) */
+    public record PostRequest(String title, String body, Long categoryId, Long topicId, Visibility visibility,
+                              List<String> tags, Boolean draft) {
         PostService.PostInput toInput() {
-            return new PostService.PostInput(title, body, categoryId, visibility);
+            return new PostService.PostInput(title, body, categoryId, topicId, visibility, Boolean.TRUE.equals(draft));
         }
     }
 
-    public record PostSource(long id, long blogId, long categoryId, String title, String body, Visibility visibility,
-                             List<String> tags) {
+    public record PostSource(long id, long blogId, long categoryId, long topicId, String title, String body,
+                             Visibility visibility, PostStatus status, List<String> tags) {
     }
 
     private final PostService postService;
@@ -54,8 +57,10 @@ public class PostController {
     }
 
     @GetMapping("/api/posts")
-    public PostQueryService.PageResult recent(@RequestParam(defaultValue = "1") int page) {
-        return postQuery.recentPublic(page);
+    public PostQueryService.PageResult recent(@RequestParam(defaultValue = "1") int page,
+                                              @RequestParam(required = false) Long topicId,
+                                              @RequestParam(required = false) String sort) {
+        return postQuery.recentPublic(page, topicId, PostQueryService.Sort.from(sort));
     }
 
     @GetMapping("/api/blogs/{blogId}/posts")
@@ -81,8 +86,8 @@ public class PostController {
     @GetMapping("/api/posts/{postId}/edit")
     public PostSource source(@PathVariable long postId) {
         Post post = postService.getOwned(postId, CurrentMember.id());
-        return new PostSource(post.getId(), post.getBlogId(), post.getCategoryId(), post.getTitle(), post.getBody(),
-                post.getVisibility(), tagService.tagsOf(post.getId()));
+        return new PostSource(post.getId(), post.getBlogId(), post.getCategoryId(), post.getTopicId(), post.getTitle(),
+                post.getBody(), post.getVisibility(), post.getStatus(), tagService.tagsOf(post.getId()));
     }
 
     @PutMapping("/api/posts/{postId}")

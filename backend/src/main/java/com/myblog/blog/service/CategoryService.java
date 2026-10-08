@@ -3,13 +3,17 @@ package com.myblog.blog.service;
 import com.myblog.blog.domain.Blog;
 import com.myblog.blog.domain.Category;
 import com.myblog.blog.domain.CategoryRepository;
+import com.myblog.blog.domain.CategoryVisibility;
 import com.myblog.common.config.BlogLimits;
 import com.myblog.common.error.ApiException;
 import com.myblog.common.error.ErrorCode;
 import com.myblog.common.error.Messages;
 import java.time.Clock;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,38 +40,60 @@ public class CategoryService {
         this.clock = clock;
     }
 
+    /** 새 분류의 색은 아직 쓰지 않은 첫 번째 색, 모두 쓰였으면 차례대로 (BR-34, BM-04-3) */
     @Transactional
-    public Category add(long blogId, long memberId, String rawName) {
+    public Category add(long blogId, long memberId, String rawName, String rawDescription) {
         Blog blog = blogService.getOwned(blogId, memberId);
-        String name = checkName(rawName);
+        String name = checkName(rawName, false);
+        String description = checkDescription(rawDescription);
         if (categories.existsNameInBlog(blog.getId(), name, -1L)) {
             throw new ApiException(ErrorCode.CONFLICT, Messages.CATEGORY_DUPLICATE);
         }
-        int color = (int) (categories.countByBlogId(blog.getId()) % COLOR_COUNT);
         try {
-            return categories.saveAndFlush(new Category(blog.getId(), name,
-                    categories.maxSortOrder(blog.getId()) + 1, color, false, clock.instant()));
+            return categories.saveAndFlush(new Category(blog.getId(), name, description,
+                    categories.maxSortOrder(blog.getId()) + 1, nextColor(blog.getId()), false, clock.instant()));
         } catch (DataIntegrityViolationException e) {
             throw new ApiException(ErrorCode.CONFLICT, Messages.CATEGORY_DUPLICATE);
         }
     }
 
+    /** 이름과 소개글을 함께 고친다. 소개글을 보내지 않으면(null) 그대로 둔다 (FR-17, CR-58) */
     @Transactional
-    public Category rename(long categoryId, long memberId, String rawName) {
+    public Category edit(long categoryId, long memberId, String rawName, String rawDescription) {
         Category category = getOwned(categoryId, memberId);
-        String name = checkName(rawName);
+        String name = checkName(rawName, category.isDefault());
+        String description = rawDescription == null ? category.getDescription() : checkDescription(rawDescription);
         if (categories.existsNameInBlog(category.getBlogId(), name, category.getId())) {
             throw new ApiException(ErrorCode.CONFLICT, Messages.CATEGORY_DUPLICATE);
         }
-        category.rename(name);
+        category.edit(name, description);
         return category;
     }
 
-    /** 이웃한 분류와 순서를 맞바꾼다. 끝에 있으면 그대로 둔다 */
+    /** 분류 공개 범위. 글마다의 공개 설정은 그대로 두고, 분류가 비공개면 그 글은 주인만 본다 (BR-46) */
+    @Transactional
+    public Category changeVisibility(long categoryId, long memberId, String rawVisibility) {
+        Category category = getOwned(categoryId, memberId);
+        CategoryVisibility visibility;
+        try {
+            visibility = CategoryVisibility.valueOf(rawVisibility == null ? "" : rawVisibility.strip().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            throw ApiException.field("visibility", Messages.CATEGORY_VISIBILITY);
+        }
+        category.changeVisibility(visibility);
+        return category;
+    }
+
+    /** 직접 만든 분류끼리 이웃과 순서를 맞바꾼다. 끝에 있으면 그대로 두고, "미분류"는 맨 뒤에서 움직이지 않는다 (BR-34) */
     @Transactional
     public void move(long categoryId, long memberId, boolean up) {
         Category category = getOwned(categoryId, memberId);
-        List<Category> ordered = categories.findByBlogIdOrderBySortOrderAsc(category.getBlogId());
+        if (category.isDefault()) {
+            throw new ApiException(ErrorCode.CONFLICT, Messages.CATEGORY_DEFAULT_UNMOVABLE);
+        }
+        List<Category> ordered = categories.findOrdered(category.getBlogId()).stream()
+                .filter(c -> !c.isDefault())
+                .toList();
         int index = ordered.indexOf(category);
         int target = up ? index - 1 : index + 1;
         if (target >= 0 && target < ordered.size()) {
@@ -91,12 +117,14 @@ public class CategoryService {
     }
 
     private Category getOwned(long categoryId, long memberId) {
-        Category category = categories.findById(categoryId).orElseThrow(() -> ApiException.notFound(Messages.NOT_FOUND));
+        Category category = categories.findById(categoryId)
+                .orElseThrow(() -> ApiException.notFound(Messages.CATEGORY_NOT_FOUND));
         blogService.getOwned(category.getBlogId(), memberId);
         return category;
     }
 
-    private String checkName(String raw) {
+    /** 1~20자, 앞뒤 공백 제거. 기본 분류가 아니면 "미분류"(대소문자 무시)는 쓸 수 없다 (BR-34) */
+    private String checkName(String raw, boolean isDefault) {
         String name = raw == null ? "" : raw.strip();
         if (name.isEmpty()) {
             throw ApiException.field("name", Messages.CATEGORY_NAME_REQUIRED);
@@ -104,6 +132,33 @@ public class CategoryService {
         if (name.codePointCount(0, name.length()) > limits.categoryNameMax()) {
             throw ApiException.field("name", "분류 이름은 " + limits.categoryNameMax() + "자 이하로 입력해 주세요");
         }
+        if (!isDefault && name.equalsIgnoreCase(Category.DEFAULT_NAME)) {
+            throw ApiException.field("name", Messages.CATEGORY_RESERVED_NAME);
+        }
         return name;
+    }
+
+    /** 소개글은 선택, 0~100자, 앞뒤 공백 제거 (CR-58) */
+    private String checkDescription(String raw) {
+        String description = raw == null ? "" : raw.strip();
+        if (description.isEmpty()) {
+            return null;
+        }
+        if (description.codePointCount(0, description.length()) > limits.categoryDescriptionMax()) {
+            throw ApiException.field("description",
+                    "소개글은 " + limits.categoryDescriptionMax() + "자 이하로 입력해 주세요");
+        }
+        return description;
+    }
+
+    private int nextColor(long blogId) {
+        Set<Integer> used = new HashSet<>();
+        categories.colorIndexes(blogId).forEach(c -> used.add((int) c));
+        for (int i = 0; i < COLOR_COUNT; i++) {
+            if (!used.contains(i)) {
+                return i;
+            }
+        }
+        return (int) (categories.countByBlogId(blogId) % COLOR_COUNT);
     }
 }

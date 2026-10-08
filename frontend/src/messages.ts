@@ -20,4 +20,9 @@ export const M = {
   commentDeleteConfirm: '댓글을 삭제할까요?',
   withdrawnUser: '탈퇴한 사용자',
   categoryNameRequired: '분류 이름을 입력해 주세요',
+  categoryReservedName: '미분류는 쓸 수 없는 이름입니다',
+  categoryNotFound: '존재하지 않는 분류입니다',
+  categoryMakePublicConfirm: '이 분류를 공개로 바꾸면 분류 안의 공개 글을 누구나 볼 수 있습니다. 바꿀까요?',
+  draftSaved: '임시저장했어요',
+  draftTitle: '제목 없음',
 } as const

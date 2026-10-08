@@ -10,8 +10,10 @@ interface ManagedPost {
   id: number
   title: string
   categoryName: string
+  categoryVisibility: 'PUBLIC' | 'PRIVATE'
   createdAt: string
   visibility: 'PUBLIC' | 'PRIVATE'
+  status: 'DRAFT' | 'PUBLISHED'
   viewCount: number
   commentCount: number
 }
@@ -23,29 +25,38 @@ interface Page {
   items: ManagedPost[]
 }
 
-/** 글 관리: 비공개 포함 내 글 전체, 공개 여부·분류로 거르기 (BM-03) */
+const STATUS_TABS = [
+  { value: '', label: '전체' },
+  { value: 'PUBLIC', label: '공개' },
+  { value: 'PRIVATE', label: '비공개' },
+  { value: 'DRAFT', label: '임시저장' },
+]
+
+/** 글 관리: 비공개·임시저장 포함 내 글 전체, 상태(전체·공개·비공개·임시저장)·분류로 거르기 (BM-03, FR-32) */
 export default function ManagePostsPage() {
   const { blog, reloadBlog } = useManage()
   const [params, setParams] = useSearchParams()
-  const visibility = params.get('visibility') ?? ''
+  const statusParam = (params.get('status') ?? params.get('visibility') ?? '').toUpperCase()
+  const status = STATUS_TABS.some((t) => t.value === statusParam) ? statusParam : ''
   const categoryId = params.get('categoryId') ?? ''
   const page = Number(params.get('page') ?? '1')
   const [data, setData] = useState<Page | null>(null)
 
   const load = () => {
     const q = new URLSearchParams({ page: String(page) })
-    if (visibility) q.set('visibility', visibility)
+    if (status) q.set('status', status)
     if (categoryId) q.set('categoryId', categoryId)
     get<Page>(`/api/manage/blogs/${blog.id}/posts?${q}`).then(setData)
   }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(load, [blog.id, visibility, categoryId, page])
+  useEffect(load, [blog.id, status, categoryId, page])
 
   const setFilter = (key: string, value: string) => {
     const next = new URLSearchParams(params)
     if (value) next.set(key, value)
     else next.delete(key)
     next.delete('page')
+    next.delete('visibility')
     setParams(next)
   }
 
@@ -56,7 +67,7 @@ export default function ManagePostsPage() {
     reloadBlog()
   }
 
-  const filtered = visibility || categoryId
+  const filtered = status || categoryId
   return (
     <>
       <div className="list-head">
@@ -65,17 +76,20 @@ export default function ManagePostsPage() {
           글쓰기
         </Link>
       </div>
+      <div className="tabs" role="tablist" aria-label="상태">
+        {STATUS_TABS.map((t) => (
+          <button key={t.value} role="tab" aria-selected={status === t.value} className={status === t.value ? 'current' : ''} onClick={() => setFilter('status', t.value)}>
+            {t.label}
+          </button>
+        ))}
+      </div>
       <div className="filters">
-        <select value={visibility} onChange={(e) => setFilter('visibility', e.target.value)} aria-label="공개 여부">
-          <option value="">전체</option>
-          <option value="PUBLIC">공개</option>
-          <option value="PRIVATE">비공개</option>
-        </select>
         <select value={categoryId} onChange={(e) => setFilter('categoryId', e.target.value)} aria-label="분류">
           <option value="">모든 분류</option>
           {blog.categories.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
+              {c.visibility === 'PRIVATE' ? ' (비공개)' : ''}
             </option>
           ))}
         </select>
@@ -94,7 +108,7 @@ export default function ManagePostsPage() {
                   <th>제목</th>
                   <th>분류</th>
                   <th>작성일</th>
-                  <th>공개</th>
+                  <th>상태</th>
                   <th>조회</th>
                   <th>댓글</th>
                   <th />
@@ -104,11 +118,23 @@ export default function ManagePostsPage() {
                 {data.items.map((p) => (
                   <tr key={p.id}>
                     <td>
-                      <Link to={`/posts/${p.id}`}>{p.title}</Link>
+                      {/* 임시저장 글은 이어 쓰도록 수정 화면으로 간다 */}
+                      <Link to={p.status === 'DRAFT' ? `/posts/${p.id}/edit` : `/posts/${p.id}`}>{p.title}</Link>
                     </td>
-                    <td>{p.categoryName}</td>
+                    <td>
+                      {p.categoryName}
+                      {p.categoryVisibility === 'PRIVATE' && <span aria-label="비공개 분류"> 🔒</span>}
+                    </td>
                     <td>{formatDate(p.createdAt)}</td>
-                    <td>{p.visibility === 'PUBLIC' ? '공개' : <span className="badge">비공개</span>}</td>
+                    <td>
+                      {p.status === 'DRAFT' ? (
+                        <span className="badge">임시저장</span>
+                      ) : p.visibility === 'PUBLIC' ? (
+                        '공개'
+                      ) : (
+                        <span className="badge">비공개</span>
+                      )}
+                    </td>
                     <td>{p.viewCount.toLocaleString()}</td>
                     <td>{p.commentCount}</td>
                     <td className="actions-cell">

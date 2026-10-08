@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,10 +19,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class BlogController {
 
-    public record BlogUpdateRequest(String name, String description) {
+    public record BlogUpdateRequest(String name, String description, Long topicId) {
     }
 
-    public record CategoryRequest(String name) {
+    public record CategoryRequest(String name, String description) {
+    }
+
+    public record CategoryVisibilityRequest(String visibility) {
     }
 
     public record MoveRequest(String direction) {
@@ -45,20 +49,27 @@ public class BlogController {
     @PatchMapping("/api/blogs/{blogId}")
     public BlogQueryService.BlogView update(@PathVariable long blogId, @RequestBody BlogUpdateRequest request) {
         long memberId = CurrentMember.id();
-        blogService.update(blogId, memberId, request.name(), request.description());
+        blogService.update(blogId, memberId, request.name(), request.description(), request.topicId());
         return blogQuery.view(blogId, memberId);
     }
 
     @PostMapping("/api/blogs/{blogId}/categories")
     @ResponseStatus(HttpStatus.CREATED)
     public Map<String, Long> addCategory(@PathVariable long blogId, @RequestBody CategoryRequest request) {
-        return Map.of("id", categoryService.add(blogId, CurrentMember.id(), request.name()).getId());
+        return Map.of("id", categoryService.add(blogId, CurrentMember.id(), request.name(), request.description()).getId());
     }
 
     @PatchMapping("/api/categories/{categoryId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void renameCategory(@PathVariable long categoryId, @RequestBody CategoryRequest request) {
-        categoryService.rename(categoryId, CurrentMember.id(), request.name());
+    public void editCategory(@PathVariable long categoryId, @RequestBody CategoryRequest request) {
+        categoryService.edit(categoryId, CurrentMember.id(), request.name(), request.description());
+    }
+
+    @PutMapping("/api/categories/{categoryId}/visibility")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void changeCategoryVisibility(@PathVariable long categoryId,
+                                         @RequestBody CategoryVisibilityRequest request) {
+        categoryService.changeVisibility(categoryId, CurrentMember.id(), request.visibility());
     }
 
     @PostMapping("/api/categories/{categoryId}/move")

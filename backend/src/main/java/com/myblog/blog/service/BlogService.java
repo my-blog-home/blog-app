@@ -15,11 +15,13 @@ public class BlogService {
 
     private final BlogRepository blogs;
     private final BlogLimits limits;
+    private final TopicService topics;
     private final Clock clock;
 
-    public BlogService(BlogRepository blogs, BlogLimits limits, Clock clock) {
+    public BlogService(BlogRepository blogs, BlogLimits limits, TopicService topics, Clock clock) {
         this.blogs = blogs;
         this.limits = limits;
+        this.topics = topics;
         this.clock = clock;
     }
 
@@ -36,9 +38,9 @@ public class BlogService {
         return blog;
     }
 
-    /** 블로그 이름 1~30자, 소개 0~200자 (CF-04-1~3) */
+    /** 블로그 이름 1~30자, 소개 0~200자, 대표 주제는 10개 중 하나(보내지 않으면 그대로) (CF-04-1~3, FR-07) */
     @Transactional
-    public Blog update(long blogId, long memberId, String rawName, String rawDescription) {
+    public Blog update(long blogId, long memberId, String rawName, String rawDescription, Long topicId) {
         Blog blog = getOwned(blogId, memberId);
         String name = rawName == null ? "" : rawName.strip();
         if (name.isEmpty()) {
@@ -51,7 +53,8 @@ public class BlogService {
         if (description != null && description.codePointCount(0, description.length()) > limits.blogDescriptionMax()) {
             throw ApiException.field("description", "소개는 " + limits.blogDescriptionMax() + "자 이하로 입력해 주세요");
         }
-        blog.update(name, description, clock.instant());
+        long topic = topicId == null ? blog.getTopicId() : topics.check(topicId);
+        blog.update(name, description, topic, clock.instant());
         return blog;
     }
 }

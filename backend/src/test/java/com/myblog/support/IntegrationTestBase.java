@@ -56,6 +56,11 @@ public abstract class IntegrationTestBase {
         return post(url).with(csrf()).contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(body));
     }
 
+    /** PATCH·PUT 같은 요청에 JSON 본문과 CSRF를 붙인다 */
+    protected MockHttpServletRequestBuilder withJson(MockHttpServletRequestBuilder builder, Object body) throws Exception {
+        return builder.with(csrf()).contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(body));
+    }
+
     protected String codeFor(String purpose, String email) {
         return redis.opsForValue().get("verify:" + purpose + ":" + email + ":code");
     }
@@ -87,8 +92,20 @@ public abstract class IntegrationTestBase {
     }
 
     protected long createPost(LoggedIn user, String title, String visibility) throws Exception {
-        MvcResult result = mvc.perform(jsonPost("/api/blogs/" + user.blogId() + "/posts",
-                        Map.of("title", title, "body", title + " 본문", "visibility", visibility))
+        return createPost(user, Map.of("title", title, "body", title + " 본문", "visibility", visibility));
+    }
+
+    /** 요청 본문을 그대로 보내 글을 만든다 (주제·분류·임시저장 등) */
+    protected long createPost(LoggedIn user, Map<String, ?> body) throws Exception {
+        MvcResult result = mvc.perform(jsonPost("/api/blogs/" + user.blogId() + "/posts", body)
+                        .cookie(user.session()))
+                .andExpect(status().isCreated())
+                .andReturn();
+        return json.readTree(result.getResponse().getContentAsString()).get("id").asLong();
+    }
+
+    protected long createCategory(LoggedIn user, String name) throws Exception {
+        MvcResult result = mvc.perform(jsonPost("/api/blogs/" + user.blogId() + "/categories", Map.of("name", name))
                         .cookie(user.session()))
                 .andExpect(status().isCreated())
                 .andReturn();

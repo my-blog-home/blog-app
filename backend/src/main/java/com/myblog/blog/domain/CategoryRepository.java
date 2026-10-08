@@ -7,7 +7,9 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface CategoryRepository extends JpaRepository<Category, Long> {
 
-    List<Category> findByBlogIdOrderBySortOrderAsc(Long blogId);
+    /** "미분류"는 항상 맨 뒤, 나머지는 정한 순서 (BR-34) */
+    @Query("select c from Category c where c.blogId = :blogId order by c.isDefault asc, c.sortOrder asc, c.id asc")
+    List<Category> findOrdered(Long blogId);
 
     Optional<Category> findFirstByBlogIdAndIsDefaultTrue(Long blogId);
 
@@ -18,6 +20,9 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     int maxSortOrder(Long blogId);
 
     long countByBlogId(Long blogId);
+
+    @Query("select c.colorIndex from Category c where c.blogId = :blogId")
+    List<Short> colorIndexes(Long blogId);
 
     /** blog 모듈이 post 모듈을 부르지 않도록 글 수는 표에서 직접 센다 (모듈 방향: post → blog) */
     @Query(value = "select count(*) from post where category_id = :categoryId", nativeQuery = true)

@@ -22,6 +22,7 @@ public record BlogLimits(
         int blogNameMax,
         int blogDescriptionMax,
         int categoryNameMax,
+        int categoryDescriptionMax,
         int postTitleMax,
         int postBodyMax,
         int pageSize,

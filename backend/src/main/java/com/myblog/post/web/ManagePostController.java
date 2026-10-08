@@ -19,9 +19,11 @@ public class ManagePostController {
 
     @GetMapping("/api/manage/blogs/{blogId}/posts")
     public ManagePostQueryService.Page posts(@PathVariable long blogId,
+                                             @RequestParam(required = false) String status,
                                              @RequestParam(required = false) Visibility visibility,
                                              @RequestParam(required = false) Long categoryId,
                                              @RequestParam(defaultValue = "1") int page) {
-        return service.list(blogId, CurrentMember.id(), visibility, categoryId, page);
+        return service.list(blogId, CurrentMember.id(),
+                ManagePostQueryService.StatusFilter.from(status, visibility), categoryId, page);
     }
 }

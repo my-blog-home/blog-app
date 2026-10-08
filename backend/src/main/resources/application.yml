@@ -50,6 +50,7 @@ blog:
     blog-name-max: 30
     blog-description-max: 200
     category-name-max: 20
+    category-description-max: 100
     post-title-max: 100
     post-body-max: 10000
     page-size: 10

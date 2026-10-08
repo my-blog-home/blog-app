@@ -44,17 +44,27 @@ export default function PostDetailPage() {
   return (
     <article className="reading">
       <header className="article-head">
-        <Link to={`/blogs/${post.blog.id}?category=${post.category.id}`} className="category">
-          {post.category.name}
-        </Link>
-        {post.visibility === 'PRIVATE' && <span className="badge" style={{ marginLeft: 8 }}>비공개</span>}
+        {/* 글 맨 위에 주제(누르면 그 주제의 글 모아 보기)와 분류를 함께 보인다 (CR-68) */}
+        <p className="article-topic">
+          <Link to={`/?topic=${post.topic.id}`} className="topic-link">
+            {post.topic.name}
+          </Link>
+          <span aria-hidden="true"> · </span>
+          <Link to={`/blogs/${post.blog.id}?category=${post.category.id}`} className="category">
+            {post.category.name}
+          </Link>
+          {post.status === 'DRAFT' && <span className="badge" style={{ marginLeft: 8 }}>임시저장</span>}
+          {post.visibility === 'PRIVATE' && <span className="badge" style={{ marginLeft: 8 }}>비공개</span>}
+        </p>
         <h1>{post.title}</h1>
         <div className="meta">
           <Link to={`/blogs/${post.blog.id}`} className="card-blog">
-            <span className="avatar sm">{[...post.blog.name][0]}</span>
+            <span className="avatar sm" style={{ background: post.authorColor }}>
+              {[...post.blog.name][0]}
+            </span>
             <span>{post.blog.name}</span>
           </Link>
-          <span>{formatDateTime(post.createdAt)}</span>
+          {post.createdAt && <span>{formatDateTime(post.createdAt)}</span>}
           {post.updatedAt && <span>수정 {formatDateTime(post.updatedAt)}</span>}
           <a href="#comments">댓글 {commentCount || post.commentCount}</a>
           {post.editable && (

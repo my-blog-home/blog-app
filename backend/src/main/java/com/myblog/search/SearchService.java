@@ -3,6 +3,7 @@ package com.myblog.search;
 import com.myblog.common.config.BlogLimits;
 import com.myblog.common.error.ApiException;
 import com.myblog.common.error.Messages;
+import com.myblog.common.sql.PostVisibilitySql;
 import com.myblog.post.service.PostQueryService;
 import java.util.HashMap;
 import java.util.Map;
@@ -10,7 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 공개 글의 제목·본문에서 모든 단어가 들어 있는 글을 찾는다 (CF-11, research R-11).
+ * 방문자에게 보이는 글(작성완료·공개·공개 분류)의 제목·본문에서 모든 단어가 들어 있는 글을 찾는다 (CF-11, research R-11, BR-03).
  */
 @Service
 public class SearchService {
@@ -33,7 +34,7 @@ public class SearchService {
         if (length > limits.searchMax()) {
             throw ApiException.field("q", "검색어는 " + limits.searchMax() + "자 이하로 입력해 주세요");
         }
-        StringBuilder where = new StringBuilder("where p.visibility = 'PUBLIC'\n");
+        StringBuilder where = new StringBuilder("where " + PostVisibilitySql.PUBLIC + "\n");
         Map<String, Object> params = new HashMap<>();
         String[] words = query.split("\\s+");
         for (int i = 0; i < words.length; i++) {

@@ -21,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class MyPageService {
 
-    public record MyInfo(String email, String nickname, String bio, Instant joinedAt, Long blogId) {
+    public record MyInfo(String email, String nickname, String bio, String profileColor, Instant joinedAt, Long blogId) {
     }
 
     private final MemberRepository members;
@@ -49,12 +49,16 @@ public class MyPageService {
         Member member = get(memberId);
         Long blogId = jdbc.queryForList("select id from blog where owner_id = :id order by id limit 1",
                 Map.of("id", memberId), Long.class).stream().findFirst().orElse(null);
-        return new MyInfo(member.getEmail(), member.getNickname(), member.getBio(), member.getCreatedAt(), blogId);
+        return new MyInfo(member.getEmail(), member.getNickname(), member.getBio(), member.getProfileColor(),
+                member.getCreatedAt(), blogId);
     }
 
-    /** 닉네임은 가입 규칙을 따르고(내 닉네임 그대로는 중복 아님), 소개는 0~100자 (CF-15-5) */
+    /**
+     * 닉네임은 가입 규칙을 따르고(내 닉네임 그대로는 중복 아님), 소개는 0~100자 (CF-15-5).
+     * 프로필 색은 정해진 6가지 중 하나이고, 보내지 않으면 그대로 둔다 (FR-05)
+     */
     @Transactional
-    public MyInfo updateProfile(long memberId, String rawNickname, String rawBio) {
+    public MyInfo updateProfile(long memberId, String rawNickname, String rawBio, String rawProfileColor) {
         Member member = get(memberId);
         String nickname = rules.checkNickname(rawNickname);
         if (members.existsByNicknameExcept(nickname, memberId)) {
@@ -64,7 +68,14 @@ public class MyPageService {
         if (bio != null && bio.codePointCount(0, bio.length()) > 100) {
             throw ApiException.field("bio", Messages.BIO_TOO_LONG);
         }
-        member.updateProfile(nickname, bio, clock.instant());
+        String profileColor = member.getProfileColor();
+        if (rawProfileColor != null) {
+            profileColor = rawProfileColor.strip().toLowerCase(java.util.Locale.ROOT);
+            if (!Member.PROFILE_COLORS.contains(profileColor)) {
+                throw ApiException.field("profileColor", Messages.PROFILE_COLOR_INVALID);
+            }
+        }
+        member.updateProfile(nickname, bio, profileColor, clock.instant());
         return info(memberId);
     }
 

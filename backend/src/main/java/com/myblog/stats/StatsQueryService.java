@@ -3,6 +3,7 @@ package com.myblog.stats;
 import com.myblog.blog.service.BlogService;
 import com.myblog.comment.service.ManageCommentService;
 import com.myblog.common.error.ApiException;
+import com.myblog.common.sql.PostVisibilitySql;
 import java.sql.Date;
 import java.time.Clock;
 import java.time.Instant;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 대시보드와 통계 화면 (BM-02, BM-06). 누적은 일별 기록의 합으로 구한다 (research R-12).
+ * 인기 글은 방문자에게 보이는 글만, 최근 글은 작성완료한 글만 (임시저장 글 제외, BR-01).
  */
 @Service
 public class StatsQueryService {
@@ -71,16 +73,17 @@ public class StatsQueryService {
         List<PopularPost> popular = jdbc.query("""
                 select p.id, p.title, sum(v.view_count) as views
                 from post_daily_views v join post p on p.id = v.post_id
-                where p.blog_id = :blogId and p.visibility = 'PUBLIC' and v.stat_date >= :from
+                where p.blog_id = :blogId and %s and v.stat_date >= :from
                 group by p.id, p.title
                 order by views desc, p.id desc
                 limit 5
-                """, params, (rs, row) -> new PopularPost(rs.getLong("id"), rs.getString("title"), rs.getLong("views")));
+                """.formatted(PostVisibilitySql.PUBLIC), params, (rs, row) -> new PopularPost(rs.getLong("id"), rs.getString("title"), rs.getLong("views")));
         List<RecentPost> recent = jdbc.query("""
-                select id, title, created_at, visibility from post where blog_id = :blogId
-                order by created_at desc, id desc limit 5
-                """, params, (rs, row) -> new RecentPost(rs.getLong("id"), rs.getString("title"),
-                rs.getTimestamp("created_at").toInstant(), rs.getString("visibility")));
+                select p.id, p.title, p.published_at, p.visibility from post p
+                where p.blog_id = :blogId and %s
+                order by p.published_at desc, p.id desc limit 5
+                """.formatted(PostVisibilitySql.PUBLISHED), params, (rs, row) -> new RecentPost(rs.getLong("id"),
+                rs.getString("title"), rs.getTimestamp("published_at").toInstant(), rs.getString("visibility")));
 
         return new Dashboard(
                 new Counts(t.views(), y.views(), ((Number) totals.get("views")).longValue()),

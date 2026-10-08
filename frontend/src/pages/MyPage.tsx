@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useBlocker, useNavigate } from 'react-router-dom'
 import { ApiError, del, get, patch, put } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
+import { PROFILE_COLORS } from '../colors'
 import { formatDate } from '../format'
 import { M } from '../messages'
 import { passwordChecks } from './SignupPage'
@@ -10,6 +11,7 @@ interface MyInfo {
   email: string
   nickname: string
   bio: string | null
+  profileColor: string
   joinedAt: string
   blogId: number | null
 }
@@ -73,8 +75,9 @@ export default function MyPage() {
 function InfoForm({ info, onSaved }: { info: MyInfo; onSaved: (info: MyInfo) => void }) {
   const [nickname, setNickname] = useState(info.nickname)
   const [bio, setBio] = useState(info.bio ?? '')
+  const [profileColor, setProfileColor] = useState(info.profileColor)
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null)
-  const changed = nickname !== info.nickname || bio !== (info.bio ?? '')
+  const changed = nickname !== info.nickname || bio !== (info.bio ?? '') || profileColor !== info.profileColor
 
   // 수정하던 중 나가려 하면 묻는다 (CF-15-7)
   const blocker = useBlocker(({ currentLocation, nextLocation }) => changed && currentLocation.pathname !== nextLocation.pathname)
@@ -88,7 +91,7 @@ function InfoForm({ info, onSaved }: { info: MyInfo; onSaved: (info: MyInfo) => 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     try {
-      onSaved(await patch<MyInfo>('/api/me', { nickname, bio }))
+      onSaved(await patch<MyInfo>('/api/me', { nickname, bio, profileColor }))
       setMessage({ ok: true, text: '저장했습니다' })
     } catch (err) {
       setMessage({ ok: false, text: errorOf(err) })
@@ -97,6 +100,27 @@ function InfoForm({ info, onSaved }: { info: MyInfo; onSaved: (info: MyInfo) => 
 
   return (
     <form className="form" onSubmit={submit}>
+      {/* 프로필 색: 6가지 중 하나. 아바타 바탕색으로 쓴다 (FR-05) */}
+      <fieldset className="color-field">
+        <legend>프로필 색상</legend>
+        <span className="avatar sm" style={{ background: profileColor }} aria-hidden="true">
+          {[...(nickname || info.nickname)][0]}
+        </span>
+        <span className="swatches" role="radiogroup" aria-label="프로필 색상">
+          {PROFILE_COLORS.map((color, i) => (
+            <button
+              key={color}
+              type="button"
+              role="radio"
+              aria-checked={profileColor === color}
+              aria-label={`색 ${i + 1}`}
+              className={profileColor === color ? 'swatch current' : 'swatch'}
+              style={{ background: color }}
+              onClick={() => setProfileColor(color)}
+            />
+          ))}
+        </span>
+      </fieldset>
       <label>
         이메일
         <input value={info.email} readOnly />

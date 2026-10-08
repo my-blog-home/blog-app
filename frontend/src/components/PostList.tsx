@@ -15,7 +15,10 @@ export default function PostList({ items, showBlog = false }: { items: PostItem[
                 {post.blogName}
               </Link>
             )}
-            <span>{post.categoryName}</span>
+            <span>
+              {post.categoryName}
+              {post.categoryVisibility === 'PRIVATE' && <span aria-label="비공개 분류"> 🔒</span>}
+            </span>
             <span>{formatDate(post.createdAt)}</span>
             {post.visibility === 'PRIVATE' && <span className="badge">비공개</span>}
           </div>
@@ -37,14 +40,16 @@ export function PostCards({ items }: { items: PostItem[] }) {
         <li key={post.id} className="post-card">
           <div className="card-top">
             <Link to={`/blogs/${post.blogId}`} className="card-blog">
-              <span className="avatar sm">{[...post.blogName][0]}</span>
+              <span className="avatar sm" style={{ background: post.authorColor }}>
+                {[...post.blogName][0]}
+              </span>
               <span>{post.blogName}</span>
             </Link>
             <span className="card-date">{formatDate(post.createdAt)}</span>
           </div>
           <span className="cat-chip">
             <i />
-            {post.categoryName}
+            {post.topicName} · {post.categoryName}
           </span>
           {post.thumbnailUrl && <Thumb url={post.thumbnailUrl} label={post.categoryName} />}
           <Link to={`/posts/${post.id}`} className="card-link">

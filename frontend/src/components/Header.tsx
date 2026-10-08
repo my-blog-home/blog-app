@@ -44,7 +44,10 @@ export default function Header() {
           {me ? (
             <>
               {me.blogId && (
-                <Link to={`/blogs/${me.blogId}`} className="hide-mobile">
+                <Link to={`/blogs/${me.blogId}`} className="hide-mobile header-me">
+                  <span className="avatar sm" style={{ background: me.profileColor }}>
+                    {[...me.nickname][0]}
+                  </span>
                   {me.nickname}
                 </Link>
               )}

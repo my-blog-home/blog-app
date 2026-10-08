@@ -2,6 +2,8 @@ package com.myblog.blog.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -24,6 +26,13 @@ public class Category {
     @Column(nullable = false, length = 20)
     private String name;
 
+    @Column(length = 100)
+    private String description;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 10)
+    private CategoryVisibility visibility = CategoryVisibility.PUBLIC;
+
     @Column(name = "sort_order", nullable = false)
     private int sortOrder;
 
@@ -39,17 +48,28 @@ public class Category {
     protected Category() {
     }
 
-    public Category(long blogId, String name, int sortOrder, int colorIndex, boolean isDefault, Instant now) {
+    public Category(long blogId, String name, String description, int sortOrder, int colorIndex, boolean isDefault,
+                    Instant now) {
         this.blogId = blogId;
         this.name = name;
+        this.description = description;
         this.sortOrder = sortOrder;
         this.colorIndex = (short) colorIndex;
         this.isDefault = isDefault;
         this.createdAt = now;
     }
 
-    public void rename(String name) {
+    public void edit(String name, String description) {
         this.name = name;
+        this.description = description;
+    }
+
+    public void changeVisibility(CategoryVisibility visibility) {
+        this.visibility = visibility;
+    }
+
+    public boolean isPublic() {
+        return visibility == CategoryVisibility.PUBLIC;
     }
 
     public void swapOrderWith(Category other) {
@@ -68,6 +88,14 @@ public class Category {
 
     public String getName() {
         return name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public CategoryVisibility getVisibility() {
+        return visibility;
     }
 
     public int getSortOrder() {
