@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { del, get } from '../../api/client'
+import { del, get, post } from '../../api/client'
 import { useAuth } from '../../auth/AuthContext'
 import Pagination from '../../components/Pagination'
 import { formatDateTime } from '../../format'
@@ -31,10 +31,19 @@ export default function ManageCommentsPage() {
   const [params, setParams] = useSearchParams()
   const page = Number(params.get('page') ?? '1')
   const [data, setData] = useState<Page | null>(null)
+  // 이 화면을 연 순간 새 댓글이던 것은 계속 NEW로 보여 준다
+  const newIds = useRef(new Set<number>())
+  const markedRead = useRef(false)
 
   const load = async () => {
-    setData(await get<Page>(`/api/manage/blogs/${blog.id}/comments?page=${page}`))
-    refreshNewComments()
+    const result = await get<Page>(`/api/manage/blogs/${blog.id}/comments?page=${page}`)
+    result.items.forEach((c) => c.isNew && newIds.current.add(c.id))
+    setData(result)
+    if (!markedRead.current) {
+      markedRead.current = true
+      await post(`/api/manage/blogs/${blog.id}/comments/read`)
+      refreshNewComments()
+    }
   }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { load() }, [blog.id, page])
@@ -56,7 +65,7 @@ export default function ManageCommentsPage() {
           {data.items.map((c) => (
             <li key={c.id}>
               <div className="meta">
-                {c.isNew && <span className="badge new">NEW</span>}
+                {newIds.current.has(c.id) && <span className="badge new">NEW</span>}
                 <strong>{c.authorNickname ?? M.withdrawnUser}</strong>
                 <span>{formatDateTime(c.createdAt)}</span>
                 <button className="link danger" onClick={() => remove(c.id)}>

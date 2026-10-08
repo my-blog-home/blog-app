@@ -50,8 +50,8 @@ public class ManageCommentService {
         this.clock = clock;
     }
 
-    /** 내 블로그 글에 달린 모든 댓글, 최신순. 첫 페이지를 열면 모두 읽음이 된다 (BM-05-1, 6) */
-    @Transactional
+    /** 내 블로그 글에 달린 모든 댓글, 최신순 (BM-05-1). 읽음 처리는 markRead로 따로 한다 */
+    @Transactional(readOnly = true)
     public Page list(long blogId, long memberId, int requestedPage) {
         blogService.getOwned(blogId, memberId);
         Map<String, Object> params = new HashMap<>();
@@ -78,11 +78,15 @@ public class ManageCommentService {
                 """, params, (rs, row) -> new ManagedComment(rs.getLong("id"), rs.getString("nickname"),
                 rs.getTimestamp("created_at").toInstant(), excerpt(rs.getString("content")), rs.getLong("post_id"),
                 rs.getString("title"), rs.getBoolean("is_new")));
-        if (page == 1) {
-            jdbc.update("update blog set comments_last_viewed_at = :now where id = :blogId",
-                    Map.of("now", Timestamp.from(clock.instant()), "blogId", blogId));
-        }
         return new Page(total, page, totalPages, items);
+    }
+
+    /** 댓글 관리 화면을 열면 새 댓글이 모두 읽음이 된다 (BM-05-6) */
+    @Transactional
+    public void markRead(long blogId, long memberId) {
+        blogService.getOwned(blogId, memberId);
+        jdbc.update("update blog set comments_last_viewed_at = :now where id = :blogId",
+                Map.of("now", Timestamp.from(clock.instant()), "blogId", blogId));
     }
 
     /** 메뉴·사용자 메뉴·대시보드에 보여 줄 새 댓글 수 (BM-05-5) */

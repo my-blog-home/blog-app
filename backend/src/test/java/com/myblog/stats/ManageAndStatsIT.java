@@ -46,7 +46,7 @@ class ManageAndStatsIT extends IntegrationTestBase {
     }
 
     @Test
-    void 새_댓글은_남이_단_것만_세고_댓글_관리를_열면_읽음이_된다() throws Exception {
+    void 새_댓글은_남이_단_것만_세고_읽음_처리하면_사라진다() throws Exception {
         long postId = createPost(owner, "글", "PUBLIC");
         comment(other, postId, "하나");
         redis.delete("comment-cooldown:" + other.memberId());
@@ -59,6 +59,8 @@ class ManageAndStatsIT extends IntegrationTestBase {
                 .andExpect(jsonPath("$.totalCount").value(3))
                 .andExpect(jsonPath("$.items[0].isNew").value(false))
                 .andExpect(jsonPath("$.items[1].isNew").value(true));
+        mvc.perform(jsonPost("/api/manage/blogs/" + owner.blogId() + "/comments/read", Map.of()).cookie(owner.session()))
+                .andExpect(status().isNoContent());
         mvc.perform(get("/api/manage/new-comments").cookie(owner.session()))
                 .andExpect(jsonPath("$.count").value(0));
     }
