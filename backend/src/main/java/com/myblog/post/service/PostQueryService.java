@@ -11,6 +11,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -50,14 +51,16 @@ public class PostQueryService {
     private final BlogService blogService;
     private final TagService tagService;
     private final BlogLimits limits;
+    private final ApplicationEventPublisher events;
 
     public PostQueryService(NamedParameterJdbcTemplate jdbc, PostService postService, BlogService blogService,
-                            TagService tagService, BlogLimits limits) {
+                            TagService tagService, BlogLimits limits, ApplicationEventPublisher events) {
         this.jdbc = jdbc;
         this.postService = postService;
         this.blogService = blogService;
         this.tagService = tagService;
         this.limits = limits;
+        this.events = events;
     }
 
     /** 태그를 누르면 같은 태그가 붙은 공개 글을 보여 준다 (CF-20-3) */
@@ -114,9 +117,12 @@ public class PostQueryService {
     }
 
     @Transactional(readOnly = true)
-    public PostDetail detail(long postId, Long viewerId) {
+    public PostDetail detail(long postId, Long viewerId, String visitorKey) {
         Post post = postService.getVisible(postId, viewerId);
         Blog blog = blogService.get(post.getBlogId());
+        if (visitorKey != null) {
+            events.publishEvent(new PostViewedEvent(post.getId(), blog.getId(), blog.getOwnerId(), visitorKey, viewerId));
+        }
         String categoryName = jdbc.queryForObject("select name from category where id = :id",
                 Map.of("id", post.getCategoryId()), String.class);
         Map<String, Object> params = Map.of("blogId", post.getBlogId(), "createdAt",

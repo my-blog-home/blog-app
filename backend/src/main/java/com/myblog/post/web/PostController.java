@@ -1,6 +1,8 @@
 package com.myblog.post.web;
 
 import com.myblog.common.security.CurrentMember;
+import com.myblog.common.web.VisitorKeyFilter;
+import jakarta.servlet.http.HttpServletRequest;
 import com.myblog.post.domain.Post;
 import com.myblog.post.domain.Visibility;
 import com.myblog.post.service.PostEditingService;
@@ -71,8 +73,9 @@ public class PostController {
     }
 
     @GetMapping("/api/posts/{postId}")
-    public PostQueryService.PostDetail detail(@PathVariable long postId) {
-        return postQuery.detail(postId, CurrentMember.idIfPresent().orElse(null));
+    public PostQueryService.PostDetail detail(@PathVariable long postId, HttpServletRequest request) {
+        return postQuery.detail(postId, CurrentMember.idIfPresent().orElse(null),
+                (String) request.getAttribute(VisitorKeyFilter.ATTRIBUTE));
     }
 
     @GetMapping("/api/posts/{postId}/edit")
