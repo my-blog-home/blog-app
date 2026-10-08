@@ -1,4 +1,5 @@
 import { Route, Routes } from 'react-router-dom'
+import Footer from './components/Footer'
 import Header from './components/Header'
 import LoginModal from './components/LoginModal'
 import { CurrentBlogProvider } from './layout/CurrentBlog'
@@ -76,9 +77,7 @@ export default function App() {
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
-      <footer className="footer">
-        <div>Ylog · 내 블로그</div>
-      </footer>
+      <Footer />
       <LoginModal />
       </VisitorPreviewScope>
     </CurrentBlogProvider>

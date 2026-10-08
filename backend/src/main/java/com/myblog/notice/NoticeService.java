@@ -25,7 +25,8 @@ public class NoticeService {
 
     public enum NoticeType { NOTICE, GUIDE }
 
-    public record NoticeItem(long id, NoticeType type, String title, boolean pinned, Instant createdAt) {
+    public record NoticeItem(long id, NoticeType type, String title, boolean pinned, Instant createdAt,
+                             String releaseVersion) {
     }
 
     public record NoticePage(long totalCount, int page, int totalPages, List<NoticeItem> items) {
@@ -33,7 +34,7 @@ public class NoticeService {
 
     /** others: 같은 종류의 다른 안내 (목록 순서로 최대 5개) */
     public record NoticeDetail(long id, NoticeType type, String title, String content, boolean pinned,
-                               Instant createdAt, Instant updatedAt, List<NoticeItem> others) {
+                               Instant createdAt, Instant updatedAt, List<NoticeItem> others, String releaseVersion) {
     }
 
     private static final String ORDER = " order by pinned desc, created_at desc, id desc";
@@ -59,7 +60,7 @@ public class NoticeService {
         int page = Math.min(Math.max(1, requestedPage), totalPages);
         params.put("limit", size);
         params.put("offset", (page - 1) * size);
-        List<NoticeItem> items = jdbc.query("select id, type, title, pinned, created_at from notice" + where + ORDER
+        List<NoticeItem> items = jdbc.query("select id, type, title, pinned, created_at, release_version from notice" + where + ORDER
                 + " limit :limit offset :offset", params, (rs, row) -> item(rs));
         return new NoticePage(total, page, totalPages, items);
     }
@@ -72,18 +73,18 @@ public class NoticeService {
                     return new NoticeDetail(rs.getLong("id"), NoticeType.valueOf(rs.getString("type")),
                             rs.getString("title"), rs.getString("content"), rs.getBoolean("pinned"),
                             rs.getTimestamp("created_at").toInstant(), updated == null ? null : updated.toInstant(),
-                            List.of());
+                            List.of(), rs.getString("release_version"));
                 });
         if (found.isEmpty()) {
             throw ApiException.notFound(Messages.NOTICE_NOT_FOUND);
         }
         NoticeDetail notice = found.get(0);
-        List<NoticeItem> others = jdbc.query("select id, type, title, pinned, created_at from notice"
+        List<NoticeItem> others = jdbc.query("select id, type, title, pinned, created_at, release_version from notice"
                         + " where type = :type and id <> :id" + ORDER + " limit :limit",
                 Map.of("type", notice.type().name(), "id", id, "limit", limits.noticeRelatedCount()),
                 (rs, row) -> item(rs));
         return new NoticeDetail(notice.id(), notice.type(), notice.title(), notice.content(), notice.pinned(),
-                notice.createdAt(), notice.updatedAt(), others);
+                notice.createdAt(), notice.updatedAt(), others, notice.releaseVersion());
     }
 
     private static NoticeType parse(String raw) {
@@ -99,6 +100,6 @@ public class NoticeService {
 
     private static NoticeItem item(ResultSet rs) throws SQLException {
         return new NoticeItem(rs.getLong("id"), NoticeType.valueOf(rs.getString("type")), rs.getString("title"),
-                rs.getBoolean("pinned"), rs.getTimestamp("created_at").toInstant());
+                rs.getBoolean("pinned"), rs.getTimestamp("created_at").toInstant(), rs.getString("release_version"));
     }
 }

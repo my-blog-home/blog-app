@@ -1,3 +1,4 @@
+import NoticeBadge, { NOTICE_TYPE_LABEL } from '../NoticeBadge'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { get } from '../../api/client'
@@ -91,7 +92,7 @@ export function HotBloggersPanel({ topicId }: { topicId: string | null }) {
   )
 }
 
-export const NOTICE_TYPE_LABEL = { NOTICE: '공지', GUIDE: '이용법' } as const
+export { NOTICE_TYPE_LABEL }
 
 /** 공지 · 이용 안내: 고정 글이 위, 최대 5개 (FR-077, BR-30) */
 export function NoticePanel() {
@@ -116,7 +117,7 @@ export function NoticePanel() {
           <li key={n.id}>
             <Link className="notice-item" to={`/notices/${n.id}`}>
               <span className="notice-line">
-                <span className={n.type === 'NOTICE' ? 'badge notice-badge' : 'badge guide-badge'}>{NOTICE_TYPE_LABEL[n.type]}</span>
+                <NoticeBadge notice={n} />
                 <span className="notice-title">{n.title}</span>
               </span>
               <span className="notice-date">{formatDate(n.createdAt)}</span>

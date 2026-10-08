@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { ApiError, get } from '../api/client'
 import type { NoticeDetail } from '../api/types'
 import BackButton from '../components/BackButton'
+import NoticeBadge from '../components/NoticeBadge'
 import { NOTICE_TYPE_LABEL } from '../components/home/HomeSidePanels'
 import PlainText from '../components/PlainText'
 import { formatDate } from '../format'
@@ -33,7 +34,7 @@ export default function NoticeDetailPage() {
     <article className="reading notice-detail">
       <BackButton fallback="/notices" />
       <header className="article-head">
-        <span className={notice.type === 'NOTICE' ? 'badge notice-badge' : 'badge guide-badge'}>{label}</span>
+        <NoticeBadge notice={notice} />
         <h1>{notice.title}</h1>
         <div className="meta">
           <span>{formatDate(notice.createdAt)}</span>

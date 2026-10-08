@@ -16,7 +16,7 @@ RUN ./gradlew bootJar -x test --no-daemon
 
 FROM eclipse-temurin:21-jre
 WORKDIR /app
-COPY --from=api /app/backend/build/libs/myblog-0.0.1-SNAPSHOT.jar app.jar
+COPY --from=api /app/backend/build/libs/myblog.jar app.jar
 ENV SPRING_PROFILES_ACTIVE=prod
 ENV PORT=8330
 RUN mkdir -p /var/lib/ylog/images

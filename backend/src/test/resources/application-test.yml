@@ -10,6 +10,9 @@ spring:
       port: 6379
       database: 15
 blog:
+  # 테스트에서는 릴리스 노트를 공지에 자동으로 올리지 않는다 (ReleaseNoteIT가 직접 부른다)
+  release-notes:
+    publish: false
   mail:
     mode: log
   image:

@@ -228,6 +228,7 @@ export interface NoticeItem {
   title: string
   pinned: boolean
   createdAt: string
+  releaseVersion: string | null
 }
 
 export interface NoticePage {

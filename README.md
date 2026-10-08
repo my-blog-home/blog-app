@@ -31,6 +31,10 @@ cd backend && gradle wrapper && cd ..
 
 Docker를 쓴다면 위의 PostgreSQL·Redis 설치 대신 `docker compose up -d` 후 `myblog_test` DB만 만듭니다.
 
+## 버전과 릴리스 노트
+
+[RELEASING.md](RELEASING.md)를 봅니다. 버전을 올리고 `release-notes`에 노트를 더하면 배포 때 공지사항과 GitHub 릴리스에 자동으로 올라갑니다.
+
 ## 배포
 
 [DEPLOY.md](DEPLOY.md)를 봅니다. 배포용 jar는 `./build.sh`, 도커 이미지는 `docker build -t ylog .`로 만듭니다.

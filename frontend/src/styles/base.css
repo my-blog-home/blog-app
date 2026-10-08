@@ -633,6 +633,9 @@ button.link:disabled { color: var(--text-faint); text-decoration: none; }
 .blogger-info small { font-size: 12px; color: var(--text-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .badge.notice-badge { background: var(--primary-soft); color: var(--primary); flex-shrink: 0; }
 .badge.guide-badge { background: var(--sky); color: #2c6aa0; flex-shrink: 0; }
+.badge.release-badge { background: #e8f7f0; color: #256d52; flex-shrink: 0; }
+.footer-inner { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.footer-version a { color: var(--primary); font-weight: 600; }
 .notice-item { display: block; padding: 10px 6px; border-top: 1px solid var(--border); }
 .notice-list li:first-child .notice-item { border-top: 0; padding-top: 4px; }
 .notice-item:hover .notice-title { color: var(--primary); }

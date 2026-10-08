@@ -5,7 +5,8 @@ plugins {
 }
 
 group = 'com.myblog'
-version = '0.0.1-SNAPSHOT'
+// 서비스 버전. 올릴 때는 release-notes에 같은 버전의 노트를 함께 더한다 (RELEASING.md)
+version = '1.0.0'
 
 java {
     toolchain {
@@ -43,4 +44,14 @@ tasks.named('processResources') {
     from('../frontend/dist') {
         into 'static'
     }
+}
+
+// 서버가 자기 버전을 알 수 있게 build-info를 만든다 (화면 바닥글의 버전 표시)
+springBoot {
+    buildInfo()
+}
+
+// 버전이 바뀌어도 배포 스크립트가 같은 이름으로 찾도록 jar 이름을 고정한다
+tasks.named('bootJar') {
+    archiveFileName = 'myblog.jar'
 }
