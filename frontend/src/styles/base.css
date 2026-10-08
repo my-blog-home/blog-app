@@ -97,6 +97,9 @@ input[type="checkbox"], input[type="radio"] { width: 16px; height: 16px; accent-
 .warning { padding: 14px 16px; border-radius: var(--radius-sm); background: #fdecef; color: #8c3442; font-size: 14px; }
 .warning p { margin: 2px 0; }
 
+.test-code { margin: 0; padding: 12px 14px; border: 1px dashed #c3c8f3; border-radius: var(--radius-sm); background: #f8f8ff; font-size: 14px; color: var(--text-sub); }
+.test-code strong { font-family: Menlo, Consolas, monospace; font-size: 18px; letter-spacing: 3px; color: var(--text); }
+
 /* ===== 머리글 ===== */
 .header {
   position: sticky; top: 0; z-index: 50; height: var(--header-h);

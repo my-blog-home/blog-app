@@ -18,6 +18,7 @@ export default function PasswordResetPage() {
   const [step, setStep] = useState<'email' | 'code' | 'password'>('email')
   const [cooldown, setCooldown] = useState(0)
   const [notice, setNotice] = useState<string | null>(null)
+  const [testCode, setTestCode] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -40,11 +41,12 @@ export default function PasswordResetPage() {
 
   const requestCode = () =>
     run(async () => {
-      await post('/api/auth/password-reset/verification', { email })
+      const res = await post<{ testCode?: string } | undefined>('/api/auth/password-reset/verification', { email })
       setStep('code')
       setCode('')
       setCooldown(60)
       setNotice(RESET_NOTICE)
+      setTestCode(res?.testCode ?? null)
     })
 
   const confirmCode = () =>
@@ -91,6 +93,11 @@ export default function PasswordResetPage() {
           </label>
         )}
         {notice && <p className="notice">{notice}</p>}
+        {testCode && step === 'code' && (
+          <p className="test-code">
+            테스트 모드: 인증번호 <strong>{testCode}</strong> <span className="faint">(메일 대신 화면에 보여 줍니다)</span>
+          </p>
+        )}
         {step === 'password' && (
           <>
             <label>

@@ -1,7 +1,9 @@
 package com.myblog.user.web;
 
 import com.myblog.user.service.PasswordResetService;
+import java.util.Map;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -20,15 +22,16 @@ public class PasswordResetController {
     }
 
     private final PasswordResetService reset;
+    private final TestCodeResponse testCode;
 
-    public PasswordResetController(PasswordResetService reset) {
+    public PasswordResetController(PasswordResetService reset, TestCodeResponse testCode) {
         this.reset = reset;
+        this.testCode = testCode;
     }
 
     @PostMapping("/api/auth/password-reset/verification")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void requestCode(@RequestBody EmailRequest request) {
-        reset.requestCode(request.email());
+    public ResponseEntity<Map<String, String>> requestCode(@RequestBody EmailRequest request) {
+        return testCode.of(reset.requestCode(request.email()));
     }
 
     @PostMapping("/api/auth/password-reset/verification/confirm")

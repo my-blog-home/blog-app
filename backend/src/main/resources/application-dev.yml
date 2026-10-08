@@ -12,6 +12,8 @@ spring:
 blog:
   mail:
     mode: log
+    # 개발 중에는 인증번호를 가입 화면에도 보여 준다
+    show-code-on-screen: true
 
 # 화면 빌드 결과(frontend/dist)를 서버가 함께 내려 준다. 주소 하나(http://localhost:8080)로 쓸 수 있다
 spring.web.resources.static-locations: file:${BLOG_WEB_DIR:${user.home}/Documents/blog-app/frontend/dist}/

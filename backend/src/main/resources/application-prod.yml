@@ -40,5 +40,7 @@ blog:
     # smtp: 실제 메일 발송. log: 인증번호를 서버 로그에 찍음(메일 계정을 정하기 전 임시로만)
     mode: ${MAIL_MODE:smtp}
     from: ${SMTP_FROM:no-reply@ylog.local}
+    # 시험 운영 때만 true. 켜면 인증번호가 화면에 보여서 남의 이메일로도 가입할 수 있다
+    show-code-on-screen: ${SHOW_CODE_ON_SCREEN:false}
   image:
     dir: ${IMAGE_DIR:/var/lib/ylog/images}

@@ -42,7 +42,7 @@ Docker를 쓴다면 위의 PostgreSQL·Redis 설치 대신 `docker compose up -d
 ./run.sh stop   # 끈다
 ```
 
-가입 인증번호는 메일 대신 `.run/server.log`에 찍힙니다. Mac을 다시 켜면 `./run.sh`를 한 번 실행하면 됩니다.
+가입 인증번호는 메일 대신 가입 화면(테스트 모드 상자)과 `.run/server.log`에 나옵니다. Mac을 다시 켜면 `./run.sh`를 한 번 실행하면 됩니다.
 
 ## 개발할 때 따로 켜기
 

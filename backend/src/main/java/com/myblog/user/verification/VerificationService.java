@@ -33,7 +33,7 @@ public class VerificationService {
      * 인증번호를 새로 만든다. {@code deliver}가 false이면 (가입되지 않은 이메일의 비밀번호 찾기)
      * 메일은 보내지 않지만, 제한과 화면 흐름은 똑같이 만들려고 아무도 모르는 번호를 저장한다 (CF-25-3).
      */
-    public void issue(VerificationPurpose purpose, String email, boolean deliver) {
+    public String issue(VerificationPurpose purpose, String email, boolean deliver) {
         try {
             if (Boolean.TRUE.equals(redis.hasKey(key(purpose, email, "cooldown")))) {
                 throw new ApiException(ErrorCode.TOO_MANY_REQUESTS, Messages.RESEND_TOO_SOON);
@@ -64,6 +64,7 @@ public class VerificationService {
                     throw new ApiException(ErrorCode.SERVICE_UNAVAILABLE, Messages.MAIL_FAILED);
                 }
             }
+            return code;
         } catch (DataAccessException e) {
             throw new ApiException(ErrorCode.SERVICE_UNAVAILABLE, Messages.TRY_LATER);
         }

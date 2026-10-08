@@ -33,6 +33,8 @@ export default function SignupPage() {
   const [cooldown, setCooldown] = useState(0)
   const [errors, setErrors] = useState<Partial<Record<Field | 'form', string>>>({})
   const [notice, setNotice] = useState<string | null>(null)
+  // 메일 계정을 정하기 전 시험 모드에서만 서버가 인증번호를 돌려준다
+  const [testCode, setTestCode] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const refs = {
     nickname: useRef<HTMLInputElement>(null),
@@ -82,11 +84,12 @@ export default function SignupPage() {
     setErrors({})
     setNotice(null)
     try {
-      await post('/api/auth/signup/verification', { nickname, email })
+      const res = await post<{ testCode?: string } | undefined>('/api/auth/signup/verification', { nickname, email })
       setCodeSent(true)
       setCode('')
       setCooldown(60)
       setNotice(M.codeSent)
+      setTestCode(res?.testCode ?? null)
       refs.code.current?.focus()
     } catch (err) {
       showError(err, 'email')
@@ -185,6 +188,11 @@ export default function SignupPage() {
           </label>
         )}
         {notice && <p className="notice">{notice}</p>}
+        {testCode && !verified && (
+          <p className="test-code">
+            테스트 모드: 인증번호 <strong>{testCode}</strong> <span className="faint">(메일 대신 화면에 보여 줍니다)</span>
+          </p>
+        )}
 
         <label>
           비밀번호

@@ -23,6 +23,7 @@ Ylog는 **jar 하나**(서버 + 화면)로 돌아갑니다. 함께 필요한 것
 | `REDIS_HOST` | O | `REDIS_PORT`(기본 6379), `REDIS_PASSWORD`(선택) |
 | `MAIL_MODE` | | `smtp`(기본) 또는 `log` |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM` | smtp일 때 O | 인증 메일 발송 |
+| `SHOW_CODE_ON_SCREEN` | | 기본 `false`. `true`면 가입·비밀번호 찾기 화면에 인증번호가 보인다. 메일 없이 시험할 때만 쓰고, 켜 두면 남의 이메일로도 가입할 수 있다 |
 | `IMAGE_DIR` | | 기본 `/var/lib/ylog/images` |
 | `PORT` | | 기본 8080 |
 | `COOKIE_SECURE` | | 기본 `true`. HTTP로 잠깐 시험할 때만 `false` |

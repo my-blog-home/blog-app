@@ -40,13 +40,14 @@ public class SignupService {
     }
 
     /** 이메일 중복은 메일을 보내기 전에 확인한다 (CF-14-1) */
-    public void requestCode(String rawNickname, String rawEmail) {
+    /** 보낸 인증번호를 돌려준다. 화면에 보여 줄지는 컨트롤러가 정한다 */
+    public String requestCode(String rawNickname, String rawEmail) {
         rules.checkNickname(rawNickname);
         String email = rules.normalizeEmail(rawEmail);
         if (members.existsByEmail(email)) {
             throw new ApiException(ErrorCode.CONFLICT, Messages.EMAIL_DUPLICATE);
         }
-        verification.issue(VerificationPurpose.SIGNUP, email, true);
+        return verification.issue(VerificationPurpose.SIGNUP, email, true);
     }
 
     public void confirmCode(String rawEmail, String code) {

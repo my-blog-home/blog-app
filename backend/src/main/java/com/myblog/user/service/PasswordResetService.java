@@ -35,9 +35,9 @@ public class PasswordResetService {
         this.clock = clock;
     }
 
-    public void requestCode(String rawEmail) {
+    public String requestCode(String rawEmail) {
         String email = rules.normalizeEmail(rawEmail);
-        verification.issue(VerificationPurpose.RESET, email, members.existsByEmail(email));
+        return verification.issue(VerificationPurpose.RESET, email, members.existsByEmail(email));
     }
 
     public void confirmCode(String rawEmail, String code) {

@@ -3,6 +3,7 @@ package com.myblog.user.web;
 import com.myblog.user.service.SignupService;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,15 +24,16 @@ public class SignupController {
     }
 
     private final SignupService signup;
+    private final TestCodeResponse testCode;
 
-    public SignupController(SignupService signup) {
+    public SignupController(SignupService signup, TestCodeResponse testCode) {
         this.signup = signup;
+        this.testCode = testCode;
     }
 
     @PostMapping("/api/auth/signup/verification")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void requestCode(@RequestBody CodeRequest request) {
-        signup.requestCode(request.nickname(), request.email());
+    public ResponseEntity<Map<String, String>> requestCode(@RequestBody CodeRequest request) {
+        return testCode.of(signup.requestCode(request.nickname(), request.email()));
     }
 
     @PostMapping("/api/auth/signup/verification/confirm")
