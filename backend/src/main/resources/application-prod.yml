@@ -1,3 +1,4 @@
+# 배포 환경. 모든 접속 정보와 비밀 값은 환경변수로 받는다 (DEPLOY.md 참고)
 spring:
   datasource:
     url: ${DB_URL}
@@ -7,11 +8,12 @@ spring:
     redis:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
   mail:
-    host: ${SMTP_HOST}
+    host: ${SMTP_HOST:}
     port: ${SMTP_PORT:587}
-    username: ${SMTP_USERNAME}
-    password: ${SMTP_PASSWORD}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
     properties:
       mail.smtp.auth: true
       mail.smtp.starttls.enable: true
@@ -20,12 +22,23 @@ spring:
       mail.smtp.writetimeout: 5000
 
 server:
+  port: ${PORT:8080}
+  # Nginx·로드밸런서 뒤에서 HTTPS 여부와 원래 주소를 알 수 있게 한다
+  forward-headers-strategy: framework
   servlet:
     session:
       cookie:
-        secure: true
+        # HTTPS로 서비스하면 true(기본). HTTP로 잠깐 시험할 때만 COOKIE_SECURE=false
+        secure: ${COOKIE_SECURE:true}
+
+logging:
+  level:
+    root: INFO
 
 blog:
   mail:
-    mode: smtp
-    from: ${SMTP_FROM}
+    # smtp: 실제 메일 발송. log: 인증번호를 서버 로그에 찍음(메일 계정을 정하기 전 임시로만)
+    mode: ${MAIL_MODE:smtp}
+    from: ${SMTP_FROM:no-reply@ylog.local}
+  image:
+    dir: ${IMAGE_DIR:/var/lib/ylog/images}

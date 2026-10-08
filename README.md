@@ -31,6 +31,10 @@ cd backend && gradle wrapper && cd ..
 
 Docker를 쓴다면 위의 PostgreSQL·Redis 설치 대신 `docker compose up -d` 후 `myblog_test` DB만 만듭니다.
 
+## 배포
+
+[DEPLOY.md](DEPLOY.md)를 봅니다. 배포용 jar는 `./build.sh`, 도커 이미지는 `docker build -t ylog .`로 만듭니다.
+
 ## 한 번에 켜기 (추천)
 
 ```bash

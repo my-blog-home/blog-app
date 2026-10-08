@@ -37,3 +37,10 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+// 배포용 jar 안에 화면 빌드 결과(frontend/dist)를 넣는다. 화면을 먼저 빌드해 두어야 한다 (build.sh가 순서대로 한다)
+tasks.named('processResources') {
+    from('../frontend/dist') {
+        into 'static'
+    }
+}
