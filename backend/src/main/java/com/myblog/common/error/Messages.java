@@ -28,6 +28,12 @@ public final class Messages {
     public static final String LOGIN_REQUIRED = "로그인이 필요합니다";
     public static final String TRY_LATER = "잠시 뒤 다시 시도해 주세요";
 
+    public static final String SAVED = "저장했습니다";
+    public static final String CURRENT_PASSWORD_WRONG = "현재 비밀번호가 올바르지 않습니다";
+    public static final String NEW_PASSWORD_SAME = "현재 비밀번호와 다른 값을 입력해 주세요";
+    public static final String WITHDRAW_AGREE = "안내를 읽고 동의해 주세요";
+    public static final String BIO_TOO_LONG = "소개는 100자 이하로 입력해 주세요";
+
     public static final String TITLE_REQUIRED = "제목을 입력해 주세요";
     public static final String BODY_REQUIRED = "본문을 입력해 주세요";
     public static final String POST_NOT_FOUND = "존재하지 않는 글입니다";

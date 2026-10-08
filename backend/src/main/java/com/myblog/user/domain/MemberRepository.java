@@ -15,4 +15,7 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     @Query("select count(m) > 0 from Member m where lower(m.nickname) = lower(:nickname)")
     boolean existsByNickname(String nickname);
+
+    @Query("select count(m) > 0 from Member m where lower(m.nickname) = lower(:nickname) and m.id <> :excludeId")
+    boolean existsByNicknameExcept(String nickname, Long excludeId);
 }

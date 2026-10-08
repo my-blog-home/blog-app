@@ -82,6 +82,17 @@ public class Member {
         }
     }
 
+    public void updateProfile(String nickname, String bio, Instant now) {
+        this.nickname = nickname;
+        this.bio = bio;
+        this.updatedAt = now;
+    }
+
+    public void changePasswordHash(String passwordHash, Instant now) {
+        this.passwordHash = passwordHash;
+        this.updatedAt = now;
+    }
+
     public Long getId() {
         return id;
     }

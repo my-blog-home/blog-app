@@ -48,7 +48,7 @@ export default function LoginForm({ onSuccess }: { onSuccess: () => void }) {
         로그인
       </button>
       <p className="muted small">
-        <Link to="/signup">회원가입</Link>
+        <Link to="/password-reset">비밀번호를 잊으셨나요?</Link> · <Link to="/signup">회원가입</Link>
       </p>
     </form>
   )

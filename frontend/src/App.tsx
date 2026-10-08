@@ -4,6 +4,8 @@ import LoginModal from './components/LoginModal'
 import BlogPage from './pages/BlogPage'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
+import MyPage from './pages/MyPage'
+import PasswordResetPage from './pages/PasswordResetPage'
 import NotFoundPage from './pages/NotFoundPage'
 import PostDetailPage from './pages/PostDetailPage'
 import PostEditorPage from './pages/PostEditorPage'
@@ -24,6 +26,8 @@ export default function App() {
           <Route path="/posts/:postId/edit" element={<PostEditorPage />} />
           <Route path="/write" element={<PostEditorPage />} />
           <Route path="/search" element={<SearchPage />} />
+          <Route path="/me" element={<MyPage />} />
+          <Route path="/password-reset" element={<PasswordResetPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>

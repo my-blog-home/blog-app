@@ -1,0 +1,45 @@
+package com.myblog.user.web;
+
+import com.myblog.user.service.PasswordResetService;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class PasswordResetController {
+
+    public record EmailRequest(String email) {
+    }
+
+    public record ConfirmRequest(String email, String code) {
+    }
+
+    public record ResetRequest(String email, String newPassword, String newPasswordConfirm) {
+    }
+
+    private final PasswordResetService reset;
+
+    public PasswordResetController(PasswordResetService reset) {
+        this.reset = reset;
+    }
+
+    @PostMapping("/api/auth/password-reset/verification")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void requestCode(@RequestBody EmailRequest request) {
+        reset.requestCode(request.email());
+    }
+
+    @PostMapping("/api/auth/password-reset/verification/confirm")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void confirm(@RequestBody ConfirmRequest request) {
+        reset.confirmCode(request.email(), request.code());
+    }
+
+    @PostMapping("/api/auth/password-reset")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void reset(@RequestBody ResetRequest request) {
+        reset.reset(request.email(), request.newPassword(), request.newPasswordConfirm());
+    }
+}

@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 
 // 로그인해야 쓰는 화면
-const MEMBER_ONLY = /^\/(write|posts\/\d+\/edit)$/
+const MEMBER_ONLY = /^\/(write|me|posts\/\d+\/edit)$/
 
 export default function Header() {
   const { me, logout, requireLogin } = useAuth()
@@ -42,6 +42,7 @@ export default function Header() {
           {me ? (
             <>
               {me.blogId && <Link to={`/blogs/${me.blogId}`}>{me.nickname}</Link>}
+              <Link to="/me">마이페이지</Link>
               <button className="link" onClick={onLogout}>
                 로그아웃
               </button>
