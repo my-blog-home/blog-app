@@ -55,6 +55,7 @@ export default function PostEditorPage() {
       requireLogin(() => undefined)
       return
     }
+    if (!editing && !me.blogId) return
     const load = async () => {
       try {
         let blogId = me.blogId
@@ -119,6 +120,8 @@ export default function PostEditorPage() {
 
   if (missing) return <NotFoundPage message={M.postNotFound} />
   if (loading || !me) return <p className="empty">로그인이 필요합니다</p>
+  // 관리자 계정은 블로그가 없어 글을 쓸 수 없다 (FR-078)
+  if (!editing && !me.blogId) return <p className="empty">블로그가 없는 계정은 글을 쓸 수 없습니다</p>
   if (!blog) return null
 
   const update = <K extends keyof Draft>(key: K, value: Draft[K]) => setDraft({ ...draft, [key]: value })

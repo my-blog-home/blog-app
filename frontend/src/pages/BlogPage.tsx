@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { withPreview } from '../preview'
 import { ApiError, del, get, put } from '../api/client'
 import type { BlogView, PageResult, SubscriptionState } from '../api/types'
 import { useAuth } from '../auth/AuthContext'
@@ -127,6 +128,9 @@ export default function BlogPage() {
           )}
           {blog.owner && (
             <div className="actions">
+              <Link to={withPreview(`/blogs/${blog.id}`)} className="button">
+                방문자 화면으로 보기
+              </Link>
               <Link to="/manage" className="button">
                 블로그 관리
               </Link>

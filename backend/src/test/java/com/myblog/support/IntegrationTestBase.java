@@ -45,7 +45,10 @@ public abstract class IntegrationTestBase {
 
     @BeforeEach
     void cleanUp() {
-        jdbc.execute("TRUNCATE member, spring_session, search_log RESTART IDENTITY CASCADE");
+        // suspension·report 등 회원을 가리키는 표는 CASCADE로 함께 비워진다
+        jdbc.execute("TRUNCATE member, suspension, spring_session, search_log RESTART IDENTITY CASCADE");
+        // 처음 넣은 안내(created_by 없음)는 남기고, 테스트에서 관리자가 쓴 공지만 지운다
+        jdbc.update("DELETE FROM notice WHERE created_by IS NOT NULL");
         redis.execute((org.springframework.data.redis.core.RedisCallback<Object>) connection -> {
             connection.serverCommands().flushDb();
             return null;
@@ -89,6 +92,21 @@ public abstract class IntegrationTestBase {
         JsonNode me = json.readTree(result.getResponse().getContentAsString());
         Cookie session = result.getResponse().getCookie("SESSION");
         return new LoggedIn(session, me.get("id").asLong(), me.get("blogId").asLong());
+    }
+
+    /**
+     * 관리자로 로그인한다. 관리자는 가입으로 만들 수 없으므로 가입한 회원을 관리자로 바꾸고 블로그를 지운다 (FR-078).
+     * blogId는 0이다(블로그 없음)
+     */
+    protected LoggedIn adminLogin(String email) throws Exception {
+        signup("운영자", email);
+        jdbc.update("UPDATE member SET role = 'ADMIN' WHERE email = ?", email);
+        jdbc.update("DELETE FROM blog WHERE owner_id = (SELECT id FROM member WHERE email = ?)", email);
+        MvcResult result = mvc.perform(jsonPost("/api/auth/login", Map.of("email", email, "password", PASSWORD)))
+                .andExpect(status().isOk())
+                .andReturn();
+        JsonNode me = json.readTree(result.getResponse().getContentAsString());
+        return new LoggedIn(result.getResponse().getCookie("SESSION"), me.get("id").asLong(), 0);
     }
 
     protected long createPost(LoggedIn user, String title, String visibility) throws Exception {

@@ -66,7 +66,7 @@ public class ManageCommentService {
         params.put("limit", size);
         params.put("offset", (page - 1) * size);
         List<ManagedComment> items = jdbc.query("""
-                select c.id, m.nickname, c.created_at, c.content, p.id as post_id, p.title, c.is_secret, c.parent_id,
+                select c.id, case when m.withdrawn_at is null then m.nickname end as nickname, c.created_at, c.content, p.id as post_id, p.title, c.is_secret, c.parent_id,
                 """ + IS_NEW + """
                  as is_new
                 from comment c

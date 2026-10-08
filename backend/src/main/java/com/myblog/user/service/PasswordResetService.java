@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 비밀번호 찾기. 가입 여부와 관계없이 화면 안내와 제한 동작을 똑같이 하고, 메일은 가입된 이메일에만 보낸다 (CF-25, NF-06).
+ * 탈퇴한 회원(del_… 이메일 포함)은 가입되지 않은 이메일과 똑같이 다룬다 (FR-086, BR-23).
  */
 @Service
 public class PasswordResetService {
@@ -37,7 +38,7 @@ public class PasswordResetService {
 
     public String requestCode(String rawEmail) {
         String email = rules.normalizeEmail(rawEmail);
-        return verification.issue(VerificationPurpose.RESET, email, members.existsByEmail(email));
+        return verification.issue(VerificationPurpose.RESET, email, members.existsActiveByEmail(email));
     }
 
     public void confirmCode(String rawEmail, String code) {
@@ -51,7 +52,7 @@ public class PasswordResetService {
         rules.checkPassword("newPassword", newPassword, confirm);
         verification.requireVerified(VerificationPurpose.RESET, email);
         verification.clearVerified(VerificationPurpose.RESET, email);
-        members.findByEmail(email).ifPresent((Member member) -> {
+        members.findByEmail(email).filter(m -> !m.isWithdrawn()).ifPresent((Member member) -> {
             Instant now = clock.instant();
             member.changePasswordHash(passwordEncoder.encode(newPassword), now);
             member.resetFailures(now);

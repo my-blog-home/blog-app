@@ -2,6 +2,12 @@ import { Route, Routes } from 'react-router-dom'
 import Header from './components/Header'
 import LoginModal from './components/LoginModal'
 import { CurrentBlogProvider } from './layout/CurrentBlog'
+import { PreviewBanner, usePreview, VisitorPreviewScope } from './layout/VisitorPreview'
+import AdminLayout from './pages/admin/AdminLayout'
+import AdminMembersPage from './pages/admin/AdminMembersPage'
+import AdminNoticesPage from './pages/admin/AdminNoticesPage'
+import AdminReportsPage from './pages/admin/AdminReportsPage'
+import AdminSummaryPage from './pages/admin/AdminSummaryPage'
 import ActivityPage from './pages/ActivityPage'
 import BlogPage from './pages/BlogPage'
 import HomePage from './pages/HomePage'
@@ -26,10 +32,14 @@ import ManageSettingsPage from './pages/manage/ManageSettingsPage'
 import StatsPage from './pages/manage/StatsPage'
 
 export default function App() {
+  // 방문자 화면 미리보기를 켜고 끌 때 화면을 새로 읽는다 (FR-083)
+  const preview = usePreview()
   return (
     <CurrentBlogProvider>
+      <VisitorPreviewScope>
       <Header />
-      <main className="container">
+      <PreviewBanner />
+      <main className="container" key={preview ? 'visitor' : 'me'}>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/signup" element={<SignupPage />} />
@@ -53,6 +63,13 @@ export default function App() {
             <Route path="stats" element={<StatsPage />} />
             <Route path="settings" element={<ManageSettingsPage />} />
           </Route>
+          {/* 관리자 화면 (FR-078~082) */}
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminSummaryPage />} />
+            <Route path="reports" element={<AdminReportsPage />} />
+            <Route path="members" element={<AdminMembersPage />} />
+            <Route path="notices" element={<AdminNoticesPage />} />
+          </Route>
           <Route path="/password-reset" element={<PasswordResetPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
@@ -61,6 +78,7 @@ export default function App() {
         <div>Ylog · 내 블로그</div>
       </footer>
       <LoginModal />
+      </VisitorPreviewScope>
     </CurrentBlogProvider>
   )
 }

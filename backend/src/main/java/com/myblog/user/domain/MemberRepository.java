@@ -13,6 +13,10 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     @Query("select count(m) > 0 from Member m where lower(m.email) = lower(:email)")
     boolean existsByEmail(String email);
 
+    /** 탈퇴하지 않은 회원의 이메일인지. 비밀번호 찾기는 탈퇴한 이메일을 가입되지 않은 이메일과 같게 본다 (FR-086) */
+    @Query("select count(m) > 0 from Member m where lower(m.email) = lower(:email) and m.withdrawnAt is null")
+    boolean existsActiveByEmail(String email);
+
     @Query("select count(m) > 0 from Member m where lower(m.nickname) = lower(:nickname)")
     boolean existsByNickname(String nickname);
 

@@ -27,26 +27,32 @@ public class SignupService {
     private final BlogCreationService blogCreation;
     private final InputRules rules;
     private final PasswordEncoder passwordEncoder;
+    private final RejoinPolicy rejoin;
     private final Clock clock;
 
     public SignupService(MemberRepository members, VerificationService verification, BlogCreationService blogCreation,
-                         InputRules rules, PasswordEncoder passwordEncoder, Clock clock) {
+                         InputRules rules, PasswordEncoder passwordEncoder, RejoinPolicy rejoin, Clock clock) {
         this.members = members;
         this.verification = verification;
         this.blogCreation = blogCreation;
         this.rules = rules;
         this.passwordEncoder = passwordEncoder;
+        this.rejoin = rejoin;
         this.clock = clock;
     }
 
-    /** 이메일 중복은 메일을 보내기 전에 확인한다 (CF-14-1) */
-    /** 보낸 인증번호를 돌려준다. 화면에 보여 줄지는 컨트롤러가 정한다 */
+    /**
+     * 이메일 중복과 재가입 대기(탈퇴 후 30일)는 메일을 보내기 전에 확인한다 (CF-14-1, FR-087).
+     * 가입으로 만드는 계정은 항상 일반 회원이다. 관리자는 가입으로 만들 수 없다 (FR-078).
+     * 보낸 인증번호를 돌려준다. 화면에 보여 줄지는 컨트롤러가 정한다
+     */
     public String requestCode(String rawNickname, String rawEmail) {
         rules.checkNickname(rawNickname);
         String email = rules.normalizeEmail(rawEmail);
         if (members.existsByEmail(email)) {
             throw new ApiException(ErrorCode.CONFLICT, Messages.EMAIL_DUPLICATE);
         }
+        rejoin.check(email);
         return verification.issue(VerificationPurpose.SIGNUP, email, true);
     }
 
@@ -68,6 +74,7 @@ public class SignupService {
         if (members.existsByEmail(email)) {
             throw new ApiException(ErrorCode.CONFLICT, Messages.EMAIL_DUPLICATE);
         }
+        rejoin.check(email);
         if (members.existsByNickname(nickname)) {
             throw ApiException.field("nickname", Messages.NICKNAME_DUPLICATE);
         }

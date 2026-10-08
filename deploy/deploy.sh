@@ -4,7 +4,8 @@
 #
 # 필요한 환경변수: DB_ADDRESS, DB_PORT, DB_NAME, DB_USERNAME, DB_PASSWORD
 # 선택: DB_DATABASE(nhnacademy), DB_SCHEMA(DB_NAME 값), APP_PORT(8330), MAIL_MODE(log), SHOW_CODE_ON_SCREEN(true), COOKIE_SECURE(false),
-#       SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, SMTP_FROM, SUDO_PASSWORD
+#       SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, SMTP_FROM, SUDO_PASSWORD,
+#       ADMIN_EMAIL, ADMIN_PASSWORD(둘 다 있을 때만 처음 켤 때 관리자 계정을 만든다. 기본은 빈 값)
 set -euo pipefail
 
 APP_DIR="${APP_DIR:-$HOME/ylog}"
@@ -76,6 +77,8 @@ d run -d --name "$APP" --network "$NETWORK" --restart unless-stopped \
   -e SMTP_USERNAME="${SMTP_USERNAME:-}" \
   -e SMTP_PASSWORD="${SMTP_PASSWORD:-}" \
   -e SMTP_FROM="${SMTP_FROM:-no-reply@ylog.local}" \
+  -e ADMIN_EMAIL="${ADMIN_EMAIL:-}" \
+  -e ADMIN_PASSWORD="${ADMIN_PASSWORD:-}" \
   "$IMAGE"
 
 echo "▶ 켜질 때까지 기다리기"
