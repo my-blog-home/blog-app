@@ -4,6 +4,14 @@ spring:
     url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+  # 공용 데이터베이스 안의 내 스키마를 쓸 때(Crowfoot 발급 DB 등) DB_SCHEMA로 지정한다. 없으면 public
+  flyway:
+    default-schema: ${DB_SCHEMA:public}
+    schemas: ${DB_SCHEMA:public}
+    create-schemas: false
+  jpa:
+    properties:
+      hibernate.default_schema: ${DB_SCHEMA:public}
   data:
     redis:
       host: ${REDIS_HOST}
