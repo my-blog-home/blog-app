@@ -43,6 +43,8 @@ jobs:
           DB_ADDRESS: ${{ secrets.DB_ADDRESS }}
           DB_PORT: ${{ secrets.DB_PORT }}
           DB_NAME: ${{ secrets.DB_NAME }}
+          DB_SCHEMA: ${{ secrets.DB_SCHEMA }}
+          DB_DATABASE: ${{ secrets.DB_DATABASE }}
           DB_USERNAME: ${{ secrets.DB_USERNAME }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           SUDO_PASSWORD: ${{ secrets.SSH_PASSWORD }}
@@ -61,6 +63,6 @@ jobs:
           username: ${{ secrets.SSH_ID }}
           password: ${{ secrets.SSH_PASSWORD }}
           command_timeout: 10m
-          envs: DB_ADDRESS,DB_PORT,DB_NAME,DB_USERNAME,DB_PASSWORD,SUDO_PASSWORD,MAIL_MODE,SHOW_CODE_ON_SCREEN,COOKIE_SECURE,SMTP_HOST,SMTP_PORT,SMTP_USERNAME,SMTP_PASSWORD,SMTP_FROM
+          envs: DB_ADDRESS,DB_PORT,DB_NAME,DB_SCHEMA,DB_DATABASE,DB_USERNAME,DB_PASSWORD,SUDO_PASSWORD,MAIL_MODE,SHOW_CODE_ON_SCREEN,COOKIE_SECURE,SMTP_HOST,SMTP_PORT,SMTP_USERNAME,SMTP_PASSWORD,SMTP_FROM
           # 비어 있는 선택 값은 deploy.sh가 기본값으로 바꾼다
           script: bash "$HOME/ylog/deploy.sh"

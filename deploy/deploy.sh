@@ -3,7 +3,7 @@
 # GitHub Actions가 SSH로 접속해 환경변수와 함께 실행한다 (.github/workflows/deploy.yml).
 #
 # 필요한 환경변수: DB_ADDRESS, DB_PORT, DB_NAME, DB_USERNAME, DB_PASSWORD
-# 선택: APP_PORT(8330), MAIL_MODE(log), SHOW_CODE_ON_SCREEN(true), COOKIE_SECURE(false),
+# 선택: DB_DATABASE(nhnacademy), DB_SCHEMA(DB_NAME 값), APP_PORT(8330), MAIL_MODE(log), SHOW_CODE_ON_SCREEN(true), COOKIE_SECURE(false),
 #       SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, SMTP_FROM, SUDO_PASSWORD
 set -euo pipefail
 
@@ -46,20 +46,12 @@ case "$DB_HOST" in
   localhost|127.0.0.1) DB_HOST="host.docker.internal" ;;
 esac
 
-echo "▶ 데이터베이스 확인 ($DB_NAME)"
-# 데이터베이스가 없으면 만든다. 계정에 만들 권한이 없으면 안내만 하고 계속한다
-psql_run() {
-  d run --rm --network "$NETWORK" --add-host host.docker.internal:host-gateway \
-    -e PGPASSWORD="$DB_PASSWORD" postgres:16 \
-    psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USERNAME" -d postgres -tAc "$1"
-}
-if [ "$(psql_run "SELECT 1 FROM pg_database WHERE datname = '$DB_NAME'" 2>/dev/null | tr -d '[:space:]')" = "1" ]; then
-  echo "  있음"
-elif psql_run "CREATE DATABASE \"$DB_NAME\"" >/dev/null 2>&1; then
-  echo "  없어서 새로 만들었습니다"
-else
-  echo "  ⚠️ 데이터베이스가 없고 만들 수도 없습니다. DB 관리자에게 '$DB_NAME' 데이터베이스를 만들어 달라고 해 주세요"
-fi
+# Crowfoot에서 발급한 PostgreSQL은 공용 데이터베이스(nhnacademy) 안에 내 스키마를 준다.
+# 그래서 시크릿 DB_NAME에는 발급받은 스키마 이름(예: cf_u30_d1)을 넣고, 데이터베이스는 DB_DATABASE(기본 nhnacademy)로 접속한다.
+# 다른 PostgreSQL을 쓰게 되면 DB_DATABASE에 데이터베이스 이름, DB_SCHEMA에 스키마 이름(보통 public)을 넣는다.
+DB_DATABASE="${DB_DATABASE:-nhnacademy}"
+DB_SCHEMA="${DB_SCHEMA:-$DB_NAME}"
+DB_URL="jdbc:postgresql://$DB_HOST:$DB_PORT/$DB_DATABASE?currentSchema=$DB_SCHEMA"
 
 echo "▶ 이전 컨테이너 정리"
 d rm -f "$APP" >/dev/null 2>&1 || true
@@ -71,7 +63,8 @@ d run -d --name "$APP" --network "$NETWORK" --restart unless-stopped \
   -v ylog-images:/var/lib/ylog/images \
   -e SPRING_PROFILES_ACTIVE=prod \
   -e PORT="$APP_PORT" \
-  -e DB_URL="jdbc:postgresql://$DB_HOST:$DB_PORT/$DB_NAME" \
+  -e DB_URL="$DB_URL" \
+  -e DB_SCHEMA="$DB_SCHEMA" \
   -e DB_USERNAME="$DB_USERNAME" \
   -e DB_PASSWORD="$DB_PASSWORD" \
   -e REDIS_HOST="$REDIS" \
