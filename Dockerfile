@@ -18,7 +18,8 @@ FROM eclipse-temurin:21-jre
 WORKDIR /app
 COPY --from=api /app/backend/build/libs/myblog-0.0.1-SNAPSHOT.jar app.jar
 ENV SPRING_PROFILES_ACTIVE=prod
+ENV PORT=8330
 RUN mkdir -p /var/lib/ylog/images
 VOLUME /var/lib/ylog/images
-EXPOSE 8080
+EXPOSE 8330
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]
