@@ -831,7 +831,7 @@ body.is-dragging, body.is-dragging * { cursor: grabbing !important; user-select:
 .my-blog-top h1 { margin: 0 0 4px; font-size: 24px; overflow-wrap: anywhere; }
 .my-blog-top p { margin: 0; color: var(--text-sub); font-size: 14px; }
 .my-blog-top .row { flex-wrap: wrap; gap: 8px; }
-.cat-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; margin-bottom: 32px; }
+.cat-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; margin: 0 0 32px; padding: 0; list-style: none; }
 .cat-card { display: flex; flex-direction: column; gap: 8px; padding: 18px; border: 1px solid var(--border); border-radius: var(--radius); background: #fff; }
 .cat-card.private { background: var(--bg-soft); }
 .cat-card-head { display: flex; align-items: center; gap: 8px; font-weight: 700; }
