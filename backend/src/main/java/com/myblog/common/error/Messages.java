@@ -63,6 +63,7 @@ public final class Messages {
     public static final String CATEGORY_NOT_FOUND = "존재하지 않는 분류입니다";
     public static final String CATEGORY_RESERVED_NAME = "미분류는 쓸 수 없는 이름입니다";
     public static final String CATEGORY_DEFAULT_UNMOVABLE = "미분류는 맨 뒤에 있고 옮길 수 없습니다";
+    public static final String CATEGORY_ORDER_INVALID = "분류 순서를 다시 불러온 뒤 시도해 주세요";
     public static final String CATEGORY_VISIBILITY = "분류의 공개 범위를 골라 주세요";
     public static final String TOPIC_INVALID = "주제를 다시 골라 주세요";
     public static final String PROFILE_COLOR_INVALID = "프로필 색을 다시 골라 주세요";

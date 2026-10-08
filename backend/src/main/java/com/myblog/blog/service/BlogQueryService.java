@@ -20,9 +20,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class BlogQueryService {
 
-    /** publicPostCount: 작성완료한 글 중 글 자체가 공개인 수 (분류를 공개로 바꿀 때 확인용, 주인에게만 의미 있음) */
+    /**
+     * publicPostCount: 작성완료한 글 중 글 자체가 공개인 수 (분류를 공개로 바꿀 때 확인용, 주인에게만 의미 있음).
+     * draftCount: 임시저장 글 수. 주인에게만 채우고 방문자에게는 0이다 (FR-32, 내 블로그 화면의 분류 카드)
+     */
     public record CategoryView(long id, String name, String description, CategoryVisibility visibility, int colorIndex,
-                               boolean isDefault, long postCount, long publicPostCount) {
+                               boolean isDefault, long postCount, long publicPostCount, long draftCount) {
     }
 
     /** subscriberCount·subscribedByMe: 구독자 수와 내가 구독했는지 (FR-067). ownerId는 작성자 프로필로 가는 데 쓴다 (FR-075) */
@@ -64,12 +67,23 @@ public class BlogQueryService {
             counts.put(rs.getLong("category_id"), new long[] {rs.getLong("cnt"), rs.getLong("public_cnt")});
         });
 
+        Map<Long, Long> drafts = new HashMap<>();
+        if (owner) {
+            jdbc.query("""
+                    select category_id, count(*) as cnt from post
+                    where blog_id = :blogId and status = 'DRAFT'
+                    group by category_id
+                    """, params, rs -> {
+                drafts.put(rs.getLong("category_id"), rs.getLong("cnt"));
+            });
+        }
+
         List<CategoryView> categoryViews = categories.findOrdered(blogId).stream()
                 .filter(c -> owner || c.isPublic())
                 .map((Category c) -> {
                     long[] count = counts.getOrDefault(c.getId(), new long[2]);
                     return new CategoryView(c.getId(), c.getName(), c.getDescription(), c.getVisibility(),
-                            c.getColorIndex(), c.isDefault(), count[0], count[1]);
+                            c.getColorIndex(), c.isDefault(), count[0], count[1], drafts.getOrDefault(c.getId(), 0L));
                 })
                 .toList();
         long total = counts.values().stream().mapToLong(c -> c[0]).sum();

@@ -9,6 +9,7 @@ import com.myblog.common.error.ApiException;
 import com.myblog.common.error.ErrorCode;
 import com.myblog.common.error.Messages;
 import java.time.Clock;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -98,6 +99,31 @@ public class CategoryService {
         int target = up ? index - 1 : index + 1;
         if (target >= 0 && target < ordered.size()) {
             category.swapOrderWith(ordered.get(target));
+        }
+    }
+
+    /**
+     * 끌어서 놓은 순서대로 직접 만든 분류의 순서를 정한다 (FR-17, CR-31, CR-56).
+     * 블로그의 "미분류"가 아닌 분류 id를 빠짐없이, 겹치지 않게 보내야 한다. "미분류"는 늘 맨 뒤다.
+     */
+    @Transactional
+    public void reorder(long blogId, long memberId, List<Long> categoryIds) {
+        Blog blog = blogService.getOwned(blogId, memberId);
+        List<Category> movable = categories.findOrdered(blog.getId()).stream()
+                .filter(c -> !c.isDefault())
+                .toList();
+        if (categoryIds == null || categoryIds.size() != movable.size()
+                || new HashSet<>(categoryIds).size() != categoryIds.size()) {
+            throw ApiException.field("categoryIds", Messages.CATEGORY_ORDER_INVALID);
+        }
+        Map<Long, Category> byId = new HashMap<>();
+        movable.forEach(c -> byId.put(c.getId(), c));
+        for (int i = 0; i < categoryIds.size(); i++) {
+            Category category = byId.get(categoryIds.get(i));
+            if (category == null) {
+                throw ApiException.field("categoryIds", Messages.CATEGORY_ORDER_INVALID);
+            }
+            category.changeSortOrder(i + 1);
         }
     }
 
