@@ -31,7 +31,16 @@ cd backend && gradle wrapper && cd ..
 
 Docker를 쓴다면 위의 PostgreSQL·Redis 설치 대신 `docker compose up -d` 후 `myblog_test` DB만 만듭니다.
 
-## 실행
+## 한 번에 켜기 (추천)
+
+```bash
+./run.sh        # DB·Redis를 켜고 화면을 빌드한 뒤 서버를 띄운다 → http://localhost:8080
+./run.sh stop   # 끈다
+```
+
+가입 인증번호는 메일 대신 `.run/server.log`에 찍힙니다. Mac을 다시 켜면 `./run.sh`를 한 번 실행하면 됩니다.
+
+## 개발할 때 따로 켜기
 
 ```bash
 # 서버 (http://localhost:8080). 개발 중에는 인증번호가 메일 대신 서버 로그에 찍힙니다
