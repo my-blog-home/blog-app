@@ -11,7 +11,7 @@ const ALLOWED = /^[A-Za-z\d!@#$%^&*()_+\-=]*$/
 /** 비밀번호 규칙을 입력하는 동안 바로 보여 준다 (CF-01-6) */
 export function passwordChecks(pw: string) {
   return [
-    { label: '8~10자', ok: pw.length >= 8 && pw.length <= 10 && ALLOWED.test(pw) },
+    { label: '8자 이상', ok: pw.length >= 8 && pw.length <= 64 && ALLOWED.test(pw) },
     { label: '영문', ok: /[A-Za-z]/.test(pw) },
     { label: '숫자', ok: /\d/.test(pw) },
     { label: '특수문자', ok: SPECIALS.test(pw) },

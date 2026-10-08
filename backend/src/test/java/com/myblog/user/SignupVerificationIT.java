@@ -79,6 +79,26 @@ class SignupVerificationIT extends IntegrationTestBase {
         assertThat(codeFor("signup", EMAIL)).isNull();
     }
 
+    @Test
+    void 비밀번호는_8자_이상이면_길이_제한_없이_가입된다() throws Exception {
+        requestCode();
+        confirm(codeFor("signup", EMAIL));
+        String longPassword = "abcdefgh1234!@#$";
+        mvc.perform(jsonPost("/api/auth/signup", Map.of("nickname", "지영", "email", EMAIL,
+                        "password", longPassword, "passwordConfirm", longPassword)))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    void 비밀번호가_8자보다_짧으면_거절한다() throws Exception {
+        requestCode();
+        confirm(codeFor("signup", EMAIL));
+        mvc.perform(jsonPost("/api/auth/signup", Map.of("nickname", "지영", "email", EMAIL,
+                        "password", "ab1!", "passwordConfirm", "ab1!")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors[0].message").value("비밀번호는 영문, 숫자, 특수문자를 포함해 8자 이상으로 입력해 주세요"));
+    }
+
     private org.springframework.test.web.servlet.ResultActions requestCode() throws Exception {
         return mvc.perform(jsonPost("/api/auth/signup/verification", Map.of("nickname", "지영", "email", EMAIL)));
     }
