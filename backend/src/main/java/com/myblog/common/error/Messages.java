@@ -47,6 +47,14 @@ public final class Messages {
     public static final String COMMENT_TOO_FAST = "잠시 뒤에 다시 등록해 주세요";
     public static final String COMMENT_NOT_FOUND = "존재하지 않는 댓글입니다";
     public static final String LIKE_OWN_POST = "내 글에는 좋아요를 누를 수 없습니다";
+    public static final String TAG_RULE = "태그는 공백과 쉼표 없이 1~15자로 입력해 주세요";
+    public static final String TAG_TOO_MANY = "태그는 글마다 5개까지 붙일 수 있습니다";
+    public static final String REPORT_DONE = "신고가 접수되었습니다";
+    public static final String REPORT_DUPLICATE = "이미 신고한 글입니다";
+    public static final String REPORT_OWN_POST = "내 글은 신고할 수 없습니다";
+    public static final String REPORT_REASON = "신고 사유를 골라 주세요";
+    public static final String IMAGE_RULE = "이미지는 5MB 이하의 jpg, png, gif, webp만 올릴 수 있습니다";
+    public static final String IMAGE_TOO_MANY = "이미지는 글마다 10장까지 넣을 수 있습니다";
     public static final String SEARCH_TOO_SHORT = "검색어를 2자 이상 입력해 주세요";
 
     private Messages() {

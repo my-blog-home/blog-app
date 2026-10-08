@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
@@ -40,6 +41,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleBadRequest(Exception e) {
         return ResponseEntity.badRequest()
                 .body(new ErrorResponse(ErrorCode.VALIDATION_FAILED.name(), Messages.INVALID_INPUT, List.of(), Map.of()));
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleTooLarge(MaxUploadSizeExceededException e) {
+        return ResponseEntity.badRequest()
+                .body(new ErrorResponse(ErrorCode.VALIDATION_FAILED.name(), Messages.IMAGE_RULE, List.of(), Map.of()));
     }
 
     @ExceptionHandler({NoResourceFoundException.class, HttpRequestMethodNotSupportedException.class})

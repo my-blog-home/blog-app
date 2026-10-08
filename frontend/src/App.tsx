@@ -11,6 +11,7 @@ import PostDetailPage from './pages/PostDetailPage'
 import PostEditorPage from './pages/PostEditorPage'
 import SearchPage from './pages/SearchPage'
 import SignupPage from './pages/SignupPage'
+import TagPage from './pages/TagPage'
 
 export default function App() {
   return (
@@ -27,6 +28,7 @@ export default function App() {
           <Route path="/write" element={<PostEditorPage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/me" element={<MyPage />} />
+          <Route path="/tags/:name" element={<TagPage />} />
           <Route path="/password-reset" element={<PasswordResetPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>

@@ -34,7 +34,7 @@ public class PostQueryService {
 
     public record PostDetail(long id, Ref blog, Ref category, String title, String body, Visibility visibility,
                              Instant createdAt, Instant updatedAt, Long prevPostId, Long nextPostId, boolean editable,
-                             long likeCount, boolean likedByMe, long commentCount) {
+                             long likeCount, boolean likedByMe, long commentCount, List<String> tags) {
     }
 
     private static final String SELECT_ITEMS = """
@@ -48,14 +48,28 @@ public class PostQueryService {
     private final NamedParameterJdbcTemplate jdbc;
     private final PostService postService;
     private final BlogService blogService;
+    private final TagService tagService;
     private final BlogLimits limits;
 
     public PostQueryService(NamedParameterJdbcTemplate jdbc, PostService postService, BlogService blogService,
-                            BlogLimits limits) {
+                            TagService tagService, BlogLimits limits) {
         this.jdbc = jdbc;
         this.postService = postService;
         this.blogService = blogService;
+        this.tagService = tagService;
         this.limits = limits;
+    }
+
+    /** 태그를 누르면 같은 태그가 붙은 공개 글을 보여 준다 (CF-20-3) */
+    @Transactional(readOnly = true)
+    public PageResult tagPosts(String tag, int page) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("tag", tag.strip().replaceFirst("^#+", ""));
+        return page("""
+                where p.visibility = 'PUBLIC' and exists (
+                    select 1 from post_tag pt join tag t on t.id = pt.tag_id
+                    where pt.post_id = p.id and lower(t.name) = lower(:tag))
+                """, params, page);
     }
 
     /** 한 블로그의 글 목록. 주인이면 비공개 글도 포함 (CF-10-6, 7) */
@@ -124,7 +138,8 @@ public class PostQueryService {
                 count("select count(*) from post_like where post_id = :id", post.getId(), null),
                 viewerId != null && count("select count(*) from post_like where post_id = :id and member_id = :viewer",
                         post.getId(), viewerId) > 0,
-                count("select count(*) from comment where post_id = :id", post.getId(), null));
+                count("select count(*) from comment where post_id = :id", post.getId(), null),
+                tagService.tagsOf(post.getId()));
     }
 
     /** 좋아요·댓글 수는 표에서 직접 센다 (post가 comment 모듈을 부르지 않도록) */

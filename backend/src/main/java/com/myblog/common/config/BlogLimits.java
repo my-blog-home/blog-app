@@ -29,5 +29,10 @@ public record BlogLimits(
         int searchMin,
         int searchMax,
         int commentMax,
-        Duration commentInterval) {
+        Duration commentInterval,
+        int tagsPerPost,
+        int tagMax,
+        int reportDetailMax,
+        long imageMaxBytes,
+        int imagesPerPost) {
 }

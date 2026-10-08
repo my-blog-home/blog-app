@@ -12,3 +12,5 @@ spring:
 blog:
   mail:
     mode: log
+  image:
+    dir: ${java.io.tmpdir}/myblog-test-images

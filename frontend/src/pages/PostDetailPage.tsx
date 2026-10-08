@@ -5,6 +5,8 @@ import type { PostDetail } from '../api/types'
 import CommentSection from '../components/CommentSection'
 import LikeButton from '../components/LikeButton'
 import MarkdownView from '../components/MarkdownView'
+import ReportModal from '../components/ReportModal'
+import { useAuth } from '../auth/AuthContext'
 import { formatDateTime } from '../format'
 import { M } from '../messages'
 import NotFoundPage from './NotFoundPage'
@@ -16,6 +18,8 @@ export default function PostDetailPage() {
   const [post, setPost] = useState<PostDetail | null>(null)
   const [missing, setMissing] = useState(false)
   const [commentCount, setCommentCount] = useState(0)
+  const [reporting, setReporting] = useState(false)
+  const { requireLogin } = useAuth()
   const onCountChange = useCallback((n: number) => setCommentCount(n), [])
 
   useEffect(() => {
@@ -59,9 +63,24 @@ export default function PostDetailPage() {
         </div>
       )}
       <MarkdownView source={post.body} />
+      {post.tags.length > 0 && (
+        <p className="tags">
+          {post.tags.map((t) => (
+            <Link key={t} to={`/tags/${encodeURIComponent(t)}`} className="tag">
+              #{t}
+            </Link>
+          ))}
+        </p>
+      )}
       <div className="reactions">
         <LikeButton key={post.id} postId={post.id} initialCount={post.likeCount} initialLiked={post.likedByMe} isMine={post.editable} />
+        {!post.editable && (
+          <button className="link muted" onClick={() => requireLogin(() => setReporting(true)) && setReporting(true)}>
+            신고
+          </button>
+        )}
       </div>
+      {reporting && <ReportModal postId={post.id} onClose={() => setReporting(false)} />}
       <nav className="post-nav">
         {post.prevPostId ? <Link to={`/posts/${post.prevPostId}`}>← 이전 글</Link> : <span />}
         <Link to={`/blogs/${post.blog.id}?category=${post.category.id}`}>목록으로</Link>

@@ -64,6 +64,7 @@ export interface PostDetail {
   likeCount: number
   likedByMe: boolean
   commentCount: number
+  tags: string[]
 }
 
 export interface PostSource {
@@ -73,6 +74,7 @@ export interface PostSource {
   title: string
   body: string
   visibility: Visibility
+  tags: string[]
 }
 
 export interface Limits {

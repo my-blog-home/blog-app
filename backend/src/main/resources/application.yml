@@ -1,6 +1,10 @@
 spring:
   application:
     name: myblog
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
   profiles:
     default: dev
   jpa:
@@ -54,5 +58,13 @@ blog:
     search-max: 50
     comment-max: 500
     comment-interval: 5s
+    tags-per-post: 5
+    tag-max: 15
+    report-detail-max: 200
+    image-max-bytes: 5242880
+    images-per-post: 10
   mail:
     from: no-reply@myblog.local
+  image:
+    # 이미지 파일을 두는 서버 폴더 (research R-08, MinIO로 바꿀 수 있게 ImageStorage 뒤에 둠)
+    dir: ${user.home}/.myblog/images

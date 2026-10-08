@@ -3,7 +3,9 @@ import { useBlocker, useNavigate, useParams } from 'react-router-dom'
 import { ApiError, get, post as httpPost, put } from '../api/client'
 import type { BlogView, PostSource, Visibility } from '../api/types'
 import { useAuth } from '../auth/AuthContext'
+import ImageUploadButton from '../components/ImageUploadButton'
 import MarkdownView from '../components/MarkdownView'
+import TagInput from '../components/TagInput'
 import { M } from '../messages'
 import NotFoundPage from './NotFoundPage'
 
@@ -12,6 +14,7 @@ interface Draft {
   body: string
   categoryId: number | null
   visibility: Visibility
+  tags: string[]
 }
 
 /** 글쓰기·글 수정 (CF-05, CF-13). 권한은 서버가 최종 확인한다 */
@@ -21,7 +24,7 @@ export default function PostEditorPage() {
   const { me, loading, requireLogin } = useAuth()
   const navigate = useNavigate()
   const [blog, setBlog] = useState<BlogView | null>(null)
-  const [draft, setDraft] = useState<Draft>({ title: '', body: '', categoryId: null, visibility: 'PUBLIC' })
+  const [draft, setDraft] = useState<Draft>({ title: '', body: '', categoryId: null, visibility: 'PUBLIC', tags: [] })
   const [saved, setSaved] = useState<Draft | null>(null)
   const [originalVisibility, setOriginalVisibility] = useState<Visibility>('PUBLIC')
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -43,7 +46,7 @@ export default function PostEditorPage() {
         if (editing) {
           const source = await get<PostSource>(`/api/posts/${postId}/edit`)
           blogId = source.blogId
-          initial = { title: source.title, body: source.body, categoryId: source.categoryId, visibility: source.visibility }
+          initial = { title: source.title, body: source.body, categoryId: source.categoryId, visibility: source.visibility, tags: source.tags }
           setOriginalVisibility(source.visibility)
         }
         const view = await get<BlogView>(`/api/blogs/${blogId}`)
@@ -51,7 +54,7 @@ export default function PostEditorPage() {
         if (!initial) {
           // 분류 기본값은 마지막에 쓴 글의 분류, 처음이면 "미분류" (CF-05-5)
           const fallback = view.categories.find((c) => c.isDefault)?.id ?? null
-          initial = { title: '', body: '', categoryId: view.lastUsedCategoryId ?? fallback, visibility: 'PUBLIC' }
+          initial = { title: '', body: '', categoryId: view.lastUsedCategoryId ?? fallback, visibility: 'PUBLIC', tags: [] }
         }
         setDraft(initial)
         setSaved(initial)
@@ -155,6 +158,7 @@ export default function PostEditorPage() {
           <button type="button" className={preview ? 'current' : ''} onClick={() => setPreview(true)}>
             미리보기
           </button>
+          <ImageUploadButton onUploaded={(md) => update('body', draft.body + (draft.body && !draft.body.endsWith('\n') ? '\n' : '') + md + '\n')} />
           <span className="muted small">{[...draft.body].length.toLocaleString()} / 10,000</span>
         </div>
         {preview ? (
@@ -163,6 +167,8 @@ export default function PostEditorPage() {
           <textarea value={draft.body} onChange={(e) => update('body', e.target.value)} rows={18} placeholder="마크다운으로 쓸 수 있습니다" />
         )}
         {errors.body && <span className="hint error">{errors.body}</span>}
+        <TagInput tags={draft.tags} onChange={(tags) => update('tags', tags)} />
+        {errors.tags && <span className="hint error">{errors.tags}</span>}
         {errors.categoryId && <span className="hint error">{errors.categoryId}</span>}
         {errors.form && <p className="error">{errors.form}</p>}
         <button type="submit" className="primary" disabled={saving}>
