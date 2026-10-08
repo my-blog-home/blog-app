@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * 작성자 프로필: 닉네임·소개·프로필 색, 공개 글 수, 블로그 카드 (FR-075, BR-28).
  * 내가 내 프로필을 보면 비공개 글 수(비공개 글 + 비공개 분류의 글)도 알려 준다. 임시저장 글은 어디에도 세지 않는다.
- * 없는 회원(탈퇴 포함)은 "존재하지 않는 회원입니다".
+ * 없는 회원과 탈퇴한 회원(행은 남아 있음, FR-086)은 "존재하지 않는 회원입니다".
  * 블로그·글 정보를 함께 읽으므로 post 모듈에 둔다 (post → blog → user 방향).
  */
 @Service
@@ -38,7 +38,7 @@ public class AuthorProfileService {
         Map<String, Object> params = new HashMap<>();
         params.put("id", memberId);
         List<Map<String, Object>> rows = jdbc.queryForList(
-                "select nickname, bio, profile_color from member where id = :id", params);
+                "select nickname, bio, profile_color from member where id = :id and withdrawn_at is null", params);
         if (rows.isEmpty()) {
             throw ApiException.notFound(Messages.MEMBER_NOT_FOUND);
         }
@@ -71,7 +71,7 @@ public class AuthorProfileService {
     /** 글 목록을 읽기 전에 회원이 있는지 확인한다 */
     @Transactional(readOnly = true)
     public void requireMember(long memberId) {
-        Long count = jdbc.queryForObject("select count(*) from member where id = :id", Map.of("id", memberId), Long.class);
+        Long count = jdbc.queryForObject("select count(*) from member where id = :id and withdrawn_at is null", Map.of("id", memberId), Long.class);
         if (count == null || count == 0) {
             throw ApiException.notFound(Messages.MEMBER_NOT_FOUND);
         }

@@ -70,6 +70,33 @@ public final class Messages {
     public static final String MEMBER_NOT_FOUND = "존재하지 않는 회원입니다";
     public static final String NOTICE_NOT_FOUND = "존재하지 않는 공지입니다";
 
+    public static final String NICKNAME_RESERVED = "쓸 수 없는 닉네임입니다";
+    public static final String WITHDRAWN_USER = "탈퇴한 사용자";
+    /** %d: 대기 일수, %s: 가입할 수 있는 날 (yyyy. M. d.) (FR-087) */
+    public static final String REJOIN_WAIT = "탈퇴한 지 %d일이 지나지 않아 같은 이메일로 다시 가입할 수 없습니다. %s부터 가입할 수 있습니다";
+    public static final String ADMIN_ONLY = "관리자만 볼 수 있는 화면입니다";
+    public static final String ADMIN_CANNOT_WITHDRAW = "관리자 계정은 탈퇴할 수 없습니다";
+    /** 정지 안내 (FR-081). 끝나는 시각 또는 영구, 사유(있을 때만)를 이어 붙인다 */
+    public static final String SUSPENDED_PREFIX = "정지된 계정입니다.";
+    public static final String SUSPENDED_UNTIL = "%s까지 정지입니다.";
+    public static final String SUSPENDED_PERMANENT = "영구 정지입니다.";
+    public static final String SUSPENDED_REASON = "사유: %s.";
+    public static final String SUSPENDED_SUFFIX = "운영자에게 문의해 주세요";
+    public static final String REPORT_NOT_FOUND = "존재하지 않는 신고입니다";
+    public static final String REPORT_ALREADY_HANDLED = "이미 처리한 신고입니다";
+    public static final String REPORT_ACTION = "처리 방법을 골라 주세요";
+    public static final String REPORT_IDS_REQUIRED = "처리할 신고를 골라 주세요";
+    public static final String HANDLE_NOTE_TOO_LONG = "메모는 %d자 이하로 입력해 주세요";
+    public static final String SUSPEND_ONLY_WITH_RESOLVE = "작성자 정지는 처리 완료와 함께만 할 수 있습니다";
+    public static final String SUSPEND_ONE_AUTHOR = "작성자가 같은 신고만 함께 정지할 수 있습니다";
+    public static final String SUSPEND_DAYS = "정지 기간을 골라 주세요";
+    public static final String SUSPEND_REASON_TOO_LONG = "정지 사유는 %d자 이하로 입력해 주세요";
+    public static final String CANNOT_SUSPEND = "정지할 수 없는 회원입니다";
+    public static final String NOT_SUSPENDED = "정지 중인 회원이 아닙니다";
+    public static final String NOTICE_TYPE = "종류를 골라 주세요";
+    public static final String NOTICE_TITLE_RULE = "제목은 1~%d자로 입력해 주세요";
+    public static final String NOTICE_CONTENT_RULE = "내용은 1~%d자로 입력해 주세요";
+
     private Messages() {
     }
 }

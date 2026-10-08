@@ -53,5 +53,17 @@ public record BlogLimits(
         int searchLogKeywordMax,
         Duration searchLogRetention,
         /** 공지 상세의 같은 종류 다른 안내 수 (FR-077, BR-30) */
-        int noticeRelatedCount) {
+        int noticeRelatedCount,
+        /** 탈퇴한 날(한국 날짜)부터 같은 이메일로 다시 가입할 수 있을 때까지의 일수 (FR-087, BR-23) */
+        int rejoinWaitDays,
+        /** 정지 기간으로 고를 수 있는 일수. 빈 값(null)은 영구 정지 (FR-080, BR-49) */
+        java.util.List<Integer> suspensionDays,
+        /** 정지 사유, 신고 처리 메모 최대 글자 수 (FR-079, FR-080) */
+        int suspensionReasonMax,
+        int handleNoteMax,
+        /** 관리자가 쓰는 공지의 제목·내용 최대 글자 수 (FR-082) */
+        int noticeTitleMax,
+        int noticeContentMax,
+        /** 관리자 요약에 보여 줄 처리 대기 신고 줄 수 */
+        int adminSummaryPendingCount) {
 }

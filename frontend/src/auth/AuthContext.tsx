@@ -2,8 +2,11 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import { ApiError, get, post } from '../api/client'
 import type { Me } from '../api/types'
 
-interface AuthState {
+export interface AuthState {
+  /** 화면에 쓰는 로그인 회원. 방문자 화면 미리보기 중에는 비어 있다 (FR-083) */
   me: Me | null
+  /** 미리보기와 관계없이 실제로 로그인한 회원 */
+  sessionMe: Me | null
   newCommentCount: number
   refreshNewComments: () => Promise<void>
   loading: boolean
@@ -16,7 +19,7 @@ interface AuthState {
   closeLoginPrompt: () => void
 }
 
-const AuthContext = createContext<AuthState | null>(null)
+export const AuthContext = createContext<AuthState | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [me, setMe] = useState<Me | null>(null)
@@ -78,6 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{
         me,
+        sessionMe: me,
         newCommentCount,
         refreshNewComments,
         loading,

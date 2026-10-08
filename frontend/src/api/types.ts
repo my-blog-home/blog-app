@@ -1,11 +1,16 @@
 export type Visibility = 'PUBLIC' | 'PRIVATE'
 export type PostStatus = 'DRAFT' | 'PUBLISHED'
 
+export type MemberRole = 'MEMBER' | 'ADMIN'
+
+/** 관리자는 블로그가 없을 수 있다. pendingReportCount는 관리자에게만 온다 (FR-078, FR-079) */
 export interface Me {
   id: number
   nickname: string
   blogId: number | null
   profileColor: string
+  role: MemberRole
+  pendingReportCount: number | null
 }
 
 export interface Topic {
@@ -131,6 +136,8 @@ export interface CommentView {
   id: number
   authorId: number | null
   authorNickname: string | null
+  // 작성자가 탈퇴했으면 참. 번호·닉네임·색은 비어 있고 "탈퇴한 사용자"로 보인다 (FR-086)
+  authorWithdrawn: boolean
   authorColor: string | null
   isBlogOwner: boolean
   content: string | null

@@ -103,7 +103,7 @@ public class HomeRankingService {
                        pb.latest
                 from per_blog pb
                 join blog b on b.id = pb.blog_id
-                join member m on m.id = b.owner_id
+                join member m on m.id = b.owner_id and m.withdrawn_at is null
                 order by pb.score desc, subscriber_count desc, pb.latest desc, pb.blog_id desc
                 limit :limit
                 """.formatted(windowed), params, (rs, row) -> new HotBlogger(row + 1, rs.getLong("blog_id"),

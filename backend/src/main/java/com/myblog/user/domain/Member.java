@@ -2,6 +2,8 @@ package com.myblog.user.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -49,16 +51,70 @@ public class Member {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    /** 회원 또는 관리자 (FR-078) */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 10)
+    private MemberRole role;
+
+    /** 탈퇴한 시각. 값이 있으면 탈퇴한 회원(소프트 삭제, FR-086) */
+    @Column(name = "withdrawn_at")
+    private Instant withdrawnAt;
+
+    /** 탈퇴한 회원의 원래 이메일. 재가입 대기 기간에만 보관한다 (FR-087) */
+    @Column(name = "original_email", length = 254)
+    private String originalEmail;
+
+    /** 어떤 비밀번호와도 맞지 않는 값. 탈퇴한 회원의 비밀번호 자리에 둔다 */
+    public static final String UNUSABLE_PASSWORD = "!";
+
+    private static final int EMAIL_MAX = 254;
+
     protected Member() {
     }
 
     public Member(String email, String nickname, String passwordHash, Instant now) {
+        this(email, nickname, passwordHash, MemberRole.MEMBER, now);
+    }
+
+    public Member(String email, String nickname, String passwordHash, MemberRole role, Instant now) {
         this.email = email;
         this.nickname = nickname;
         this.passwordHash = passwordHash;
+        this.role = role;
         this.profileColor = PROFILE_COLORS.get(0);
         this.createdAt = now;
         this.updatedAt = now;
+    }
+
+    public boolean isAdmin() {
+        return role == MemberRole.ADMIN;
+    }
+
+    public boolean isWithdrawn() {
+        return withdrawnAt != null;
+    }
+
+    /**
+     * 탈퇴 표시: 원래 이메일은 따로 보관하고, 이메일 앞에 del_{번호}_를 붙이고(칸 길이에 맞게 자름),
+     * 닉네임은 탈퇴{번호}, 소개와 비밀번호는 지운다 (FR-086, BR-23, CR-64)
+     */
+    public void withdraw(Instant now) {
+        String original = email.toLowerCase(java.util.Locale.ROOT);
+        String masked = "del_" + id + "_" + original;
+        this.originalEmail = original;
+        this.email = masked.length() > EMAIL_MAX ? masked.substring(0, EMAIL_MAX) : masked;
+        this.nickname = withdrawnNickname(id);
+        this.bio = null;
+        this.passwordHash = UNUSABLE_PASSWORD;
+        this.failedLoginCount = 0;
+        this.lockedUntil = null;
+        this.withdrawnAt = now;
+        this.updatedAt = now;
+    }
+
+    /** 탈퇴한 회원의 닉네임. 닉네임 칸(10자)과 유일 규칙을 지키도록 번호를 쓴다 */
+    public static String withdrawnNickname(long id) {
+        return "탈퇴" + id;
     }
 
     public boolean isLocked(Instant now) {
@@ -133,5 +189,17 @@ public class Member {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public MemberRole getRole() {
+        return role;
+    }
+
+    public Instant getWithdrawnAt() {
+        return withdrawnAt;
+    }
+
+    public String getOriginalEmail() {
+        return originalEmail;
     }
 }

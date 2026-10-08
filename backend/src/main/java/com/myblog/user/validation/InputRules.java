@@ -16,6 +16,8 @@ public class InputRules {
     private static final Pattern EMAIL = Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
     private static final Pattern NICKNAME_CHARS = Pattern.compile("^[가-힣A-Za-z0-9]+$");
     private static final String SPECIALS = "!@#$%^&*()_+\\-=";
+    /** 탈퇴한 회원의 닉네임(탈퇴{번호})과 겹치지 않도록 가입·수정에서 쓰지 못하게 한다 (FR-086) */
+    private static final Pattern WITHDRAWN_NICKNAME = Pattern.compile("^탈퇴\\d+$");
 
     private final BlogLimits limits;
     private final Pattern password;
@@ -40,6 +42,9 @@ public class InputRules {
         int length = nickname.codePointCount(0, nickname.length());
         if (length < limits.nicknameMin() || length > limits.nicknameMax() || !NICKNAME_CHARS.matcher(nickname).matches()) {
             throw ApiException.field("nickname", Messages.NICKNAME_RULE);
+        }
+        if (WITHDRAWN_NICKNAME.matcher(nickname).matches()) {
+            throw ApiException.field("nickname", Messages.NICKNAME_RESERVED);
         }
         return nickname;
     }

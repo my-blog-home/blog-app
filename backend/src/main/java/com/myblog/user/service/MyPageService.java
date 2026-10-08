@@ -93,24 +93,34 @@ public class MyPageService {
     }
 
     /**
-     * 탈퇴: 내 블로그·글(→ 댓글·좋아요 등)·분류를 지우고, 남의 글에 단 댓글은 작성자를 비워 남긴다 (CF-15-17~21, research R-14).
-     * 글은 분류를 RESTRICT로 참조하므로 먼저 지운다. 나머지는 표의 ON DELETE 규칙이 처리한다.
+     * 탈퇴는 소프트 삭제 (FR-086, BR-23, CR-64). 회원 행은 남기고 이메일·닉네임을 가리고 비밀번호·소개를 지운다.
+     * 내 블로그·글(→ 그 글의 댓글·좋아요 등)·분류, 내가 누른 좋아요·구독, 글에 붙이지 않은 이미지는 지운다.
+     * 남의 글에 단 댓글과 신고 기록은 이 회원 행을 계속 가리키고, 화면에는 "탈퇴한 사용자"로 보인다.
+     * 글은 분류를 RESTRICT로 참조하므로 블로그보다 먼저 지운다. 관리자는 탈퇴할 수 없다 (FR-078).
      */
     @Transactional(noRollbackFor = ApiException.class)
     public void withdraw(long memberId, String password, boolean agreed) {
         Member member = get(memberId);
+        if (member.isAdmin()) {
+            throw new ApiException(ErrorCode.ADMIN_CANNOT_WITHDRAW, Messages.ADMIN_CANNOT_WITHDRAW);
+        }
         passwordCheck.verify(member, password);
         if (!agreed) {
             throw ApiException.field("agreed", Messages.WITHDRAW_AGREE);
         }
         Map<String, Object> params = Map.of("id", memberId);
         jdbc.update("delete from post where blog_id in (select id from blog where owner_id = :id)", params);
-        members.delete(member);
+        jdbc.update("delete from blog where owner_id = :id", params);
+        jdbc.update("delete from post_like where member_id = :id", params);
+        jdbc.update("delete from subscription where member_id = :id", params);
+        jdbc.update("delete from post_image where uploader_id = :id", params);
+        member.withdraw(clock.instant());
         members.flush();
         sessions.terminateAll(memberId);
     }
 
     private Member get(long memberId) {
-        return members.findById(memberId).orElseThrow(() -> new ApiException(ErrorCode.UNAUTHORIZED, Messages.LOGIN_REQUIRED));
+        return members.findById(memberId).filter(m -> !m.isWithdrawn())
+                .orElseThrow(() -> new ApiException(ErrorCode.UNAUTHORIZED, Messages.LOGIN_REQUIRED));
     }
 }

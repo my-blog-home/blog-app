@@ -4,7 +4,7 @@ import { useAuth } from '../auth/AuthContext'
 import Drawer from './Drawer'
 
 // 로그인해야 쓰는 화면
-const MEMBER_ONLY = /^\/(write|me(\/activity)?|manage(\/.*)?|posts\/\d+\/edit)$/
+const MEMBER_ONLY = /^\/(write|me(\/activity)?|manage(\/.*)?|admin(\/.*)?|posts\/\d+\/edit)$/
 
 export default function Header() {
   const { me, logout, requireLogin, newCommentCount } = useAuth()
@@ -61,7 +61,8 @@ export default function Header() {
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="글 검색" aria-label="검색어" />
         </form>
         <nav className="header-nav">
-          <button onClick={write}>글쓰기</button>
+          {/* 블로그가 없는 계정(관리자)에는 글쓰기·블로그 관리가 없다 (FR-078) */}
+          {(!me || me.blogId) && <button onClick={write}>글쓰기</button>}
           {me ? (
             <>
               {me.blogId && (
@@ -72,9 +73,21 @@ export default function Header() {
                   {me.nickname}
                 </Link>
               )}
-              <Link to="/manage">
-                블로그 관리{newCommentCount > 0 && <span className="count-badge" aria-label={`새 댓글 ${newCommentCount}개`}>{newCommentCount}</span>}
-              </Link>
+              {me.blogId && (
+                <Link to="/manage">
+                  블로그 관리{newCommentCount > 0 && <span className="count-badge" aria-label={`새 댓글 ${newCommentCount}개`}>{newCommentCount}</span>}
+                </Link>
+              )}
+              {me.role === 'ADMIN' && (
+                <Link to="/admin">
+                  관리자
+                  {(me.pendingReportCount ?? 0) > 0 && (
+                    <span className="count-badge" aria-label={`처리 대기 신고 ${me.pendingReportCount}건`}>
+                      {me.pendingReportCount}
+                    </span>
+                  )}
+                </Link>
+              )}
               <Link to="/me">마이페이지</Link>
               <button onClick={onLogout}>로그아웃</button>
             </>

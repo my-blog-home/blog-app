@@ -127,6 +127,15 @@ export default function Drawer({ open, onClose, returnFocus }: { open: boolean; 
           ))}
         </div>
 
+        {me?.role === 'ADMIN' && (
+          <div className="drawer-section">
+            <h5>관리자</h5>
+            <Link to="/admin" className={location.pathname.startsWith('/admin') ? 'active' : ''}>
+              관리자 화면 <span>{me.pendingReportCount ? `대기 ${me.pendingReportCount}` : ''}</span>
+            </Link>
+          </div>
+        )}
+
         {me && (
           <div className="drawer-section">
             <h5>내 블로그</h5>
@@ -134,8 +143,9 @@ export default function Drawer({ open, onClose, returnFocus }: { open: boolean; 
             <Link to="/me/activity" className={location.pathname === '/me/activity' ? 'active' : ''}>
               내 활동
             </Link>
-            <Link to="/write">글쓰기</Link>
-            <Link to="/manage">블로그 관리</Link>
+            {/* 블로그가 없는 계정(관리자)에는 글쓰기·블로그 관리가 없다 (FR-078) */}
+            {me.blogId && <Link to="/write">글쓰기</Link>}
+            {me.blogId && <Link to="/manage">블로그 관리</Link>}
           </div>
         )}
 

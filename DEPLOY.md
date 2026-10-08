@@ -27,6 +27,7 @@ Ylog는 **jar 하나**(서버 + 화면)로 돌아갑니다. 함께 필요한 것
 | `IMAGE_DIR` | | 기본 `/var/lib/ylog/images` |
 | `PORT` | | 기본 8080 |
 | `COOKIE_SECURE` | | 기본 `true`. HTTP로 잠깐 시험할 때만 `false` |
+| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | | 관리자 계정(선택). 둘 다 값이 있고 그 이메일로 가입한 회원이 없을 때만, 서버를 켤 때 관리자(닉네임 "운영자", 블로그 없음)를 하나 만든다. 이미 있으면 아무것도 바꾸지 않는다(비밀번호를 바꿔도 반영되지 않음). 비밀번호는 가입 규칙(영문·숫자·특수문자 8자 이상)을 따라야 한다. 관리자는 회원가입으로 만들 수 없다 |
 
 ## 3-A. 도커로 배포
 
@@ -59,7 +60,7 @@ Crowfoot에서 발급한 PostgreSQL을 쓰므로 `DB_NAME`에는 발급받은 **
 
 **필수 시크릿**: `SSH_ADDRESS`, `SSH_PORT`, `SSH_ID`, `SSH_PASSWORD`, `DB_ADDRESS`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`
 
-**선택 시크릿**(없으면 괄호 안 기본값): `DB_DATABASE`(nhnacademy), `DB_SCHEMA`(`DB_NAME` 값), `MAIL_MODE`(log), `SHOW_CODE_ON_SCREEN`(true), `COOKIE_SECURE`(false), `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM`
+**선택 시크릿**(없으면 괄호 안 기본값): `DB_DATABASE`(nhnacademy), `DB_SCHEMA`(`DB_NAME` 값), `MAIL_MODE`(log), `SHOW_CODE_ON_SCREEN`(true), `COOKIE_SECURE`(false), `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`(둘 다 등록하면 처음 켤 때 관리자 계정을 만든다. 없으면 관리자 없이 켜진다)
 
 서버 조건: Docker가 설치돼 있어야 한다. SSH 계정이 docker를 바로 못 쓰면 `SSH_PASSWORD`로 sudo를 쓴다. DB가 같은 서버에 있으면(`DB_ADDRESS`가 localhost) 컨테이너가 `host.docker.internal`로 접속하므로 PostgreSQL이 도커 네트워크(172.x)에서 오는 접속도 받아야 한다.
 

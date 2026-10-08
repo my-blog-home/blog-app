@@ -55,7 +55,8 @@ export default function MyPage() {
       </div>
       {tab === 'info' && <InfoForm info={info} onSaved={(next) => { setInfo(next); refresh() }} />}
       {tab === 'password' && <PasswordForm />}
-      {tab === 'withdraw' && (
+      {tab === 'withdraw' && me.role === 'ADMIN' && <p className="warning">관리자 계정은 탈퇴할 수 없습니다</p>}
+      {tab === 'withdraw' && me.role !== 'ADMIN' && (
         <WithdrawForm
           onDone={async () => {
             await refresh()
@@ -218,10 +219,13 @@ function WithdrawForm({ onDone }: { onDone: () => void }) {
       <div className="warning">
         <p>탈퇴하면 되돌릴 수 없습니다.</p>
         <p>
-          <strong>삭제되는 것</strong>: 내 블로그, 글, 분류, 내 블로그에 달린 댓글, 내가 누른 좋아요
+          <strong>삭제되는 것</strong>: 내 블로그, 글, 분류, 내 블로그에 달린 댓글, 내가 누른 좋아요, 구독
         </p>
         <p>
           <strong>남는 것</strong>: 다른 사람 글에 단 댓글 (작성자는 "탈퇴한 사용자"로 표시)
+        </p>
+        <p>
+          <strong>다시 가입</strong>: 같은 이메일로는 탈퇴한 날부터 30일이 지나야 다시 가입할 수 있습니다. 닉네임은 바로 다른 사람이 쓸 수 있습니다
         </p>
       </div>
       <label>

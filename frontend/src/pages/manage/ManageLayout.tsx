@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useOutletContext } from 'react-router-dom'
 import { get } from '../../api/client'
 import type { BlogView } from '../../api/types'
 import { useAuth } from '../../auth/AuthContext'
+import { withPreview } from '../../preview'
 
 export interface ManageContext {
   blog: BlogView
@@ -31,6 +32,14 @@ export default function ManageLayout() {
   }, [loading, me])
 
   if (!me) return <p className="empty">로그인이 필요합니다</p>
+  // 관리자 계정은 블로그가 없다 (FR-078)
+  if (!me.blogId)
+    return (
+      <div className="empty">
+        <p>블로그가 없는 계정입니다</p>
+        {me.role === 'ADMIN' && <Link to="/admin">관리자 화면으로 가기</Link>}
+      </div>
+    )
   if (!blog) return null
 
   return (
@@ -41,6 +50,10 @@ export default function ManageLayout() {
           <div className="row">
             <Link to={`/blogs/${blog.id}`} className="button sm">
               내 블로그 보기
+            </Link>
+            {/* 로그인하지 않은 방문자에게 보이는 모습으로 연다 (FR-083) */}
+            <Link to={withPreview(`/blogs/${blog.id}`)} className="button sm">
+              방문자 화면으로 보기
             </Link>
             <Link to="/write" className="button sm primary">
               글쓰기

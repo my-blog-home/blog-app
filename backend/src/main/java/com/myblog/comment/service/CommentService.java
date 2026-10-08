@@ -32,8 +32,10 @@ public class CommentService {
     /**
      * 댓글 한 개. 가려진(hidden) 비밀 댓글은 content가 비고, 답글·삭제·신고를 할 수 없다.
      * isBlogOwner면 화면에 "글쓴이" 표시를 붙인다. replies는 원댓글에만 있고 오래된 답글이 위다.
+     * 작성자가 탈퇴했으면 authorWithdrawn이 참이고 번호·닉네임·색은 비운다(화면은 "탈퇴한 사용자", FR-086).
      */
-    public record CommentView(long id, Long authorId, String authorNickname, String authorColor, boolean isBlogOwner,
+    public record CommentView(long id, Long authorId, String authorNickname, String authorColor,
+                              boolean authorWithdrawn, boolean isBlogOwner,
                               String content, boolean secret, boolean hidden, Instant createdAt, boolean deletable,
                               boolean canReply, boolean reportable, boolean reportedByMe, List<CommentView> replies) {
     }
@@ -71,6 +73,7 @@ public class CommentService {
         params.put("viewer", viewerId);
         List<Row> rows = jdbc.query("""
                 select c.id, c.parent_id, c.author_id, m.nickname, m.profile_color, c.content, c.is_secret,
+                       (c.author_id is null or m.withdrawn_at is not null) as author_withdrawn,
                        c.created_at, pc.author_id as parent_author_id,
                        exists (select 1 from report r where r.target_type = 'COMMENT' and r.comment_id = c.id
                                and r.reporter_id = cast(:viewer as bigint)) as reported
@@ -82,7 +85,8 @@ public class CommentService {
                 """, params, (rs, n) -> new Row(rs.getLong("id"), rs.getObject("parent_id", Long.class),
                 rs.getObject("author_id", Long.class), rs.getString("nickname"), rs.getString("profile_color"),
                 rs.getString("content"), rs.getBoolean("is_secret"), rs.getTimestamp("created_at").toInstant(),
-                rs.getObject("parent_author_id", Long.class), rs.getBoolean("reported")));
+                rs.getObject("parent_author_id", Long.class), rs.getBoolean("reported"),
+                rs.getBoolean("author_withdrawn")));
 
         Map<Long, CommentView> topLevel = new LinkedHashMap<>();
         Map<Long, List<CommentView>> replies = new HashMap<>();
@@ -106,11 +110,13 @@ public class CommentService {
         boolean hidden = !canRead(row.secret(), row.authorId(), row.parentAuthorId(), blog, viewerId);
         boolean mine = viewerId != null && viewerId.equals(row.authorId());
         boolean loggedIn = viewerId != null;
-        return new CommentView(row.id(), row.authorId(), row.nickname(), row.color(), blog.isOwnedBy(row.authorId()),
+        boolean withdrawn = row.authorWithdrawn();
+        return new CommentView(row.id(), withdrawn ? null : row.authorId(), withdrawn ? null : row.nickname(),
+                withdrawn ? null : row.color(), withdrawn, blog.isOwnedBy(row.authorId()),
                 hidden ? null : row.content(), row.secret(), hidden, row.createdAt(),
                 !hidden && (mine || blog.isOwnedBy(viewerId)),
                 loggedIn && !hidden && row.parentId() == null,
-                loggedIn && !hidden && !mine,
+                loggedIn && !hidden && !mine && !withdrawn,
                 row.reported(), children);
     }
 
@@ -191,6 +197,7 @@ public class CommentService {
     }
 
     private record Row(long id, Long parentId, Long authorId, String nickname, String color, String content,
-                       boolean secret, Instant createdAt, Long parentAuthorId, boolean reported) {
+                       boolean secret, Instant createdAt, Long parentAuthorId, boolean reported,
+                       boolean authorWithdrawn) {
     }
 }
