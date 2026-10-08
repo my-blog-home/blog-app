@@ -68,6 +68,9 @@ export default function MyPage() {
           <Link to={`/blogs/${info.blogId}`}>내 블로그 바로가기</Link>
         </p>
       )}
+      <p className="muted small">
+        <Link to="/me/activity">내 활동 (좋아요한 글 · 댓글 단 글)</Link>
+      </p>
     </section>
   )
 }

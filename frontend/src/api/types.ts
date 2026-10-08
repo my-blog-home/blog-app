@@ -61,6 +61,8 @@ export interface BlogView {
   lastUsedCategoryId: number | null
   lastUsedTopicId: number | null
   categories: CategoryView[]
+  subscriberCount: number
+  subscribedByMe: boolean
 }
 
 export interface Ref {
@@ -115,10 +117,51 @@ export interface Limits {
   searchMax: number
 }
 
+// 댓글 한 개. hidden이면 가려진 비밀 댓글이라 content가 없다 (FR-065, FR-066)
 export interface CommentView {
   id: number
+  authorId: number | null
   authorNickname: string | null
-  content: string
+  authorColor: string | null
+  isBlogOwner: boolean
+  content: string | null
+  secret: boolean
+  hidden: boolean
   createdAt: string
   deletable: boolean
+  canReply: boolean
+  reportable: boolean
+  reportedByMe: boolean
+  replies: CommentView[]
+}
+
+export interface SubscriptionState {
+  subscribed: boolean
+  subscriberCount: number
+}
+
+export interface MySubscriptions {
+  totalCount: number
+  items: { blogId: number; blogName: string; ownerNickname: string }[]
+}
+
+// 내 활동의 댓글 단 글 (FR-069)
+export interface CommentedPost {
+  postId: number
+  postTitle: string
+  blogId: number
+  blogName: string
+  commentId: number
+  excerpt: string
+  secret: boolean
+  reply: boolean
+  commentedAt: string
+  otherCount: number
+}
+
+export interface CommentedPostPage {
+  totalCount: number
+  page: number
+  totalPages: number
+  items: CommentedPost[]
 }

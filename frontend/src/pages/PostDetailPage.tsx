@@ -7,6 +7,7 @@ import LikeButton from '../components/LikeButton'
 import MarkdownView from '../components/MarkdownView'
 import ReportModal from '../components/ReportModal'
 import { useAuth } from '../auth/AuthContext'
+import { useMarkCurrentBlog } from '../layout/CurrentBlog'
 import { formatDateTime } from '../format'
 import { M } from '../messages'
 import NotFoundPage from './NotFoundPage'
@@ -21,6 +22,7 @@ export default function PostDetailPage() {
   const [reporting, setReporting] = useState(false)
   const { requireLogin } = useAuth()
   const onCountChange = useCallback((n: number) => setCommentCount(n), [])
+  useMarkCurrentBlog(post?.blog.id)
 
   useEffect(() => {
     setPost(null)
@@ -93,7 +95,7 @@ export default function PostDetailPage() {
         <LikeButton key={post.id} postId={post.id} initialCount={post.likeCount} initialLiked={post.likedByMe} isMine={post.editable} />
         {!post.editable && <button onClick={() => requireLogin(() => setReporting(true)) && setReporting(true)}>신고</button>}
       </div>
-      {reporting && <ReportModal postId={post.id} onClose={() => setReporting(false)} />}
+      {reporting && <ReportModal target={{ kind: 'post', id: post.id }} onClose={() => setReporting(false)} />}
       <nav className="prev-next" aria-label="이전 글과 다음 글">
         {post.prevPostId && (
           <Link to={`/posts/${post.prevPostId}`}>

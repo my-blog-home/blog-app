@@ -15,6 +15,8 @@ interface ManagedComment {
   postId: number
   postTitle: string
   isNew: boolean
+  secret: boolean
+  reply: boolean
 }
 
 interface Page {
@@ -24,7 +26,7 @@ interface Page {
   items: ManagedComment[]
 }
 
-/** 댓글 관리: 최신순, NEW 표시, 열면 읽음 처리 (BM-05) */
+/** 댓글 관리: 최신순(답글 포함), NEW·답글·비밀 표시, 열면 읽음 처리 (BM-05, FR-065, FR-066) */
 export default function ManageCommentsPage() {
   const { blog } = useManage()
   const { refreshNewComments } = useAuth()
@@ -67,6 +69,12 @@ export default function ManageCommentsPage() {
               <div className="meta">
                 {newIds.current.has(c.id) && <span className="badge new">NEW</span>}
                 <strong>{c.authorNickname ?? M.withdrawnUser}</strong>
+                {c.reply && <span className="badge">답글</span>}
+                {c.secret && (
+                  <span className="badge secret" aria-label="비밀 댓글">
+                    🔒 비밀
+                  </span>
+                )}
                 <span>{formatDateTime(c.createdAt)}</span>
                 <button className="link danger" onClick={() => remove(c.id)}>
                   삭제

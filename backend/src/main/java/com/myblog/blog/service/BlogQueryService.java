@@ -25,22 +25,26 @@ public class BlogQueryService {
                                boolean isDefault, long postCount, long publicPostCount) {
     }
 
+    /** subscriberCount·subscribedByMe: 구독자 수와 내가 구독했는지 (FR-067) */
     public record BlogView(long id, String name, String description, TopicService.TopicRef topic,
                            String ownerNickname, String ownerColor, boolean owner, long totalPostCount,
-                           Long lastUsedCategoryId, Long lastUsedTopicId, List<CategoryView> categories) {
+                           Long lastUsedCategoryId, Long lastUsedTopicId, List<CategoryView> categories,
+                           long subscriberCount, boolean subscribedByMe) {
     }
 
     private final BlogService blogService;
     private final CategoryRepository categories;
     private final TopicService topics;
     private final NamedParameterJdbcTemplate jdbc;
+    private final SubscriptionService subscriptions;
 
     public BlogQueryService(BlogService blogService, CategoryRepository categories, TopicService topics,
-                            NamedParameterJdbcTemplate jdbc) {
+                            NamedParameterJdbcTemplate jdbc, SubscriptionService subscriptions) {
         this.blogService = blogService;
         this.categories = categories;
         this.topics = topics;
         this.jdbc = jdbc;
+        this.subscriptions = subscriptions;
     }
 
     @Transactional(readOnly = true)
@@ -86,8 +90,10 @@ public class BlogQueryService {
                 lastUsedTopicId = ((Number) last.get(0).get("topic_id")).longValue();
             }
         }
+        SubscriptionService.SubscriptionState subscription = subscriptions.state(blogId, viewerId);
         return new BlogView(blog.getId(), blog.getName(), blog.getDescription(), topics.ref(blog.getTopicId()),
                 (String) ownerRow.get("nickname"), (String) ownerRow.get("profile_color"), owner, total,
-                lastUsedCategoryId, lastUsedTopicId, categoryViews);
+                lastUsedCategoryId, lastUsedTopicId, categoryViews, subscription.subscriberCount(),
+                subscription.subscribed());
     }
 }

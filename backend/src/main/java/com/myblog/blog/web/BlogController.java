@@ -3,6 +3,7 @@ package com.myblog.blog.web;
 import com.myblog.blog.service.BlogQueryService;
 import com.myblog.blog.service.BlogService;
 import com.myblog.blog.service.CategoryService;
+import com.myblog.blog.service.SubscriptionService;
 import com.myblog.common.security.CurrentMember;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -34,11 +36,32 @@ public class BlogController {
     private final BlogService blogService;
     private final BlogQueryService blogQuery;
     private final CategoryService categoryService;
+    private final SubscriptionService subscriptions;
 
-    public BlogController(BlogService blogService, BlogQueryService blogQuery, CategoryService categoryService) {
+    public BlogController(BlogService blogService, BlogQueryService blogQuery, CategoryService categoryService,
+                          SubscriptionService subscriptions) {
         this.blogService = blogService;
         this.blogQuery = blogQuery;
         this.categoryService = categoryService;
+        this.subscriptions = subscriptions;
+    }
+
+    /** 구독 (FR-067) */
+    @PutMapping("/api/blogs/{blogId}/subscription")
+    public SubscriptionService.SubscriptionState subscribe(@PathVariable long blogId) {
+        return subscriptions.subscribe(blogId, CurrentMember.id());
+    }
+
+    /** 구독 취소 (FR-067) */
+    @DeleteMapping("/api/blogs/{blogId}/subscription")
+    public SubscriptionService.SubscriptionState unsubscribe(@PathVariable long blogId) {
+        return subscriptions.unsubscribe(blogId, CurrentMember.id());
+    }
+
+    /** 햄버거 메뉴의 구독한 블로그 (FR-068) */
+    @GetMapping("/api/me/subscriptions")
+    public SubscriptionService.MySubscriptions mySubscriptions(@RequestParam(required = false) Integer limit) {
+        return subscriptions.mine(CurrentMember.id(), limit);
     }
 
     @GetMapping("/api/blogs/{blogId}")

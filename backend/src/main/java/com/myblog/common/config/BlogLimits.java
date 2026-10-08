@@ -35,5 +35,7 @@ public record BlogLimits(
         int tagMax,
         int reportDetailMax,
         long imageMaxBytes,
-        int imagesPerPost) {
+        int imagesPerPost,
+        /** 햄버거 메뉴에 보여 줄 구독한 블로그 수 (FR-068) */
+        int drawerSubscriptionMax) {
 }

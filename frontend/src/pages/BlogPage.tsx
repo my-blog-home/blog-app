@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { ApiError, get } from '../api/client'
-import type { BlogView, PageResult } from '../api/types'
+import { ApiError, del, get, put } from '../api/client'
+import type { BlogView, PageResult, SubscriptionState } from '../api/types'
+import { useAuth } from '../auth/AuthContext'
+import { useMarkCurrentBlog } from '../layout/CurrentBlog'
 import Pagination from '../components/Pagination'
 import PostList from '../components/PostList'
 import { M } from '../messages'
@@ -18,6 +20,9 @@ export default function BlogPage() {
   const [posts, setPosts] = useState<PageResult | null>(null)
   const [missing, setMissing] = useState(false)
   const [categoryMissing, setCategoryMissing] = useState(false)
+  const [subscribing, setSubscribing] = useState(false)
+  const { me, requireLogin } = useAuth()
+  useMarkCurrentBlog(blogId ? Number(blogId) : null)
 
   const loadBlog = useCallback(() => {
     get<BlogView>(`/api/blogs/${blogId}`)
@@ -25,7 +30,8 @@ export default function BlogPage() {
       .catch((e) => e instanceof ApiError && e.status === 404 && setMissing(true))
   }, [blogId])
 
-  useEffect(loadBlog, [loadBlog])
+  // 로그인·로그아웃하면 구독 여부와 주인 여부를 다시 읽는다
+  useEffect(loadBlog, [loadBlog, me])
 
   useEffect(() => {
     const query = new URLSearchParams({ page: String(page) })
@@ -42,6 +48,22 @@ export default function BlogPage() {
   if (missing) return <NotFoundPage />
   if (categoryMissing) return <NotFoundPage message={M.categoryNotFound} />
   if (!blog || !posts) return null
+
+  // 구독은 로그인한 회원이 남의 블로그에만. 비회원이 누르면 로그인 창 (FR-067, BR-12)
+  const toggleSubscription = async () => {
+    if (subscribing) return
+    setSubscribing(true)
+    try {
+      const url = `/api/blogs/${blog.id}/subscription`
+      const next = blog.subscribedByMe ? await del<SubscriptionState>(url) : await put<SubscriptionState>(url)
+      setBlog({ ...blog, subscribedByMe: next.subscribed, subscriberCount: next.subscriberCount })
+    } finally {
+      setSubscribing(false)
+    }
+  }
+  const subscribe = () => {
+    if (requireLogin(() => loadBlog())) toggleSubscription()
+  }
 
   const selectCategory = (id: number | null) => setParams(id ? { category: String(id) } : {})
   const selected = blog.categories.find((c) => String(c.id) === categoryId)
@@ -60,9 +82,22 @@ export default function BlogPage() {
             <h1>{blog.name}</h1>
             {blog.description && <p>{blog.description}</p>}
             <p className="stats">
-              {blog.ownerNickname} · 글 {blog.totalPostCount.toLocaleString()}개
+              {blog.ownerNickname} · 글 {blog.totalPostCount.toLocaleString()}개 · 구독자 {blog.subscriberCount.toLocaleString()}명
             </p>
           </div>
+          {!blog.owner && (
+            <div className="actions">
+              <button
+                type="button"
+                className={blog.subscribedByMe ? 'subscribe-btn on' : 'subscribe-btn primary'}
+                aria-pressed={blog.subscribedByMe}
+                disabled={subscribing}
+                onClick={subscribe}
+              >
+                {blog.subscribedByMe ? '구독 중' : '구독'}
+              </button>
+            </div>
+          )}
           {blog.owner && (
             <div className="actions">
               <Link to="/manage" className="button">

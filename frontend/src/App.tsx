@@ -1,6 +1,8 @@
 import { Route, Routes } from 'react-router-dom'
 import Header from './components/Header'
 import LoginModal from './components/LoginModal'
+import { CurrentBlogProvider } from './layout/CurrentBlog'
+import ActivityPage from './pages/ActivityPage'
 import BlogPage from './pages/BlogPage'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
@@ -22,7 +24,7 @@ import StatsPage from './pages/manage/StatsPage'
 
 export default function App() {
   return (
-    <>
+    <CurrentBlogProvider>
       <Header />
       <main className="container">
         <Routes>
@@ -35,6 +37,7 @@ export default function App() {
           <Route path="/write" element={<PostEditorPage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/me" element={<MyPage />} />
+          <Route path="/me/activity" element={<ActivityPage />} />
           <Route path="/tags/:name" element={<TagPage />} />
           <Route path="/manage" element={<ManageLayout />}>
             <Route index element={<DashboardPage />} />
@@ -52,6 +55,6 @@ export default function App() {
         <div>Ylog · 내 블로그</div>
       </footer>
       <LoginModal />
-    </>
+    </CurrentBlogProvider>
   )
 }

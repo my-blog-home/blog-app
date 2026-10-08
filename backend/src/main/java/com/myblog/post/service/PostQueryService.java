@@ -148,6 +148,29 @@ public class PostQueryService {
                 + " and (cast(:topicId as bigint) is null or p.topic_id = :topicId)\n", params, page, sort);
     }
 
+    /** 구독 피드: 내가 구독한 블로그의 공개 글만, 첫 화면과 같은 정렬 (FR-067, BR-12) */
+    @Transactional(readOnly = true)
+    public PageResult feed(long memberId, int page, Sort sort) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("me", memberId);
+        return page("where " + PostVisibilitySql.PUBLIC
+                + " and p.blog_id in (select s.blog_id from subscription s where s.member_id = :me)\n", params, page, sort);
+    }
+
+    /** 내 활동의 좋아요한 글: 최근에 누른 순서. 지금 읽을 수 없는 글은 빠진다 (FR-069, BR-32) */
+    @Transactional(readOnly = true)
+    public PageResult likedPosts(long memberId, int page) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("me", memberId);
+        String where = """
+                where exists (select 1 from post_like pl where pl.post_id = p.id and pl.member_id = :me)
+                  and %s
+                """.formatted(PostVisibilitySql.readableBy("p",
+                "(select ob.owner_id from blog ob where ob.id = p.blog_id)", "me"));
+        return page(where, params, page,
+                "(select pl.created_at from post_like pl where pl.post_id = p.id and pl.member_id = :me) desc, p.id desc");
+    }
+
     /** 검색 모듈이 만든 조건으로 공개 글을 읽는다 (search → post 방향) */
     @Transactional(readOnly = true)
     public PageResult searchPage(String where, Map<String, Object> params, int page) {
@@ -160,6 +183,10 @@ public class PostQueryService {
 
     /** where 조건으로 세고, 범위를 넘는 페이지는 마지막 페이지로 바꿔 읽는다 (CF-10-1~4) */
     PageResult page(String where, Map<String, Object> params, int requestedPage, Sort sort) {
+        return page(where, params, requestedPage, sort.orderBy);
+    }
+
+    private PageResult page(String where, Map<String, Object> params, int requestedPage, String orderBy) {
         long total = jdbc.queryForObject("select count(*) from post p " + where, params, Long.class);
         int size = limits.pageSize();
         int totalPages = (int) Math.max(1, (total + size - 1) / size);
@@ -167,7 +194,7 @@ public class PostQueryService {
         params.put("limit", size);
         params.put("offset", (page - 1) * size);
         List<PostItem> items = jdbc.query(SELECT_ITEMS + where
-                + "order by " + sort.orderBy + " limit :limit offset :offset", params, itemMapper());
+                + "order by " + orderBy + " limit :limit offset :offset", params, itemMapper());
         return new PageResult(total, page, totalPages, items);
     }
 

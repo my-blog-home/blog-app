@@ -53,6 +53,10 @@ public final class Messages {
     public static final String REPORT_DUPLICATE = "이미 신고한 글입니다";
     public static final String REPORT_OWN_POST = "내 글은 신고할 수 없습니다";
     public static final String REPORT_REASON = "신고 사유를 골라 주세요";
+    public static final String REPORT_OWN_COMMENT = "내 댓글은 신고할 수 없습니다";
+    public static final String REPORT_COMMENT_DUPLICATE = "이미 신고한 댓글입니다";
+    public static final String REPLY_TO_REPLY = "답글에는 답글을 달 수 없습니다";
+    public static final String SUBSCRIBE_OWN_BLOG = "내 블로그는 구독할 수 없습니다";
     public static final String IMAGE_RULE = "이미지는 5MB 이하의 jpg, png, gif, webp만 올릴 수 있습니다";
     public static final String IMAGE_TOO_MANY = "이미지는 글마다 10장까지 넣을 수 있습니다";
     public static final String SEARCH_TOO_SHORT = "검색어를 2자 이상 입력해 주세요";

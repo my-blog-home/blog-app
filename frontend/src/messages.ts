@@ -25,4 +25,9 @@ export const M = {
   categoryMakePublicConfirm: '이 분류를 공개로 바꾸면 분류 안의 공개 글을 누구나 볼 수 있습니다. 바꿀까요?',
   draftSaved: '임시저장했어요',
   draftTitle: '제목 없음',
+  secretComment: '비밀 댓글입니다',
+  blogOwnerLabel: '글쓴이',
+  feedLoginRequired: '로그인하면 구독한 블로그의 새 글을 모아 볼 수 있습니다',
+  feedEmpty: '아직 구독한 블로그가 없습니다. 마음에 드는 블로그에서 "구독"을 눌러 보세요.',
+  noSubscriptions: '아직 구독한 블로그가 없습니다. 마음에 드는 블로그에서 "구독"을 눌러 보세요.',
 } as const

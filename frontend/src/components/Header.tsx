@@ -1,15 +1,20 @@
-import { useState, type FormEvent } from 'react'
+import { useCallback, useRef, useState, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import Drawer from './Drawer'
 
 // 로그인해야 쓰는 화면
-const MEMBER_ONLY = /^\/(write|me|manage(\/.*)?|posts\/\d+\/edit)$/
+const MEMBER_ONLY = /^\/(write|me(\/activity)?|manage(\/.*)?|posts\/\d+\/edit)$/
 
 export default function Header() {
   const { me, logout, requireLogin, newCommentCount } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [q, setQ] = useState('')
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const menuRef = useRef<HTMLButtonElement>(null)
+  const closeDrawer = useCallback(() => setDrawerOpen(false), [])
+  const focusMenu = useCallback(() => menuRef.current?.focus(), [])
 
   const search = (e: FormEvent) => {
     e.preventDefault()
@@ -26,9 +31,25 @@ export default function Header() {
     if (requireLogin(() => navigate('/write'))) navigate('/write')
   }
 
+  // 머리글의 backdrop-filter가 fixed 위치를 가두므로 메뉴는 머리글 밖에 둔다
   return (
+    <>
     <header className="header">
       <div className="header-inner">
+        {/* 햄버거 메뉴 (FR-068) */}
+        <button
+          ref={menuRef}
+          type="button"
+          className="menu-btn"
+          aria-label="전체 메뉴 열기"
+          aria-expanded={drawerOpen}
+          aria-controls="drawer"
+          onClick={() => setDrawerOpen(true)}
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <path d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
         <Link to="/" className="logo" aria-label="Ylog 첫 화면">
           Y<span>log</span>
         </Link>
@@ -68,5 +89,7 @@ export default function Header() {
         </nav>
       </div>
     </header>
+    <Drawer open={drawerOpen} onClose={closeDrawer} returnFocus={focusMenu} />
+    </>
   )
 }

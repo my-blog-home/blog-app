@@ -23,6 +23,14 @@ public class Comment {
     @Column(name = "author_id")
     private Long authorId;
 
+    /** 답글이면 원댓글 id. 답글은 한 단계까지다 (FR-065, BR-14) */
+    @Column(name = "parent_id")
+    private Long parentId;
+
+    /** 비밀 댓글 (FR-066, BR-16) */
+    @Column(name = "is_secret", nullable = false)
+    private boolean secret;
+
     @Column(nullable = false, length = 500)
     private String content;
 
@@ -32,9 +40,11 @@ public class Comment {
     protected Comment() {
     }
 
-    public Comment(long postId, long authorId, String content, Instant now) {
+    public Comment(long postId, long authorId, Long parentId, boolean secret, String content, Instant now) {
         this.postId = postId;
         this.authorId = authorId;
+        this.parentId = parentId;
+        this.secret = secret;
         this.content = content;
         this.createdAt = now;
     }
@@ -49,5 +59,21 @@ public class Comment {
 
     public Long getAuthorId() {
         return authorId;
+    }
+
+    public Long getParentId() {
+        return parentId;
+    }
+
+    public boolean isSecret() {
+        return secret;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public boolean isAuthoredBy(Long memberId) {
+        return memberId != null && memberId.equals(authorId);
     }
 }

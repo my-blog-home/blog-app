@@ -63,6 +63,19 @@ public class PostController {
         return postQuery.recentPublic(page, topicId, PostQueryService.Sort.from(sort));
     }
 
+    /** 구독 피드 (FR-067). 로그인해야 한다 */
+    @GetMapping("/api/feed")
+    public PostQueryService.PageResult feed(@RequestParam(defaultValue = "1") int page,
+                                            @RequestParam(required = false) String sort) {
+        return postQuery.feed(CurrentMember.id(), page, PostQueryService.Sort.from(sort));
+    }
+
+    /** 내 활동: 좋아요한 글 (FR-069) */
+    @GetMapping("/api/me/liked-posts")
+    public PostQueryService.PageResult likedPosts(@RequestParam(defaultValue = "1") int page) {
+        return postQuery.likedPosts(CurrentMember.id(), page);
+    }
+
     @GetMapping("/api/blogs/{blogId}/posts")
     public PostQueryService.PageResult blogPosts(@PathVariable long blogId,
                                                  @RequestParam(required = false) Long categoryId,

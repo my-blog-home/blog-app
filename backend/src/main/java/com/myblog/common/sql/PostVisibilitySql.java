@@ -33,4 +33,12 @@ public final class PostVisibilitySql {
     public static String visibleTo(String alias, String includePrivateParam) {
         return "(" + published(alias) + " and (:" + includePrivateParam + " or " + publicPost(alias) + "))";
     }
+
+    /**
+     * 여러 블로그의 글을 한 번에 읽을 때: 회원이 지금 읽을 수 있는 글 (내 블로그면 작성완료한 글 전부, 남의 글이면 공개 조건).
+     * ownerIdExpr는 글이 속한 블로그 주인 id를 가리키는 SQL 식, viewerParam은 회원 id 파라미터 이름이다 (FR-069, BR-32).
+     */
+    public static String readableBy(String alias, String ownerIdExpr, String viewerParam) {
+        return "(" + published(alias) + " and (" + ownerIdExpr + " = :" + viewerParam + " or " + publicPost(alias) + "))";
+    }
 }

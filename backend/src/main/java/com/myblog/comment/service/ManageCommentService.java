@@ -15,13 +15,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 블로그 관리의 댓글 관리와 새 댓글 표시 (BM-05, research R-13).
- * 새 댓글 = 댓글 관리를 마지막으로 연 뒤 남이 단 댓글.
+ * 새 댓글 = 댓글 관리를 마지막으로 연 뒤 남이 단 댓글. 댓글 수는 답글을 포함한다 (FR-065).
  */
 @Service
 public class ManageCommentService {
 
+    /** secret: 비밀 댓글 표시, reply: 답글이면 참 (FR-065, FR-066) */
     public record ManagedComment(long id, String authorNickname, Instant createdAt, String excerpt, long postId,
-                                 String postTitle, boolean isNew) {
+                                 String postTitle, boolean isNew, boolean secret, boolean reply) {
     }
 
     public record Page(long totalCount, int page, int totalPages, List<ManagedComment> items) {
@@ -65,7 +66,7 @@ public class ManageCommentService {
         params.put("limit", size);
         params.put("offset", (page - 1) * size);
         List<ManagedComment> items = jdbc.query("""
-                select c.id, m.nickname, c.created_at, c.content, p.id as post_id, p.title,
+                select c.id, m.nickname, c.created_at, c.content, p.id as post_id, p.title, c.is_secret, c.parent_id,
                 """ + IS_NEW + """
                  as is_new
                 from comment c
@@ -77,7 +78,8 @@ public class ManageCommentService {
                 limit :limit offset :offset
                 """, params, (rs, row) -> new ManagedComment(rs.getLong("id"), rs.getString("nickname"),
                 rs.getTimestamp("created_at").toInstant(), excerpt(rs.getString("content")), rs.getLong("post_id"),
-                rs.getString("title"), rs.getBoolean("is_new")));
+                rs.getString("title"), rs.getBoolean("is_new"), rs.getBoolean("is_secret"),
+                rs.getObject("parent_id") != null));
         return new Page(total, page, totalPages, items);
     }
 
@@ -104,7 +106,7 @@ public class ManageCommentService {
                 """ + IS_NEW, Map.of("blogId", blogId), Long.class);
     }
 
-    private static String excerpt(String content) {
+    static String excerpt(String content) {
         String text = content.replaceAll("\\s+", " ").strip();
         return text.codePointCount(0, text.length()) <= 50 ? text : text.substring(0, text.offsetByCodePoints(0, 50)) + "…";
     }

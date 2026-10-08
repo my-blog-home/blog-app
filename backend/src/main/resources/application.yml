@@ -64,6 +64,7 @@ blog:
     report-detail-max: 200
     image-max-bytes: 5242880
     images-per-post: 10
+    drawer-subscription-max: 8
   mail:
     from: no-reply@myblog.local
   image:
