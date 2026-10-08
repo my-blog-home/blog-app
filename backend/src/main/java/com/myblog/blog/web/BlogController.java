@@ -5,6 +5,7 @@ import com.myblog.blog.service.BlogService;
 import com.myblog.blog.service.CategoryService;
 import com.myblog.blog.service.SubscriptionService;
 import com.myblog.common.security.CurrentMember;
+import java.util.List;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -31,6 +32,9 @@ public class BlogController {
     }
 
     public record MoveRequest(String direction) {
+    }
+
+    public record CategoryOrderRequest(List<Long> categoryIds) {
     }
 
     private final BlogService blogService;
@@ -99,6 +103,13 @@ public class BlogController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void moveCategory(@PathVariable long categoryId, @RequestBody MoveRequest request) {
         categoryService.move(categoryId, CurrentMember.id(), "UP".equalsIgnoreCase(request.direction()));
+    }
+
+    /** 끌어서 바꾼 분류 순서를 한 번에 저장한다 (FR-17, CR-31) */
+    @PutMapping("/api/blogs/{blogId}/categories/order")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void reorderCategories(@PathVariable long blogId, @RequestBody CategoryOrderRequest request) {
+        categoryService.reorder(blogId, CurrentMember.id(), request.categoryIds());
     }
 
     @DeleteMapping("/api/categories/{categoryId}")

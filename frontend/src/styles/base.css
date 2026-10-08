@@ -770,3 +770,82 @@ button.link:disabled { color: var(--text-faint); text-decoration: none; }
   .stat-tiles.admin-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .preview-inner { padding: 10px 16px; }
 }
+
+/* ===== 분류 순서 끌기 (FR-17, CR-31) ===== */
+.category-manager li { position: relative; background: #fff; }
+.drag-handle {
+  flex-shrink: 0; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 6px; background: none;
+  display: inline-flex; align-items: center; justify-content: center; color: var(--text-faint);
+  cursor: grab; touch-action: none; /* 끌 때 화면이 같이 스크롤되지 않게 */
+}
+.drag-handle:hover:not(:disabled), .drag-handle:focus-visible { background: var(--bg-soft); color: var(--text); }
+.drag-handle:disabled { cursor: default; opacity: 0.4; }
+.drag-spacer { flex-shrink: 0; width: 28px; }
+.category-manager li.dragging { z-index: 5; box-shadow: var(--shadow-hover); border-radius: var(--radius-sm); }
+.category-manager li.drop-before::before, .category-manager li.drop-after::after {
+  content: ""; position: absolute; left: 12px; right: 12px; height: 3px; border-radius: 2px; background: var(--primary);
+}
+.category-manager li.drop-before::before { top: -2px; }
+.category-manager li.drop-after::after { bottom: -2px; }
+body.is-dragging, body.is-dragging * { cursor: grabbing !important; user-select: none; }
+
+/* ===== 코드 블록 구문 강조 (FR-16). 어두운 코드 배경에 맞춘 색 ===== */
+.markdown .hljs-keyword, .markdown .hljs-selector-tag, .markdown .hljs-built_in, .markdown .hljs-doctag { color: #c3a6ff; }
+.markdown .hljs-string, .markdown .hljs-regexp, .markdown .hljs-addition, .markdown .hljs-attribute, .markdown .hljs-template-tag { color: #a5e3a1; }
+.markdown .hljs-number, .markdown .hljs-literal, .markdown .hljs-symbol, .markdown .hljs-bullet { color: #ffc78a; }
+.markdown .hljs-comment, .markdown .hljs-quote, .markdown .hljs-meta { color: #8b8fa8; font-style: italic; }
+.markdown .hljs-title, .markdown .hljs-section, .markdown .hljs-name, .markdown .hljs-selector-id, .markdown .hljs-selector-class { color: #8ec5ff; }
+.markdown .hljs-type, .markdown .hljs-class .hljs-title, .markdown .hljs-title.class_ { color: #ffd479; }
+.markdown .hljs-attr, .markdown .hljs-variable, .markdown .hljs-template-variable, .markdown .hljs-params { color: #f0b3c6; }
+.markdown .hljs-deletion { color: #ff9a9a; }
+.markdown .hljs-emphasis { font-style: italic; }
+.markdown .hljs-strong { font-weight: 700; }
+
+/* ===== 프로필 메뉴 (CR-60) ===== */
+.profile-menu { position: relative; }
+.profile-toggle {
+  position: relative; display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer;
+}
+.profile-toggle:hover { background: var(--bg-soft); }
+.profile-toggle .avatar.sm { width: 32px; height: 32px; font-size: 14px; }
+.notify-dot { position: absolute; top: 3px; right: 3px; width: 11px; height: 11px; border-radius: 50%; background: #e0475b; border: 2px solid #fff; }
+.dropdown-menu {
+  position: absolute; right: 0; top: calc(100% + 8px); z-index: 60; width: 240px; max-width: calc(100vw - 24px);
+  background: #fff; border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-hover); padding: 8px;
+  white-space: normal;
+}
+.dropdown-menu .menu-head { padding: 8px 12px 12px; border-bottom: 1px solid var(--border); margin-bottom: 6px; }
+.dropdown-menu .menu-head strong { display: block; overflow-wrap: anywhere; }
+.dropdown-menu .menu-head small { display: block; color: var(--text-sub); font-size: 13px; overflow-wrap: anywhere; }
+.dropdown-menu a, .dropdown-menu button {
+  display: flex; align-items: center; width: 100%; height: auto; padding: 9px 12px; border: 0; border-radius: var(--radius-sm);
+  background: none; font-size: 14px; font-weight: 500; text-align: left; color: var(--text); cursor: pointer;
+}
+.dropdown-menu a:hover, .dropdown-menu button:hover, .dropdown-menu a:focus-visible, .dropdown-menu button:focus-visible { background: var(--bg-soft); outline: none; }
+.dropdown-menu .count-badge { margin-left: auto; }
+.dropdown-menu hr { margin: 6px 0; border: 0; border-top: 1px solid var(--border); }
+
+/* ===== 내 블로그 (FR-32) ===== */
+.my-blog-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 22px 24px; border-radius: var(--radius); background: var(--gradient); margin-bottom: 20px; }
+.my-blog-top h1 { margin: 0 0 4px; font-size: 24px; overflow-wrap: anywhere; }
+.my-blog-top p { margin: 0; color: var(--text-sub); font-size: 14px; }
+.my-blog-top .row { flex-wrap: wrap; gap: 8px; }
+.cat-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; margin: 0 0 32px; padding: 0; list-style: none; }
+.cat-card { display: flex; flex-direction: column; gap: 8px; padding: 18px; border: 1px solid var(--border); border-radius: var(--radius); background: #fff; }
+.cat-card.private { background: var(--bg-soft); }
+.cat-card-head { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+.cat-card-head .name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cat-card-head .badge { margin-left: auto; flex-shrink: 0; }
+.badge.public { background: #e6f6ef; color: var(--ok); }
+.cat-card p { margin: 0; color: var(--text-sub); font-size: 14px; overflow-wrap: anywhere; }
+.cat-card .counts { font-size: 13px; color: var(--text-meta); }
+.cat-card .row { gap: 8px; margin-top: auto; }
+
+@media (max-width: 767px) {
+  .profile-toggle { width: 36px; height: 36px; }
+  .dropdown-menu { position: fixed; top: calc(var(--header-h) - 4px); right: 12px; width: min(280px, calc(100vw - 24px)); }
+  .my-blog-top { padding: 18px 16px; }
+}
+.tabs .tab-link { padding: 12px 16px; font-size: 15px; font-weight: 600; color: var(--text-sub); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.tabs .tab-link:hover { color: var(--text); }

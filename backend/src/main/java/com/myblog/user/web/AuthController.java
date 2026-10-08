@@ -43,10 +43,11 @@ public class AuthController {
 
     /**
      * role: MEMBER 또는 ADMIN. 관리자는 블로그가 없을 수 있다(blogId 비어 있음).
-     * pendingReportCount는 관리자에게만 채운다(처리 대기 신고 건수, 메뉴의 "관리자" 옆 숫자) (FR-078, FR-079)
+     * pendingReportCount는 관리자에게만 채운다(처리 대기 신고 건수, 메뉴의 "관리자" 옆 숫자) (FR-078, FR-079).
+     * email은 프로필 메뉴 머리에 보인다 (CR-60)
      */
     public record Me(long id, String nickname, Long blogId, String profileColor, String role,
-                     Long pendingReportCount) {
+                     Long pendingReportCount, String email) {
     }
 
     private final LoginService loginService;
@@ -113,7 +114,7 @@ public class AuthController {
                 ? jdbc.queryForObject("select count(*) from report where status = 'PENDING'", Map.of(), Long.class)
                 : null;
         return new Me(member.getId(), member.getNickname(), blogId, member.getProfileColor(), member.getRole().name(),
-                pendingReports);
+                pendingReports, member.getEmail());
     }
 
     /** 로그인할 때마다 세션 ID를 새로 발급한다 (NF-12) */

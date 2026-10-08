@@ -5,6 +5,7 @@ import type { PageResult } from '../api/types'
 import Pagination from '../components/Pagination'
 import PostList from '../components/PostList'
 import { M } from '../messages'
+import { useDocumentMeta } from '../meta'
 
 /** 같은 태그가 붙은 공개 글 목록 (CF-20-3) */
 export default function TagPage() {
@@ -12,6 +13,7 @@ export default function TagPage() {
   const [params, setParams] = useSearchParams()
   const page = Number(params.get('page') ?? '1')
   const [result, setResult] = useState<PageResult | null>(null)
+  useDocumentMeta(`#${name}`)
 
   useEffect(() => {
     get<PageResult>(`/api/tags/${encodeURIComponent(name)}/posts?page=${page}`).then(setResult)

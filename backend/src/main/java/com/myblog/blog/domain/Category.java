@@ -72,6 +72,11 @@ public class Category {
         return visibility == CategoryVisibility.PUBLIC;
     }
 
+    /** 끌어서 정한 순서를 그대로 적는다 (FR-17, CR-31) */
+    public void changeSortOrder(int sortOrder) {
+        this.sortOrder = sortOrder;
+    }
+
     public void swapOrderWith(Category other) {
         int mine = this.sortOrder;
         this.sortOrder = other.sortOrder;

@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { ApiError, post } from '../api/client'
+import { useDialog } from './useDialog'
 
 const REASONS = [
   { value: 'SPAM', label: '스팸' },
@@ -16,6 +17,7 @@ export default function ReportModal({ target, onClose, onDone }: { target: Repor
   const [reason, setReason] = useState('SPAM')
   const [detail, setDetail] = useState('')
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null)
+  const ref = useDialog<HTMLDivElement>(onClose)
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
@@ -31,10 +33,10 @@ export default function ReportModal({ target, onClose, onDone }: { target: Repor
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" role="dialog" aria-label={target.kind === 'post' ? '글 신고하기' : '댓글 신고하기'} onClick={(e) => e.stopPropagation()}>
+      <div ref={ref} className="modal" role="dialog" aria-modal="true" aria-label={target.kind === 'post' ? '글 신고하기' : '댓글 신고하기'} onClick={(e) => e.stopPropagation()}>
         <div className="modal-head">
           <h2>{target.kind === 'post' ? '글 신고하기' : '댓글 신고하기'}</h2>
-          <button className="link" onClick={onClose} aria-label="닫기">
+          <button type="button" className="link" onClick={onClose} aria-label="닫기">
             ✕
           </button>
         </div>

@@ -12,6 +12,7 @@ import ActivityPage from './pages/ActivityPage'
 import BlogPage from './pages/BlogPage'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
+import MyBlogPage from './pages/MyBlogPage'
 import MyPage from './pages/MyPage'
 import PasswordResetPage from './pages/PasswordResetPage'
 import NotFoundPage from './pages/NotFoundPage'
@@ -51,6 +52,7 @@ export default function App() {
           <Route path="/search" element={<SearchPage />} />
           <Route path="/me" element={<MyPage />} />
           <Route path="/me/activity" element={<ActivityPage />} />
+          <Route path="/me/blog" element={<MyBlogPage />} />
           <Route path="/tags/:name" element={<TagPage />} />
           <Route path="/users/:userId" element={<UserProfilePage />} />
           <Route path="/notices" element={<NoticesPage />} />

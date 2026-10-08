@@ -140,6 +140,9 @@ export default function Drawer({ open, onClose, returnFocus }: { open: boolean; 
           <div className="drawer-section">
             <h5>내 블로그</h5>
             {me.blogId && <Link to={`/blogs/${me.blogId}`}>내 블로그 홈</Link>}
+            <Link to="/me/blog" className={location.pathname === '/me/blog' ? 'active' : ''}>
+              내 블로그 · 내가 쓴 글
+            </Link>
             <Link to="/me/activity" className={location.pathname === '/me/activity' ? 'active' : ''}>
               내 활동
             </Link>

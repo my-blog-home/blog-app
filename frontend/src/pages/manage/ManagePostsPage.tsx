@@ -1,31 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { del, get } from '../../api/client'
+import type { ManagedPostPage } from '../../api/types'
 import Pagination from '../../components/Pagination'
 import { formatDate } from '../../format'
 import { M } from '../../messages'
 import { useManage } from './ManageLayout'
 
-interface ManagedPost {
-  id: number
-  title: string
-  categoryName: string
-  categoryVisibility: 'PUBLIC' | 'PRIVATE'
-  createdAt: string
-  visibility: 'PUBLIC' | 'PRIVATE'
-  status: 'DRAFT' | 'PUBLISHED'
-  viewCount: number
-  commentCount: number
-}
-
-interface Page {
-  totalCount: number
-  page: number
-  totalPages: number
-  items: ManagedPost[]
-}
-
-const STATUS_TABS = [
+export const STATUS_TABS = [
   { value: '', label: '전체' },
   { value: 'PUBLIC', label: '공개' },
   { value: 'PRIVATE', label: '비공개' },
@@ -40,13 +22,13 @@ export default function ManagePostsPage() {
   const status = STATUS_TABS.some((t) => t.value === statusParam) ? statusParam : ''
   const categoryId = params.get('categoryId') ?? ''
   const page = Number(params.get('page') ?? '1')
-  const [data, setData] = useState<Page | null>(null)
+  const [data, setData] = useState<ManagedPostPage | null>(null)
 
   const load = () => {
     const q = new URLSearchParams({ page: String(page) })
     if (status) q.set('status', status)
     if (categoryId) q.set('categoryId', categoryId)
-    get<Page>(`/api/manage/blogs/${blog.id}/posts?${q}`).then(setData)
+    get<ManagedPostPage>(`/api/manage/blogs/${blog.id}/posts?${q}`).then(setData)
   }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(load, [blog.id, status, categoryId, page])

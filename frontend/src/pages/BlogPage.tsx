@@ -10,6 +10,7 @@ import PostList from '../components/PostList'
 import { M } from '../messages'
 import { categoryColor } from '../colors'
 import NotFoundPage from './NotFoundPage'
+import { useDocumentMeta } from '../meta'
 
 /**
  * 블로그 화면: 분류 목록과 글 목록. 분류 선택은 페이지를 넘겨도 유지된다 (CF-10)
@@ -25,6 +26,7 @@ export default function BlogPage() {
   const [searchError, setSearchError] = useState<string | null>(null)
   const [blog, setBlog] = useState<BlogView | null>(null)
   const [posts, setPosts] = useState<PageResult | null>(null)
+  useDocumentMeta(blog?.name, blog?.description)
   const [missing, setMissing] = useState(false)
   const [categoryMissing, setCategoryMissing] = useState(false)
   const [subscribing, setSubscribing] = useState(false)

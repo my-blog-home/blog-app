@@ -10,6 +10,7 @@ import MarkdownView from '../components/MarkdownView'
 import TagInput from '../components/TagInput'
 import { M } from '../messages'
 import NotFoundPage from './NotFoundPage'
+import { useDocumentMeta } from '../meta'
 
 interface Draft {
   title: string
@@ -35,6 +36,7 @@ export default function PostEditorPage() {
   const location = useLocation()
   const [notice, setNotice] = useState<string | null>((location.state as { notice?: string } | null)?.notice ?? null)
   const [blog, setBlog] = useState<BlogView | null>(null)
+  useDocumentMeta(postId ? '글 수정' : '글쓰기')
   const [topics, setTopics] = useState<Topic[]>([])
   const [status, setStatus] = useState<PostStatus>('DRAFT')
   const [draft, setDraft] = useState<Draft>({ title: '', body: '', categoryId: null, topicId: null, visibility: 'PUBLIC', tags: [] })

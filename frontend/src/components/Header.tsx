@@ -2,9 +2,10 @@ import { useCallback, useRef, useState, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import Drawer from './Drawer'
+import ProfileMenu from './ProfileMenu'
 
 // 로그인해야 쓰는 화면
-const MEMBER_ONLY = /^\/(write|me(\/activity)?|manage(\/.*)?|admin(\/.*)?|posts\/\d+\/edit)$/
+const MEMBER_ONLY = /^\/(write|me(\/activity|\/blog)?|manage(\/.*)?|admin(\/.*)?|posts\/\d+\/edit)$/
 
 export default function Header() {
   const { me, logout, requireLogin, newCommentCount } = useAuth()
@@ -64,33 +65,7 @@ export default function Header() {
           {/* 블로그가 없는 계정(관리자)에는 글쓰기·블로그 관리가 없다 (FR-078) */}
           {(!me || me.blogId) && <button onClick={write}>글쓰기</button>}
           {me ? (
-            <>
-              {me.blogId && (
-                <Link to={`/blogs/${me.blogId}`} className="hide-mobile header-me">
-                  <span className="avatar sm" style={{ background: me.profileColor }}>
-                    {[...me.nickname][0]}
-                  </span>
-                  {me.nickname}
-                </Link>
-              )}
-              {me.blogId && (
-                <Link to="/manage">
-                  블로그 관리{newCommentCount > 0 && <span className="count-badge" aria-label={`새 댓글 ${newCommentCount}개`}>{newCommentCount}</span>}
-                </Link>
-              )}
-              {me.role === 'ADMIN' && (
-                <Link to="/admin">
-                  관리자
-                  {(me.pendingReportCount ?? 0) > 0 && (
-                    <span className="count-badge" aria-label={`처리 대기 신고 ${me.pendingReportCount}건`}>
-                      {me.pendingReportCount}
-                    </span>
-                  )}
-                </Link>
-              )}
-              <Link to="/me">마이페이지</Link>
-              <button onClick={onLogout}>로그아웃</button>
-            </>
+            <ProfileMenu me={me} newCommentCount={newCommentCount} onLogout={onLogout} />
           ) : (
             <>
               <Link to="/signup">회원가입</Link>

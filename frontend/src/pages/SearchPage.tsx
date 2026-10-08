@@ -5,6 +5,7 @@ import type { PageResult } from '../api/types'
 import Pagination from '../components/Pagination'
 import PostList from '../components/PostList'
 import { M } from '../messages'
+import { useDocumentMeta } from '../meta'
 
 /** 검색 결과. 검색창에 검색어가 남아 있다 (CF-11) */
 export default function SearchPage() {
@@ -14,6 +15,7 @@ export default function SearchPage() {
   const [input, setInput] = useState(q)
   const [result, setResult] = useState<PageResult | null>(null)
   const [error, setError] = useState<string | null>(null)
+  useDocumentMeta(q ? `"${q}" 검색 결과` : '검색 결과')
 
   useEffect(() => {
     setInput(q)

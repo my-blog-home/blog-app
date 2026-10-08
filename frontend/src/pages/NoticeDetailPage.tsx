@@ -8,12 +8,14 @@ import PlainText from '../components/PlainText'
 import { formatDate } from '../format'
 import { M } from '../messages'
 import NotFoundPage from './NotFoundPage'
+import { useDocumentMeta } from '../meta'
 
 /** 공지 · 이용 안내 한 건과 같은 종류의 다른 안내 (FR-077) */
 export default function NoticeDetailPage() {
   const { noticeId } = useParams()
   const [notice, setNotice] = useState<NoticeDetail | null>(null)
   const [missing, setMissing] = useState(false)
+  useDocumentMeta(notice?.title ?? '공지사항')
 
   useEffect(() => {
     setNotice(null)

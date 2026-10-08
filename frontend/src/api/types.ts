@@ -11,6 +11,8 @@ export interface Me {
   profileColor: string
   role: MemberRole
   pendingReportCount: number | null
+  /** 프로필 메뉴 머리에 보인다 (CR-60) */
+  email: string
 }
 
 export interface Topic {
@@ -57,6 +59,8 @@ export interface CategoryView {
   isDefault: boolean
   postCount: number
   publicPostCount: number
+  /** 임시저장 글 수. 주인에게만 채워진다 (FR-32) */
+  draftCount: number
 }
 
 export interface BlogView {
@@ -249,4 +253,24 @@ export interface UserProfile {
   privatePostCount: number | null
   isMe: boolean
   blog: { id: number; name: string; description: string | null; topicName: string; subscriberCount: number } | null
+}
+
+/** 글 관리·내가 쓴 글 목록의 한 줄 (BM-03, FR-32) */
+export interface ManagedPost {
+  id: number
+  title: string
+  categoryName: string
+  categoryVisibility: Visibility
+  createdAt: string
+  visibility: Visibility
+  status: PostStatus
+  viewCount: number
+  commentCount: number
+}
+
+export interface ManagedPostPage {
+  totalCount: number
+  page: number
+  totalPages: number
+  items: ManagedPost[]
 }

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ApiError, post } from '../api/client'
 import { M } from '../messages'
+import { useDocumentMeta } from '../meta'
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const NICKNAME = /^[가-힣A-Za-z0-9]{2,10}$/
@@ -23,6 +24,7 @@ type Field = 'nickname' | 'email' | 'code' | 'password' | 'passwordConfirm'
 /** 가입 화면 한 곳에서 이메일 인증을 먼저 마치고 가입한다 (CF-01) */
 export default function SignupPage() {
   const navigate = useNavigate()
+  useDocumentMeta('회원가입')
   const [nickname, setNickname] = useState('')
   const [email, setEmail] = useState('')
   const [code, setCode] = useState('')
