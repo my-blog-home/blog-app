@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { ApiError, get } from '../api/client'
 import type { BlogView, PageResult } from '../api/types'
-import CategoryManager from '../components/CategoryManager'
 import Pagination from '../components/Pagination'
 import PostList from '../components/PostList'
 import { M } from '../messages'
@@ -56,7 +55,11 @@ export default function BlogPage() {
             </li>
           ))}
         </ul>
-        {blog.owner && <CategoryManager blogId={blog.id} categories={blog.categories} onChanged={loadBlog} />}
+        {blog.owner && (
+          <p className="small">
+            <Link to="/manage/categories">분류 관리</Link> · <Link to="/manage">블로그 관리</Link>
+          </p>
+        )}
       </aside>
       <section className="grow">
         <div className="list-head">

@@ -4,6 +4,8 @@ import type { Me } from '../api/types'
 
 interface AuthState {
   me: Me | null
+  newCommentCount: number
+  refreshNewComments: () => Promise<void>
   loading: boolean
   refresh: () => Promise<void>
   login: (email: string, password: string) => Promise<Me>
@@ -19,6 +21,7 @@ const AuthContext = createContext<AuthState | null>(null)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [me, setMe] = useState<Me | null>(null)
   const [loading, setLoading] = useState(true)
+  const [newCommentCount, setNewCommentCount] = useState(0)
   const [loginPrompt, setLoginPrompt] = useState<{ open: boolean; then?: () => void }>({ open: false })
 
   const refresh = useCallback(async () => {
@@ -35,6 +38,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     refresh()
   }, [refresh])
+
+  // 새 댓글 수는 사용자 메뉴와 관리 메뉴에 보여 준다 (BM-05-5)
+  const refreshNewComments = useCallback(async () => {
+    if (!me) {
+      setNewCommentCount(0)
+      return
+    }
+    const result = await get<{ count: number }>('/api/manage/new-comments')
+    setNewCommentCount(result.count)
+  }, [me])
+
+  useEffect(() => {
+    refreshNewComments()
+  }, [refreshNewComments])
 
   const login = async (email: string, password: string) => {
     const result = await post<Me>('/api/auth/login', { email, password })
@@ -61,6 +78,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{
         me,
+        newCommentCount,
+        refreshNewComments,
         loading,
         refresh,
         login,

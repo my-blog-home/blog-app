@@ -3,10 +3,10 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 
 // 로그인해야 쓰는 화면
-const MEMBER_ONLY = /^\/(write|me|posts\/\d+\/edit)$/
+const MEMBER_ONLY = /^\/(write|me|manage(\/.*)?|posts\/\d+\/edit)$/
 
 export default function Header() {
-  const { me, logout, requireLogin } = useAuth()
+  const { me, logout, requireLogin, newCommentCount } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [q, setQ] = useState('')
@@ -42,6 +42,9 @@ export default function Header() {
           {me ? (
             <>
               {me.blogId && <Link to={`/blogs/${me.blogId}`}>{me.nickname}</Link>}
+              <Link to="/manage">
+                블로그 관리{newCommentCount > 0 && <span className="count-badge" aria-label={`새 댓글 ${newCommentCount}개`}>{newCommentCount}</span>}
+              </Link>
               <Link to="/me">마이페이지</Link>
               <button className="link" onClick={onLogout}>
                 로그아웃
