@@ -46,6 +46,21 @@ case "$DB_HOST" in
   localhost|127.0.0.1) DB_HOST="host.docker.internal" ;;
 esac
 
+echo "▶ 데이터베이스 확인 ($DB_NAME)"
+# 데이터베이스가 없으면 만든다. 계정에 만들 권한이 없으면 안내만 하고 계속한다
+psql_run() {
+  d run --rm --network "$NETWORK" --add-host host.docker.internal:host-gateway \
+    -e PGPASSWORD="$DB_PASSWORD" postgres:16 \
+    psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USERNAME" -d postgres -tAc "$1"
+}
+if [ "$(psql_run "SELECT 1 FROM pg_database WHERE datname = '$DB_NAME'" 2>/dev/null | tr -d '[:space:]')" = "1" ]; then
+  echo "  있음"
+elif psql_run "CREATE DATABASE \"$DB_NAME\"" >/dev/null 2>&1; then
+  echo "  없어서 새로 만들었습니다"
+else
+  echo "  ⚠️ 데이터베이스가 없고 만들 수도 없습니다. DB 관리자에게 '$DB_NAME' 데이터베이스를 만들어 달라고 해 주세요"
+fi
+
 echo "▶ 이전 컨테이너 정리"
 d rm -f "$APP" >/dev/null 2>&1 || true
 
