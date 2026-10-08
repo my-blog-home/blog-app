@@ -3,7 +3,7 @@
 # GitHub Actions가 SSH로 접속해 환경변수와 함께 실행한다 (.github/workflows/deploy.yml).
 #
 # 필요한 환경변수: DB_ADDRESS, DB_PORT, DB_NAME, DB_USERNAME, DB_PASSWORD
-# 선택: DB_SCHEMA(public), APP_PORT(8330), MAIL_MODE(log), SHOW_CODE_ON_SCREEN(true), COOKIE_SECURE(false),
+# 선택: DB_DATABASE(nhnacademy), DB_SCHEMA(DB_NAME 값), APP_PORT(8330), MAIL_MODE(log), SHOW_CODE_ON_SCREEN(true), COOKIE_SECURE(false),
 #       SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, SMTP_FROM, SUDO_PASSWORD
 set -euo pipefail
 
@@ -46,9 +46,12 @@ case "$DB_HOST" in
   localhost|127.0.0.1) DB_HOST="host.docker.internal" ;;
 esac
 
-# 공용 데이터베이스 안의 스키마를 쓰면 접속 주소에 지정한다 (테이블·Flyway 기록이 그 스키마에 생긴다)
-DB_SCHEMA="${DB_SCHEMA:-public}"
-DB_URL="jdbc:postgresql://$DB_HOST:$DB_PORT/$DB_NAME?currentSchema=$DB_SCHEMA"
+# Crowfoot에서 발급한 PostgreSQL은 공용 데이터베이스(nhnacademy) 안에 내 스키마를 준다.
+# 그래서 시크릿 DB_NAME에는 발급받은 스키마 이름(예: cf_u30_d1)을 넣고, 데이터베이스는 DB_DATABASE(기본 nhnacademy)로 접속한다.
+# 다른 PostgreSQL을 쓰게 되면 DB_DATABASE에 데이터베이스 이름, DB_SCHEMA에 스키마 이름(보통 public)을 넣는다.
+DB_DATABASE="${DB_DATABASE:-nhnacademy}"
+DB_SCHEMA="${DB_SCHEMA:-$DB_NAME}"
+DB_URL="jdbc:postgresql://$DB_HOST:$DB_PORT/$DB_DATABASE?currentSchema=$DB_SCHEMA"
 
 echo "▶ 이전 컨테이너 정리"
 d rm -f "$APP" >/dev/null 2>&1 || true
