@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { get } from '../api/client'
 import type { NoticePage, NoticeType } from '../api/types'
 import BackButton from '../components/BackButton'
-import { NOTICE_TYPE_LABEL } from '../components/home/HomeSidePanels'
+import NoticeBadge from '../components/NoticeBadge'
 import Pagination from '../components/Pagination'
 import { formatDate } from '../format'
 import { M } from '../messages'
@@ -64,7 +64,7 @@ export default function NoticesPage() {
             {result.items.map((n) => (
               <li key={n.id}>
                 <Link className="notice-row" to={`/notices/${n.id}`}>
-                  <span className={n.type === 'NOTICE' ? 'badge notice-badge' : 'badge guide-badge'}>{NOTICE_TYPE_LABEL[n.type]}</span>
+                  <NoticeBadge notice={n} />
                   {n.pinned && <span className="pin" aria-label="고정">📌</span>}
                   <span className="notice-row-title">{n.title}</span>
                   <span className="faint notice-row-date">{formatDate(n.createdAt)}</span>

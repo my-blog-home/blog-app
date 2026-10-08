@@ -22,7 +22,7 @@ brew services start postgresql@16 >/dev/null
 brew services start redis >/dev/null
 (cd frontend && npm install --silent --no-audit --no-fund && npm run build --silent)
 (cd backend && ./gradlew bootJar -q)
-nohup java -jar backend/build/libs/myblog-0.0.1-SNAPSHOT.jar > .run/server.log 2>&1 &
+nohup java -jar backend/build/libs/myblog.jar > .run/server.log 2>&1 &
 echo $! > $PID_FILE
 for i in $(seq 1 30); do
   if curl -s -o /dev/null http://localhost:8080/api/config/limits; then

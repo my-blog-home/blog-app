@@ -40,7 +40,7 @@ docker run -d --name ylog -p 8080:8080 --env-file .env.prod -v ylog-images:/var/
 
 ```bash
 ./build.sh                      # 화면 빌드 → 테스트(로컬 DB·Redis 필요) → jar
-scp backend/build/libs/myblog-0.0.1-SNAPSHOT.jar 서버:/opt/ylog/app.jar
+scp backend/build/libs/myblog.jar 서버:/opt/ylog/app.jar
 # 서버에서 (Java 21 필요)
 set -a; . /opt/ylog/.env.prod; set +a
 java -jar /opt/ylog/app.jar
