@@ -45,6 +45,22 @@ set -a; . /opt/ylog/.env.prod; set +a
 java -jar /opt/ylog/app.jar
 ```
 
+## 3-C. GitHub Actions 자동 배포 (지금 쓰는 방식)
+
+`main`에 push하거나 PR을 병합하면 `.github/workflows/deploy.yml`이 돈다.
+
+1. 테스트(PostgreSQL·Redis 서비스 컨테이너로 서버 통합 테스트, 화면 테스트)
+2. 도커 이미지 빌드 → 압축 파일로 서버 `~/ylog`에 복사(SSH)
+3. 서버에서 `deploy/deploy.sh` 실행: Redis 컨테이너 준비, 이전 앱 컨테이너 교체, **포트 8330**으로 실행, 켜질 때까지 확인
+
+PR에서는 `.github/workflows/ci.yml`이 테스트와 도커 빌드만 확인한다(배포 안 함). Actions 탭의 "Deploy"에서 손으로 다시 돌릴 수도 있다.
+
+**필수 시크릿**: `SSH_ADDRESS`, `SSH_PORT`, `SSH_ID`, `SSH_PASSWORD`, `DB_ADDRESS`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`
+
+**선택 시크릿**(없으면 괄호 안 기본값): `MAIL_MODE`(log), `SHOW_CODE_ON_SCREEN`(true), `COOKIE_SECURE`(false), `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM`
+
+서버 조건: Docker가 설치돼 있어야 한다. SSH 계정이 docker를 바로 못 쓰면 `SSH_PASSWORD`로 sudo를 쓴다. DB가 같은 서버에 있으면(`DB_ADDRESS`가 localhost) 컨테이너가 `host.docker.internal`로 접속하므로 PostgreSQL이 도커 네트워크(172.x)에서 오는 접속도 받아야 한다.
+
 ## 4. 켜진 뒤 확인
 
 - `GET /api/config/limits`가 200이면 서버가 켜진 것이다.
