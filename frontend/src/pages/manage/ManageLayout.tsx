@@ -4,6 +4,7 @@ import { get } from '../../api/client'
 import type { BlogView } from '../../api/types'
 import { useAuth } from '../../auth/AuthContext'
 import { withPreview } from '../../preview'
+import { useDocumentMeta } from '../../meta'
 
 export interface ManageContext {
   blog: BlogView
@@ -16,6 +17,7 @@ export const useManage = () => useOutletContext<ManageContext>()
 export default function ManageLayout() {
   const { me, loading, requireLogin, newCommentCount } = useAuth()
   const [blog, setBlog] = useState<BlogView | null>(null)
+  useDocumentMeta('블로그 관리')
 
   const reloadBlog = async () => {
     if (me?.blogId) setBlog(await get<BlogView>(`/api/blogs/${me.blogId}`))

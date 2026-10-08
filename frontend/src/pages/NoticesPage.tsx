@@ -7,6 +7,7 @@ import { NOTICE_TYPE_LABEL } from '../components/home/HomeSidePanels'
 import Pagination from '../components/Pagination'
 import { formatDate } from '../format'
 import { M } from '../messages'
+import { useDocumentMeta } from '../meta'
 
 const TABS: { type: NoticeType | null; label: string }[] = [
   { type: null, label: '전체' },
@@ -21,6 +22,7 @@ export default function NoticesPage() {
   const type: NoticeType | null = rawType === 'NOTICE' || rawType === 'GUIDE' ? rawType : null
   const page = Number(params.get('page') ?? '1')
   const [result, setResult] = useState<NoticePage | null>(null)
+  useDocumentMeta('공지사항')
 
   useEffect(() => {
     const q = new URLSearchParams({ page: String(page) })

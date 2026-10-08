@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Link, NavLink, Outlet, useOutletContext } from 'react-router-dom'
 import { useAuth } from '../../auth/AuthContext'
+import { useDocumentMeta } from '../../meta'
 
 export interface AdminContext {
   /** 처리 대기 신고 수(머리글의 "관리자" 옆 숫자)를 다시 읽는다 */
@@ -15,6 +16,7 @@ export const useAdmin = () => useOutletContext<AdminContext>()
  */
 export default function AdminLayout() {
   const { me, loading, requireLogin, refresh } = useAuth()
+  useDocumentMeta('관리자')
 
   useEffect(() => {
     if (!loading && !me) requireLogin()

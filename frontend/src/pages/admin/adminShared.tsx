@@ -1,7 +1,8 @@
-import { useEffect, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { ApiError } from '../../api/client'
 import { REPORT_STATUS_LABEL, type ReportGroup, type ReportStatus } from '../../api/adminTypes'
+import { useDialog } from '../../components/useDialog'
 
 export const errorOf = (e: unknown) => (e instanceof ApiError ? e.fieldErrors[0]?.message ?? e.message : '잠시 뒤 다시 시도해 주세요')
 
@@ -39,19 +40,13 @@ export function TargetText({ group, max = 60 }: { group: ReportGroup; max?: numb
   )
 }
 
-/** 관리자 화면의 창. 바깥을 누르거나 ESC로 닫는다 */
+/** 관리자 화면의 창. 바깥을 누르거나 ESC로 닫고, 닫으면 초점을 되돌린다 (NFR-08) */
 export function AdminModal({ title, wide, onClose, children }: { title: string; wide?: boolean; onClose: () => void; children: ReactNode }) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
-  }, [onClose])
+  const ref = useDialog<HTMLDivElement>(onClose)
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className={wide ? 'modal wide' : 'modal'} role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()}>
+      <div ref={ref} className={wide ? 'modal wide' : 'modal'} role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()}>
         <div className="modal-head">
           <h2>{title}</h2>
           <button type="button" className="link" onClick={onClose} aria-label="닫기">

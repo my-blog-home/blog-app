@@ -8,6 +8,7 @@ import Pagination from '../components/Pagination'
 import PostList from '../components/PostList'
 import { M } from '../messages'
 import NotFoundPage from './NotFoundPage'
+import { useDocumentMeta } from '../meta'
 
 /**
  * 작성자 프로필 (FR-075, BR-28): 닉네임·소개·공개 글 수, 블로그 카드, 글 목록.
@@ -21,6 +22,7 @@ export default function UserProfilePage() {
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [posts, setPosts] = useState<PageResult | null>(null)
   const [missing, setMissing] = useState(false)
+  useDocumentMeta(profile?.nickname, profile?.bio)
 
   useEffect(() => {
     setMissing(false)

@@ -6,6 +6,7 @@ import { PROFILE_COLORS } from '../colors'
 import { formatDate } from '../format'
 import { M } from '../messages'
 import { passwordChecks } from './SignupPage'
+import { useDocumentMeta } from '../meta'
 
 interface MyInfo {
   email: string
@@ -26,6 +27,7 @@ export default function MyPage() {
   const navigate = useNavigate()
   const [tab, setTab] = useState<Tab>('info')
   const [info, setInfo] = useState<MyInfo | null>(null)
+  useDocumentMeta('마이페이지')
 
   useEffect(() => {
     if (loading) return

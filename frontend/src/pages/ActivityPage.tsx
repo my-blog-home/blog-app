@@ -6,6 +6,7 @@ import { useAuth } from '../auth/AuthContext'
 import Pagination from '../components/Pagination'
 import PostList from '../components/PostList'
 import { formatDateTime } from '../format'
+import { useDocumentMeta } from '../meta'
 
 type Tab = 'liked' | 'commented'
 
@@ -20,6 +21,7 @@ export default function ActivityPage() {
   const page = Number(params.get('page') ?? '1')
   const [liked, setLiked] = useState<PageResult | null>(null)
   const [commented, setCommented] = useState<CommentedPostPage | null>(null)
+  useDocumentMeta('내 활동')
 
   useEffect(() => {
     if (!loading && !me) requireLogin()

@@ -4,6 +4,7 @@ import { ApiError, post } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 import { M } from '../messages'
 import { passwordChecks } from './SignupPage'
+import { useDocumentMeta } from '../meta'
 
 const RESET_NOTICE = '입력하신 이메일로 안내를 보냈습니다. 10분 안에 인증번호를 입력해 주세요'
 
@@ -11,6 +12,7 @@ const RESET_NOTICE = '입력하신 이메일로 안내를 보냈습니다. 10분
 export default function PasswordResetPage() {
   const { me } = useAuth()
   const navigate = useNavigate()
+  useDocumentMeta('비밀번호 찾기')
   const [email, setEmail] = useState('')
   const [code, setCode] = useState('')
   const [password, setPassword] = useState('')

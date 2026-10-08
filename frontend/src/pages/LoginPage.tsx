@@ -1,12 +1,14 @@
 import { Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import LoginForm from '../components/LoginForm'
+import { useDocumentMeta } from '../meta'
 
 /** 로그인 전에 보던 화면으로 돌아간다. 직접 왔다면 첫 화면으로 (CF-02-2) */
 export default function LoginPage() {
   const { me } = useAuth()
   const [params] = useSearchParams()
   const navigate = useNavigate()
+  useDocumentMeta('로그인')
   const notice = (useLocation().state as { notice?: string } | null)?.notice
   const redirect = params.get('redirect')
   const target = redirect && redirect.startsWith('/') && !redirect.startsWith('//') && redirect !== '/login' ? redirect : '/'

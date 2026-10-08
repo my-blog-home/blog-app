@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ApiError, del, get } from '../api/client'
 import type { PostDetail } from '../api/types'
@@ -13,6 +13,7 @@ import { useMarkCurrentBlog } from '../layout/CurrentBlog'
 import { formatDateTime } from '../format'
 import { M } from '../messages'
 import NotFoundPage from './NotFoundPage'
+import { plainExcerpt, useDocumentMeta } from '../meta'
 
 /** 링크 복사: 클립보드 API가 없으면 예전 방식으로 복사한다 */
 async function copyText(text: string): Promise<boolean> {
@@ -51,6 +52,8 @@ export default function PostDetailPage() {
   const { requireLogin } = useAuth()
   const onCountChange = useCallback((n: number) => setCommentCount(n), [])
   useMarkCurrentBlog(post?.blog.id)
+  const excerpt = useMemo(() => (post ? plainExcerpt(post.body) : null), [post])
+  useDocumentMeta(post?.title, excerpt)
 
   useEffect(() => {
     if (!copyMessage) return
