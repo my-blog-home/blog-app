@@ -39,7 +39,8 @@ blog:
     nickname-min: 2
     nickname-max: 10
     password-min: 8
-    password-max: 10
+    # 화면에는 "8자 이상"만 안내한다. 상한은 BCrypt가 72바이트까지만 쓰기 때문에 두는 기술적 한도다
+    password-max: 64
     verification-code-ttl: 10m
     verification-resend-interval: 1m
     verification-daily-max: 5
