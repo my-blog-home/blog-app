@@ -44,8 +44,9 @@ class ReleaseNoteIT extends IntegrationTestBase {
         mvc.perform(get("/api/config/version"))
                 .andExpect(jsonPath("$.version").value(version))
                 .andExpect(jsonPath("$.releaseNoticeId").value(id));
+        // 공지 목록 첫 페이지에 지금 버전의 노트가 보인다 (노트가 많아지면 옛 노트는 다음 페이지로 밀린다)
         mvc.perform(get("/api/notices").param("type", "NOTICE"))
-                .andExpect(jsonPath("$.items[?(@.releaseVersion == '1.0.0')]").exists());
+                .andExpect(jsonPath("$.items[?(@.releaseVersion == '" + version + "')]").exists());
     }
 
     @Test
