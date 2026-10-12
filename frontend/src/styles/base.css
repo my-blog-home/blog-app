@@ -577,9 +577,8 @@ button.link:disabled { color: var(--text-faint); text-decoration: none; }
 .home-main .card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .home-main .thumb-row { grid-auto-columns: calc((100% - 3 * 20px) / 4); }
 .home-side {
+  /* 따로 스크롤바를 두지 않고 화면과 함께 내려간다 */
   display: flex; flex-direction: column; gap: 20px;
-  position: sticky; top: calc(var(--header-h) + 24px);
-  max-height: calc(100vh - var(--header-h) - 48px); overflow-y: auto; scrollbar-width: thin;
 }
 
 .hot-posts { display: flex; flex-direction: column; min-width: 0; flex-shrink: 0; }
@@ -728,7 +727,6 @@ button.link:disabled { color: var(--text-faint); text-decoration: none; }
 
 @media (max-width: 1023px) {
   .home-layout { grid-template-columns: minmax(0, 1fr); gap: 32px; }
-  .home-side { position: static; max-height: none; overflow: visible; }
   .home-main .thumb-row { grid-auto-columns: calc((100% - 2 * 20px) / 3); }
 }
 
