@@ -4,6 +4,7 @@ import Header from './components/Header'
 import LoginModal from './components/LoginModal'
 import { CurrentBlogProvider } from './layout/CurrentBlog'
 import { PreviewBanner, usePreview, VisitorPreviewScope } from './layout/VisitorPreview'
+import AdminContentPage from './pages/admin/AdminContentPage'
 import AdminLayout from './pages/admin/AdminLayout'
 import AdminMembersPage from './pages/admin/AdminMembersPage'
 import AdminNoticesPage from './pages/admin/AdminNoticesPage'
@@ -74,6 +75,7 @@ export default function App() {
             <Route index element={<AdminSummaryPage />} />
             <Route path="reports" element={<AdminReportsPage />} />
             <Route path="members" element={<AdminMembersPage />} />
+            <Route path="content" element={<AdminContentPage />} />
             <Route path="notices" element={<AdminNoticesPage />} />
           </Route>
           <Route path="/password-reset" element={<PasswordResetPage />} />
