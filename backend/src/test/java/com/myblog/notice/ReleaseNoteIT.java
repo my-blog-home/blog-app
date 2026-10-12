@@ -15,6 +15,9 @@ class ReleaseNoteIT extends IntegrationTestBase {
     @Autowired
     ReleaseNotePublisher publisher;
 
+    @Autowired
+    org.springframework.boot.info.BuildProperties build;
+
     @AfterEach
     void removeReleaseNotices() {
         jdbc.update("delete from notice where release_version is not null");
@@ -35,9 +38,11 @@ class ReleaseNoteIT extends IntegrationTestBase {
     @Test
     void 현재_버전과_그_버전의_릴리스_노트_공지를_알려_준다() throws Exception {
         publisher.publishAll();
-        Long id = jdbc.queryForObject("select id from notice where release_version = '1.0.0'", Long.class);
+        // 지금 버전(build.gradle)의 노트가 있어야 하고, 바닥글은 그 노트를 가리킨다
+        String version = build.getVersion();
+        Long id = jdbc.queryForObject("select id from notice where release_version = ?", Long.class, version);
         mvc.perform(get("/api/config/version"))
-                .andExpect(jsonPath("$.version").value("1.0.0"))
+                .andExpect(jsonPath("$.version").value(version))
                 .andExpect(jsonPath("$.releaseNoticeId").value(id));
         mvc.perform(get("/api/notices").param("type", "NOTICE"))
                 .andExpect(jsonPath("$.items[?(@.releaseVersion == '1.0.0')]").exists());

@@ -21,6 +21,14 @@ export default function Drawer({ open, onClose, returnFocus }: { open: boolean; 
   const [topics, setTopics] = useState<Topic[]>([])
   const [blog, setBlog] = useState<BlogView | null>(null)
   const [subs, setSubs] = useState<MySubscriptions | null>(null)
+  // 공지사항 칸의 "최신 릴리스 노트" 링크에 쓴다
+  const [release, setRelease] = useState<{ version: string; releaseNoticeId: number | null } | null>(null)
+
+  useEffect(() => {
+    get<{ version: string; releaseNoticeId: number | null }>('/api/config/version')
+      .then(setRelease)
+      .catch(() => setRelease(null))
+  }, [])
   const wasOpen = useRef(false)
 
   // 열 때마다 새로 읽는다 (블로그 화면에서 구독을 눌렀어도 맞게 보이도록)
@@ -171,6 +179,24 @@ export default function Drawer({ open, onClose, returnFocus }: { open: boolean; 
             )}
           </div>
         )}
+
+        <div className="drawer-section">
+          <h5>공지사항</h5>
+          <Link to="/notices" className={location.pathname.startsWith('/notices') && !location.search ? 'active' : ''}>
+            전체 공지
+          </Link>
+          <Link to="/notices?type=NOTICE" className={location.search === '?type=NOTICE' ? 'active' : ''}>
+            공지
+          </Link>
+          <Link to="/notices?type=GUIDE" className={location.search === '?type=GUIDE' ? 'active' : ''}>
+            이용법
+          </Link>
+          {release?.releaseNoticeId && (
+            <Link to={`/notices/${release.releaseNoticeId}`} className={location.pathname === `/notices/${release.releaseNoticeId}` ? 'active' : ''}>
+              릴리스 노트 <span>v{release.version}</span>
+            </Link>
+          )}
+        </div>
       </nav>
     </>
   )
