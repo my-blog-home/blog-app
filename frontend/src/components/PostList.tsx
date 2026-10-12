@@ -90,19 +90,45 @@ export function PostCards({ items }: { items: PostItem[] }) {
   )
 }
 
-/** 첫 화면의 앨범형 목록: 첫 이미지를 크게, 이미지가 없으면 주제 이름 칸. 아래에 제목과 블로그 이름 */
-export function PostAlbum({ items }: { items: PostItem[] }) {
+/**
+ * 첫 화면의 피드형 목록: 네이버 블로그 피드처럼 글 하나를 크게.
+ * 위에 블로그·작성자·시간, 그 아래 첫 이미지를 넓게(이미지가 없으면 생략), 제목, 내용 몇 줄, 주제와 좋아요·댓글 수
+ */
+export function PostFeed({ items }: { items: PostItem[] }) {
   return (
-    <ul className="album-grid">
+    <ul className="feed-view">
       {items.map((post) => (
-        <li key={post.id}>
-          <Link to={`/posts/${post.id}`} className="thumb-card album-card">
-            <Thumb url={post.thumbnailUrl} label={post.topicName} />
-            <strong>{post.title}</strong>
-            <span>
-              {post.blogName} · {formatPostDate(post.createdAt)}
-            </span>
+        <li key={post.id} className="feed-post">
+          <div className="feed-top">
+            <Link to={`/blogs/${post.blogId}`} className="card-blog">
+              <span className="avatar sm" style={{ background: post.authorColor }}>
+                {[...post.blogName][0]}
+              </span>
+              <span>{post.blogName}</span>
+            </Link>
+            <Link to={`/users/${post.authorId}`} className="card-author">
+              {post.authorNickname}
+            </Link>
+            <time className="card-date" dateTime={post.createdAt} title={formatDateTime(post.createdAt)}>
+              {formatPostDate(post.createdAt)}
+            </time>
+          </div>
+          {post.thumbnailUrl && (
+            <figure className="feed-image">
+              <img src={post.thumbnailUrl} alt="" loading="lazy" referrerPolicy="no-referrer" />
+            </figure>
+          )}
+          <Link to={`/posts/${post.id}`} className="card-link">
+            <h3>{post.title}</h3>
           </Link>
+          <p className="feed-excerpt">{post.excerpt}</p>
+          <div className="feed-foot">
+            <span className="cat-chip">
+              <i />
+              {post.topicName} · {post.categoryName}
+            </span>
+            <Reactions post={post} />
+          </div>
         </li>
       ))}
     </ul>

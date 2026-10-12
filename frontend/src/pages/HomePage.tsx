@@ -7,19 +7,20 @@ import { useAuth } from '../auth/AuthContext'
 import Pagination from '../components/Pagination'
 import HotPostsSlider from '../components/home/HotPostsSlider'
 import { HotBloggersPanel, NoticePanel, PopularKeywordsPanel } from '../components/home/HomeSidePanels'
-import { PostAlbum, PostCards, ThumbRow } from '../components/PostList'
+import { PostCards, PostFeed, ThumbRow } from '../components/PostList'
 import { M } from '../messages'
 
 type Sort = 'latest' | 'popular'
 type Tab = 'all' | 'feed'
-type View = 'list' | 'album'
+type View = 'list' | 'feed'
 
 const VIEW_KEY = 'ylog.homeView'
 
-/** 목록형/앨범형 선택은 이 브라우저에 기억한다. 저장소를 못 쓰면 목록형 */
-function loadView(): View {
+/** 목록형/피드형 선택은 이 브라우저에 기억한다. 예전 앨범형은 피드형으로, 저장소를 못 쓰면 목록형 */
+export function loadView(): View {
   try {
-    return localStorage.getItem(VIEW_KEY) === 'album' ? 'album' : 'list'
+    const saved = localStorage.getItem(VIEW_KEY)
+    return saved === 'feed' || saved === 'album' ? 'feed' : 'list'
   } catch {
     return 'list'
   }
@@ -41,13 +42,11 @@ function ListIcon() {
   )
 }
 
-function AlbumIcon() {
+function FeedIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
-      <rect x="2.2" y="2.2" width="4.6" height="4.6" rx="1.2" />
-      <rect x="9.2" y="2.2" width="4.6" height="4.6" rx="1.2" />
-      <rect x="2.2" y="9.2" width="4.6" height="4.6" rx="1.2" />
-      <rect x="9.2" y="9.2" width="4.6" height="4.6" rx="1.2" />
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true">
+      <rect x="2.2" y="2" width="11.6" height="7.2" rx="1.4" />
+      <path d="M2.5 11.8h11M2.5 14.2h7" />
     </svg>
   )
 }
@@ -72,7 +71,7 @@ export default function HomePage() {
     setView(next)
     saveView(next)
   }
-  const Posts = view === 'album' ? PostAlbum : PostCards
+  const Posts = view === 'feed' ? PostFeed : PostCards
   const [hasSubscriptions, setHasSubscriptions] = useState(true)
   const [topics, setTopics] = useState<Topic[]>([])
   const [latest, setLatest] = useState<PageResult | null>(null)
@@ -196,13 +195,13 @@ export default function HomePage() {
               인기순
             </button>
           </div>
-          {/* 목록형(기본)과 앨범형 전환 */}
+          {/* 목록형(기본)과 피드형 전환 */}
           <div className="sort-toggle view-toggle" role="group" aria-label="보기 방식">
             <button type="button" className={view === 'list' ? 'current' : ''} aria-pressed={view === 'list'} aria-label="목록형" title="목록형" onClick={() => changeView('list')}>
               <ListIcon />
             </button>
-            <button type="button" className={view === 'album' ? 'current' : ''} aria-pressed={view === 'album'} aria-label="앨범형" title="앨범형" onClick={() => changeView('album')}>
-              <AlbumIcon />
+            <button type="button" className={view === 'feed' ? 'current' : ''} aria-pressed={view === 'feed'} aria-label="피드형" title="피드형" onClick={() => changeView('feed')}>
+              <FeedIcon />
             </button>
           </div>
         </div>
