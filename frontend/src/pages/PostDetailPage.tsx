@@ -10,7 +10,7 @@ import MarkdownView from '../components/MarkdownView'
 import ReportModal from '../components/ReportModal'
 import { useAuth } from '../auth/AuthContext'
 import { useMarkCurrentBlog } from '../layout/CurrentBlog'
-import { formatDateTime } from '../format'
+import { formatDateTime, formatPostDateTime } from '../format'
 import { M } from '../messages'
 import NotFoundPage from './NotFoundPage'
 import { plainExcerpt, useDocumentMeta } from '../meta'
@@ -111,7 +111,11 @@ export default function PostDetailPage() {
           <Link to={`/users/${post.authorId}`} className="author-link">
             {post.authorNickname}
           </Link>
-          {post.createdAt && <span>{formatDateTime(post.createdAt)}</span>}
+          {post.createdAt && (
+            <time dateTime={post.createdAt} title={formatDateTime(post.createdAt)}>
+              {formatPostDateTime(post.createdAt)}
+            </time>
+          )}
           {post.updatedAt && <span>수정 {formatDateTime(post.updatedAt)}</span>}
           <span>조회 {post.viewCount.toLocaleString()}</span>
           <a href="#comments">댓글 {commentCount || post.commentCount}</a>

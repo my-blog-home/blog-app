@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import type { PostItem } from '../api/types'
-import { formatDate } from '../format'
+import { formatDateTime, formatPostDate } from '../format'
 import Thumb from './Thumb'
 
 /** 글 아래의 좋아요 수와 댓글 수(답글 포함) (FR-085, BR-05) */
@@ -28,7 +28,7 @@ export default function PostList({ items, showBlog = false }: { items: PostItem[
               {post.categoryName}
               {post.categoryVisibility === 'PRIVATE' && <span aria-label="비공개 분류"> 🔒</span>}
             </span>
-            <span>{formatDate(post.createdAt)}</span>
+            <time dateTime={post.createdAt} title={formatDateTime(post.createdAt)}>{formatPostDate(post.createdAt)}</time>
             {post.visibility === 'PRIVATE' && <span className="badge">비공개</span>}
           </div>
           <Link to={`/posts/${post.id}`} className="title">
@@ -61,7 +61,9 @@ export function PostCards({ items }: { items: PostItem[] }) {
                 {post.authorNickname}
               </Link>
             </span>
-            <span className="card-date">{formatDate(post.createdAt)}</span>
+            <time className="card-date" dateTime={post.createdAt} title={formatDateTime(post.createdAt)}>
+              {formatPostDate(post.createdAt)}
+            </time>
           </div>
           <span className="cat-chip">
             <i />
