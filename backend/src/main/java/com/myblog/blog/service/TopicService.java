@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 사이트 전체를 나누는 주제 10개 (고정, 시드 데이터). 블로그의 대표 주제와 글의 주제로 쓴다 (용어 '주제', CR-68).
+ * 사이트 전체를 나누는 주제 9개 (고정, 시드 데이터. 2026-10-12 문화·리뷰를 빼서 9개). 블로그의 대표 주제와 글의 주제로 쓴다 (용어 '주제', CR-68).
  * 글 수는 글의 주제로 세고, 방문자에게 보이는 글만 센다.
  */
 @Service

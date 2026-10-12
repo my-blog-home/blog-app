@@ -43,7 +43,7 @@ class CategoryVisibilityIT extends IntegrationTestBase {
         mvc.perform(get("/api/posts")).andExpect(jsonPath("$.totalCount").value(2));
         mvc.perform(get("/api/search").param("q", "검색어")).andExpect(jsonPath("$.totalCount").value(2));
         mvc.perform(get("/api/tags/숨김/posts")).andExpect(jsonPath("$.totalCount").value(0));
-        mvc.perform(get("/api/topics")).andExpect(jsonPath("$[8].postCount").value(2));
+        mvc.perform(get("/api/topics")).andExpect(jsonPath("$[?(@.name == '일상')].postCount").value(2));
         mvc.perform(get("/api/posts/" + hidden).cookie(other.session()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("존재하지 않는 글입니다"));
