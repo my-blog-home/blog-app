@@ -6,8 +6,9 @@ import { useDocumentMeta } from '../meta'
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const NICKNAME = /^[가-힣A-Za-z0-9]{2,10}$/
-const SPECIALS = /[!@#$%^&*()_+\-=]/
-const ALLOWED = /^[A-Za-z\d!@#$%^&*()_+\-=]*$/
+// 특수문자는 키보드의 ASCII 기호 전부 (서버 InputRules와 같다)
+const SPECIALS = /[!-/:-@[-`{-~]/
+const ALLOWED = /^[A-Za-z\d!-/:-@[-`{-~]*$/
 
 /** 비밀번호 규칙을 입력하는 동안 바로 보여 준다 (CF-01-6) */
 export function passwordChecks(pw: string) {
