@@ -113,5 +113,9 @@ class AdminAccessIT extends IntegrationTestBase {
                 .andExpect(jsonPath("$.role").value("ADMIN"));
         // 규칙에 맞지 않는 비밀번호로는 만들지 않는다
         assertThat(initializer.ensureAdmin("weak@example.com", "short")).isFalse();
+        // 마침표·물음표·물결 같은 키보드 기호도 특수문자로 받는다
+        assertThat(initializer.ensureAdmin("dot@example.com", "Boss.2026?~")).isTrue();
+        // 공백이나 한글은 받지 않는다
+        assertThat(initializer.ensureAdmin("space@example.com", "boss 12!@")).isFalse();
     }
 }

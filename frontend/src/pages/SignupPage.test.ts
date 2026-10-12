@@ -8,6 +8,8 @@ describe('passwordChecks', () => {
   it('영문·숫자·특수문자를 포함한 8자 이상을 통과시킨다', () => {
     expect(ok('abc123!@')).toBe(true)
     expect(ok('abcd1234!@')).toBe(true)
+    expect(ok('abcd1234.?')).toBe(true) // 마침표·물음표 같은 기호도 특수문자
+    expect(ok('abcd1234~')).toBe(true)
   })
 
   it('규칙을 어기면 통과시키지 않는다', () => {

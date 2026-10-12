@@ -6,7 +6,7 @@ plugins {
 
 group = 'com.myblog'
 // 서비스 버전. 올릴 때는 release-notes에 같은 버전의 노트를 함께 더한다 (RELEASING.md)
-version = '1.7.0'
+version = '1.7.1'
 
 java {
     toolchain {
