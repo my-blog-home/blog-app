@@ -6,6 +6,7 @@ import type { BlogView, MySubscriptions, Topic } from '../api/types'
 import { useAuth } from '../auth/AuthContext'
 import { useCurrentBlog } from '../layout/CurrentBlog'
 import { M } from '../messages'
+import { useTheme } from '../theme'
 
 const SUBSCRIPTION_LIMIT = 8
 
@@ -15,6 +16,7 @@ const SUBSCRIPTION_LIMIT = 8
  */
 export default function Drawer({ open, onClose, returnFocus }: { open: boolean; onClose: () => void; returnFocus: () => void }) {
   const { me } = useAuth()
+  const [theme, toggleTheme] = useTheme()
   const location = useLocation()
   const currentBlogId = useCurrentBlog()
   const closeRef = useRef<HTMLButtonElement>(null)
@@ -199,6 +201,13 @@ export default function Drawer({ open, onClose, returnFocus }: { open: boolean; 
               릴리스 노트 <span>v{release.version}</span>
             </Link>
           )}
+        </div>
+
+        <div className="drawer-section">
+          <h5>화면</h5>
+          <button type="button" className="drawer-item" onClick={toggleTheme}>
+            {theme === 'dark' ? '밝은 화면으로 보기' : '어두운 화면으로 보기'}
+          </button>
         </div>
       </nav>
     </>

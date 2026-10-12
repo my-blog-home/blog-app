@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import Drawer from './Drawer'
 import ProfileMenu from './ProfileMenu'
+import ThemeToggle from './ThemeToggle'
 
 // 로그인해야 쓰는 화면
 const MEMBER_ONLY = /^\/(write|me(\/activity|\/blog)?|manage(\/.*)?|admin(\/.*)?|posts\/\d+\/edit)$/
@@ -62,6 +63,7 @@ export default function Header() {
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="글 검색" aria-label="검색어" />
         </form>
         <nav className="header-nav">
+          <ThemeToggle />
           {/* 블로그가 없는 계정(관리자)에는 글쓰기·블로그 관리가 없다 (FR-078) */}
           {(!me || me.blogId) && <button onClick={write}>글쓰기</button>}
           {me ? (
