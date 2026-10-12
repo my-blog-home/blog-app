@@ -466,7 +466,7 @@ a.tag:hover { background: var(--primary-soft); color: var(--primary); }
 /* ===== 주제·정렬·임시저장·분류 공개 범위·프로필 색 ===== */
 .hero-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .hero-head .link { font-size: 14px; }
-.topic-chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; margin-top: 18px; }
+.topic-chips { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-top: 18px; }
 .topic-chips button {
   height: 38px; padding: 0 10px; border: 1px solid transparent; border-radius: var(--radius-sm);
   background: #fff; color: var(--text-sub); font-size: 14px; font-weight: 600; white-space: nowrap;
