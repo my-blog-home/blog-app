@@ -2,11 +2,77 @@ import NoticeBadge, { NOTICE_TYPE_LABEL } from '../NoticeBadge'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { get } from '../../api/client'
-import type { HotBlogger, NoticePage, PopularKeywords } from '../../api/types'
+import type { BlogView, HotBlogger, NoticePage, PopularKeywords } from '../../api/types'
+import { useAuth } from '../../auth/AuthContext'
 import { formatDate } from '../../format'
 import { M } from '../../messages'
 
 const REFRESH_MS = 60 * 1000
+
+/**
+ * 오른쪽 맨 위 내 정보: 티스토리처럼 프로필, 블로그 이름·닉네임·글 수, 글쓰기·내 블로그, 아래에 관리 링크.
+ * 로그인하지 않았으면 로그인·회원가입을 권한다. 블로그가 없는 관리자 계정은 관리자 링크만 둔다
+ */
+export function MyInfoPanel() {
+  const { me, loading } = useAuth()
+  const [blog, setBlog] = useState<BlogView | null>(null)
+  const blogId = me?.blogId ?? null
+
+  useEffect(() => {
+    setBlog(null)
+    if (blogId == null) return
+    get<BlogView>(`/api/blogs/${blogId}`).then(setBlog).catch(() => undefined)
+  }, [blogId])
+
+  if (loading) return null
+  if (!me)
+    return (
+      <section className="side-panel my-card" aria-label="내 정보">
+        <p className="my-card-guest">로그인하고 나만의 블로그를 시작해 보세요.</p>
+        <div className="my-card-actions">
+          <Link to="/login?redirect=%2F" className="button primary">
+            로그인
+          </Link>
+          <Link to="/signup" className="button">
+            회원가입
+          </Link>
+        </div>
+      </section>
+    )
+
+  const title = blog?.name ?? (me.blogId ? '' : '관리자 계정')
+  return (
+    <section className="side-panel my-card" aria-label="내 정보">
+      <div className="my-card-head">
+        <span className="avatar my-card-avatar" style={{ background: me.profileColor }} aria-hidden="true">
+          {[...me.nickname][0]}
+        </span>
+        <div className="my-card-who">
+          <strong>{title}</strong>
+          <span>
+            {me.nickname}
+            {blog && <> · 글 {blog.totalPostCount.toLocaleString()}</>}
+          </span>
+        </div>
+      </div>
+      {me.blogId && (
+        <div className="my-card-actions">
+          <Link to="/write" className="button primary">
+            글쓰기
+          </Link>
+          <Link to="/me/blog" className="button">
+            내 블로그
+          </Link>
+        </div>
+      )}
+      <nav className="my-card-links" aria-label="내 메뉴">
+        {me.role === 'ADMIN' && <Link to="/admin">관리자</Link>}
+        {me.blogId && <Link to="/manage">블로그 관리</Link>}
+        <Link to="/me">내 정보</Link>
+      </nav>
+    </section>
+  )
+}
 
 /** 순위 변동: 오르면 ▲n, 내리면 ▼n, 같으면 -, 새로 들어오면 NEW (BR-31) */
 export function ChangeMark({ change, isNew }: { change: number; isNew: boolean }) {

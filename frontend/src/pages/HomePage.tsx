@@ -6,7 +6,7 @@ import type { MySubscriptions, PageResult, Topic } from '../api/types'
 import { useAuth } from '../auth/AuthContext'
 import Pagination from '../components/Pagination'
 import HotPostsSlider from '../components/home/HotPostsSlider'
-import { HotBloggersPanel, NoticePanel, PopularKeywordsPanel } from '../components/home/HomeSidePanels'
+import { HotBloggersPanel, MyInfoPanel, NoticePanel, PopularKeywordsPanel } from '../components/home/HomeSidePanels'
 import { PostCards, PostFeed, ThumbRow } from '../components/PostList'
 import { M } from '../messages'
 
@@ -234,6 +234,7 @@ export default function HomePage() {
       </section>
       </div>
       <aside className="home-side" aria-label="안내">
+        <MyInfoPanel />
         <HotPostsSlider topicId={sideTopic} />
         <PopularKeywordsPanel />
         <HotBloggersPanel topicId={sideTopic} />
