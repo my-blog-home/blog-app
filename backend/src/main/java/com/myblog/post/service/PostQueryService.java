@@ -55,9 +55,9 @@ public class PostQueryService {
         }
     }
 
-    /** 본문의 첫 이미지를 목록 썸네일로 쓴다 */
-    private static final java.util.regex.Pattern FIRST_IMAGE =
-            java.util.regex.Pattern.compile("!\\[[^\\]]*]\\((/images/[0-9a-f\\-]{36}\\.(?:jpg|png|gif|webp))\\)");
+    /** 본문의 첫 이미지(직접 올린 이미지 또는 http(s) 이미지 주소)를 목록 썸네일로 쓴다 */
+    private static final java.util.regex.Pattern FIRST_IMAGE = java.util.regex.Pattern.compile(
+            "!\\[[^\\]]*]\\((/images/[0-9a-f\\-]{36}\\.(?:jpg|png|gif|webp)|https?://[^\\s()<>\"']{1,1000})(?:\\s+\"[^\"]*\")?\\)");
 
     public record PageResult(long totalCount, int page, int totalPages, List<PostItem> items) {
     }
@@ -314,7 +314,7 @@ public class PostQueryService {
                 rs.getString("author_nickname"));
     }
 
-    private static String thumbnail(String body) {
+    static String thumbnail(String body) {
         java.util.regex.Matcher m = FIRST_IMAGE.matcher(body);
         return m.find() ? m.group(1) : null;
     }
