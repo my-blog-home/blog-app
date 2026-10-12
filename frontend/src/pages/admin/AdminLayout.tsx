@@ -11,7 +11,7 @@ export interface AdminContext {
 export const useAdmin = () => useOutletContext<AdminContext>()
 
 /**
- * 관리자 화면: 왼쪽 메뉴(요약·신고 처리·회원 관리·공지 관리), 오른쪽 내용 (FR-078~082).
+ * 관리자 화면: 왼쪽 메뉴(요약·신고 처리·회원 관리·글·댓글 관리·공지 관리), 오른쪽 내용 (FR-078~082).
  * 로그인하지 않았으면 로그인 창, 관리자가 아니면 "관리자만 볼 수 있는 화면입니다". 서버도 요청마다 다시 확인한다.
  */
 export default function AdminLayout() {
@@ -56,6 +56,7 @@ export default function AdminLayout() {
             신고 처리{pending > 0 && <span className="count-badge" aria-label={`처리 대기 신고 ${pending}건`}>{pending}</span>}
           </NavLink>
           <NavLink to="/admin/members">회원 관리</NavLink>
+          <NavLink to="/admin/content">글·댓글 관리</NavLink>
           <NavLink to="/admin/notices">공지 관리</NavLink>
         </nav>
       </aside>

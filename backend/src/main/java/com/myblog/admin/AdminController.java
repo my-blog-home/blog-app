@@ -35,14 +35,17 @@ public class AdminController {
     private final AdminMemberService members;
     private final AdminSuspensionService suspensions;
     private final AdminNoticeService notices;
+    private final AdminContentService contents;
 
     public AdminController(AdminGuard guard, AdminReportService reports, AdminMemberService members,
-                           AdminSuspensionService suspensions, AdminNoticeService notices) {
+                           AdminSuspensionService suspensions, AdminNoticeService notices,
+                           AdminContentService contents) {
         this.guard = guard;
         this.reports = reports;
         this.members = members;
         this.suspensions = suspensions;
         this.notices = notices;
+        this.contents = contents;
     }
 
     @GetMapping("/api/admin/summary")
@@ -112,5 +115,34 @@ public class AdminController {
     public void deleteNotice(@PathVariable long noticeId) {
         guard.requireAdmin();
         notices.delete(noticeId);
+    }
+
+    /** 글·댓글 관리: 신고가 없어도 최근 글과 댓글을 보고 지운다 */
+    @GetMapping("/api/admin/posts")
+    public AdminContentService.Page<AdminContentService.PostRow> posts(@RequestParam(required = false) String q,
+                                                                      @RequestParam(defaultValue = "1") int page) {
+        guard.requireAdmin();
+        return contents.posts(q, page);
+    }
+
+    @DeleteMapping("/api/admin/posts/{postId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deletePost(@PathVariable long postId) {
+        guard.requireAdmin();
+        contents.deletePost(postId);
+    }
+
+    @GetMapping("/api/admin/comments")
+    public AdminContentService.Page<AdminContentService.CommentRow> comments(@RequestParam(required = false) String q,
+                                                                            @RequestParam(defaultValue = "1") int page) {
+        guard.requireAdmin();
+        return contents.comments(q, page);
+    }
+
+    @DeleteMapping("/api/admin/comments/{commentId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteComment(@PathVariable long commentId) {
+        guard.requireAdmin();
+        contents.deleteComment(commentId);
     }
 }

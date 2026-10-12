@@ -56,7 +56,8 @@ class AdminAccessIT extends IntegrationTestBase {
     @Test
     void 관리자_API는_비회원_401_일반_회원_403이다() throws Exception {
         LoggedIn member = signupAndLogin("회원", "member@example.com");
-        for (String url : new String[] {"/api/admin/summary", "/api/admin/reports", "/api/admin/members"}) {
+        for (String url : new String[] {"/api/admin/summary", "/api/admin/reports", "/api/admin/members",
+                "/api/admin/posts", "/api/admin/comments"}) {
             mvc.perform(get(url)).andExpect(status().isUnauthorized());
             mvc.perform(get(url).cookie(member.session()))
                     .andExpect(status().isForbidden())

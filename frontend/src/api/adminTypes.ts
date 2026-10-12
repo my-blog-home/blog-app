@@ -135,3 +135,38 @@ export const MEMBER_STATUS_LABEL: Record<MemberStatus, string> = {
   SUSPENDED: '정지',
   WITHDRAWN: '탈퇴',
 }
+
+/** 관리자 글·댓글 관리 */
+export interface AdminPostRow {
+  id: number
+  title: string
+  visibility: 'PUBLIC' | 'PRIVATE'
+  publishedAt: string
+  blogId: number
+  blogName: string
+  authorId: number | null
+  authorNickname: string | null
+  commentCount: number
+  reportCount: number
+}
+
+export interface AdminCommentRow {
+  id: number
+  /** 비밀 댓글이면 비어 있다 */
+  content: string | null
+  secret: boolean
+  reply: boolean
+  createdAt: string
+  postId: number
+  postTitle: string
+  authorId: number | null
+  authorNickname: string | null
+  reportCount: number
+}
+
+export interface AdminContentPage<T> {
+  totalCount: number
+  page: number
+  totalPages: number
+  items: T[]
+}
