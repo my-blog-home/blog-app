@@ -140,19 +140,8 @@ export default function HomePage() {
         </div>
         <div className="section-head with-sort">
           <div>
-            {tab === 'all' && result ? (
-              <>
-                <p>
-                  {current ? `'${current.name}' 주제의 공개 글` : '모든 블로그의 공개 글'} {result.totalCount.toLocaleString()}개
-                </p>
-                <h2>전체 글</h2>
-              </>
-            ) : (
-              <>
-                <p>내가 구독한 블로그의 공개 글{feed ? ` ${feed.totalCount.toLocaleString()}개` : ''}</p>
-                <h2>구독 피드</h2>
-              </>
-            )}
+            {/* 글 수는 늘어나면 의미가 없어 보이지 않는다 */}
+            <h2>{tab === 'all' ? '전체 글' : '구독 피드'}</h2>
           </div>
           <div className="sort-toggle" role="group" aria-label="정렬">
             <button type="button" className={sort === 'latest' ? 'current' : ''} aria-pressed={sort === 'latest'} onClick={() => go({ sort: 'latest' })}>
