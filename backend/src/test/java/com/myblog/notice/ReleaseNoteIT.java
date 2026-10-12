@@ -44,27 +44,24 @@ class ReleaseNoteIT extends IntegrationTestBase {
                 .andExpect(jsonPath("$.version").value(version))
                 .andReturn().getResponse().getContentAsString();
         long id = json.readTree(body).get("releaseNoticeId").asLong();
-        // 가리킨 공지는 보이는 릴리스 노트다 (지금 버전 노트가 모음으로 합쳐졌으면 모음 노트)
+        // 지금 버전의 노트 파일이 있으면 바닥글은 그 버전의 공지를 가리킨다
         mvc.perform(get("/api/notices/" + id))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.releaseVersion").exists());
+                .andExpect(jsonPath("$.releaseVersion").value(version));
     }
 
     @Test
     void 파일이_없어진_버전의_공지는_지우지_않고_숨긴다() throws Exception {
         // 모음 노트로 합치기 전에 올라가 있던 옛 버전 공지
         jdbc.update("insert into notice (type, title, content, pinned, created_at, release_version)"
-                + " values ('NOTICE', '[v1.3.0] 옛 노트', '내용', false, now(), '1.3.0')");
+                + " values ('NOTICE', '[v0.9.0] 옛 노트', '내용', false, now(), '0.9.0')");
         publisher.publishAll();
-        assertThat(jdbc.queryForObject("select hidden from notice where release_version = '1.3.0'", Boolean.class)).isTrue();
+        assertThat(jdbc.queryForObject("select hidden from notice where release_version = '0.9.0'", Boolean.class)).isTrue();
         assertThat(jdbc.queryForObject("select hidden from notice where release_version = '1.0.0'", Boolean.class)).isFalse();
-        assertThat(jdbc.queryForObject("select title from notice where release_version = '1.x'", String.class))
-                .isEqualTo("[v1.x] 업데이트 모음 (1.0.1~1.9.0)");
-        long oldId = jdbc.queryForObject("select id from notice where release_version = '1.3.0'", Long.class);
+        long oldId = jdbc.queryForObject("select id from notice where release_version = '0.9.0'", Long.class);
         mvc.perform(get("/api/notices/" + oldId)).andExpect(status().isNotFound());
         mvc.perform(get("/api/notices").param("type", "NOTICE"))
-                .andExpect(jsonPath("$.items[?(@.releaseVersion == '1.3.0')]").doesNotExist())
-                .andExpect(jsonPath("$.items[?(@.releaseVersion == '1.x')]").exists());
+                .andExpect(jsonPath("$.items[?(@.releaseVersion == '0.9.0')]").doesNotExist());
     }
 
     @Test
