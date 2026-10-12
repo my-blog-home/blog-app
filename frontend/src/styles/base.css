@@ -636,6 +636,17 @@ button.link:disabled { color: var(--text-faint); text-decoration: none; }
 .badge.guide-badge { background: var(--sky); color: #2c6aa0; flex-shrink: 0; }
 .badge.release-badge { background: #e8f7f0; color: #256d52; flex-shrink: 0; }
 .footer-inner { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.footer-links { display: flex; gap: 14px; flex-wrap: wrap; }
+.footer-links a:hover { color: var(--text); text-decoration: underline; }
+.footer-links strong { color: var(--text); }
+.policy-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.policy-tabs a { padding: 6px 14px; border-radius: 999px; background: var(--bg-soft); color: var(--text-sub); font-size: 14px; font-weight: 600; }
+.policy-tabs a.current { background: var(--primary); color: #fff; }
+.policy .markdown h1 { font-size: 28px; margin-top: 16px; }
+.policy .markdown h2 { font-size: 19px; margin: 32px 0 10px; }
+.policy .markdown table { display: table; width: 100%; font-size: 14px; }
+.policy .markdown td, .policy .markdown th { vertical-align: top; }
+@media (max-width: 767px) { .policy .markdown table { display: block; } }
 .footer-version a { color: var(--primary); font-weight: 600; }
 .notice-item { display: block; padding: 10px 6px; border-top: 1px solid var(--border); }
 .notice-list li:first-child .notice-item { border-top: 0; padding-top: 4px; }
