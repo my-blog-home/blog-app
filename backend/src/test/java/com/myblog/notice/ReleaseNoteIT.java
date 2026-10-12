@@ -3,6 +3,7 @@ package com.myblog.notice;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.myblog.support.IntegrationTestBase;
 import org.junit.jupiter.api.AfterEach;
@@ -36,17 +37,34 @@ class ReleaseNoteIT extends IntegrationTestBase {
     }
 
     @Test
-    void 현재_버전과_그_버전의_릴리스_노트_공지를_알려_준다() throws Exception {
+    void 바닥글은_지금_버전_노트나_가장_최근의_보이는_노트를_가리킨다() throws Exception {
         publisher.publishAll();
-        // 지금 버전(build.gradle)의 노트가 있어야 하고, 바닥글은 그 노트를 가리킨다
         String version = build.getVersion();
-        Long id = jdbc.queryForObject("select id from notice where release_version = ?", Long.class, version);
-        mvc.perform(get("/api/config/version"))
+        String body = mvc.perform(get("/api/config/version"))
                 .andExpect(jsonPath("$.version").value(version))
-                .andExpect(jsonPath("$.releaseNoticeId").value(id));
-        // 공지 목록 첫 페이지에 지금 버전의 노트가 보인다 (노트가 많아지면 옛 노트는 다음 페이지로 밀린다)
+                .andReturn().getResponse().getContentAsString();
+        long id = json.readTree(body).get("releaseNoticeId").asLong();
+        // 가리킨 공지는 보이는 릴리스 노트다 (지금 버전 노트가 모음으로 합쳐졌으면 모음 노트)
+        mvc.perform(get("/api/notices/" + id))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.releaseVersion").exists());
+    }
+
+    @Test
+    void 파일이_없어진_버전의_공지는_지우지_않고_숨긴다() throws Exception {
+        // 모음 노트로 합치기 전에 올라가 있던 옛 버전 공지
+        jdbc.update("insert into notice (type, title, content, pinned, created_at, release_version)"
+                + " values ('NOTICE', '[v1.3.0] 옛 노트', '내용', false, now(), '1.3.0')");
+        publisher.publishAll();
+        assertThat(jdbc.queryForObject("select hidden from notice where release_version = '1.3.0'", Boolean.class)).isTrue();
+        assertThat(jdbc.queryForObject("select hidden from notice where release_version = '1.0.0'", Boolean.class)).isFalse();
+        assertThat(jdbc.queryForObject("select title from notice where release_version = '1.x'", String.class))
+                .isEqualTo("[v1.x] 업데이트 모음 (1.0.1~1.9.0)");
+        long oldId = jdbc.queryForObject("select id from notice where release_version = '1.3.0'", Long.class);
+        mvc.perform(get("/api/notices/" + oldId)).andExpect(status().isNotFound());
         mvc.perform(get("/api/notices").param("type", "NOTICE"))
-                .andExpect(jsonPath("$.items[?(@.releaseVersion == '" + version + "')]").exists());
+                .andExpect(jsonPath("$.items[?(@.releaseVersion == '1.3.0')]").doesNotExist())
+                .andExpect(jsonPath("$.items[?(@.releaseVersion == '1.x')]").exists());
     }
 
     @Test

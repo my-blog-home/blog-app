@@ -151,7 +151,7 @@ public class AdminReportService {
 
     @Transactional(readOnly = true)
     public Summary summary() {
-        Long notices = jdbc.queryForObject("select count(*) from notice", Map.of(), Long.class);
+        Long notices = jdbc.queryForObject("select count(*) from notice where not hidden", Map.of(), Long.class);
         ReportPage pending = list(Status.PENDING, 1, limits.adminSummaryPendingCount());
         return new Summary(pending.counts(), notices == null ? 0 : notices, pending.items());
     }
