@@ -18,7 +18,7 @@ class TopicIT extends IntegrationTestBase {
     private static final long DAILY = 9;
 
     @Test
-    void 주제_10개를_순서대로_보이고_방문자에게_보이는_글만_센다() throws Exception {
+    void 주제_9개를_순서대로_보이고_방문자에게_보이는_글만_센다() throws Exception {
         LoggedIn owner = signupAndLogin("주인", "owner@example.com");
         createPost(owner, Map.of("title", "요리 글", "body", "본문", "topicId", COOKING));
         createPost(owner, Map.of("title", "비공개 요리", "body", "본문", "topicId", COOKING, "visibility", "PRIVATE"));
@@ -26,10 +26,11 @@ class TopicIT extends IntegrationTestBase {
 
         mvc.perform(get("/api/topics"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(10))
+                .andExpect(jsonPath("$.length()").value(9))
                 .andExpect(jsonPath("$[0].name").value("IT·개발"))
-                .andExpect(jsonPath("$[8].name").value("일상"))
-                .andExpect(jsonPath("$[9].name").value("취미"))
+                .andExpect(jsonPath("$[*].name", org.hamcrest.Matchers.not(org.hamcrest.Matchers.hasItem("문화·리뷰"))))
+                .andExpect(jsonPath("$[7].name").value("일상"))
+                .andExpect(jsonPath("$[8].name").value("취미"))
                 .andExpect(jsonPath("$[2].postCount").value(1));
     }
 
