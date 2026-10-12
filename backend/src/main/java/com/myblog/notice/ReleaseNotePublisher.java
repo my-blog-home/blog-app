@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * 버전마다 하나씩 있는 릴리스 노트(resources/release-notes/{버전}.md)를 공지로 올린다.
  * 서버가 켜질 때 아직 올라가지 않은 버전만 올리므로, 같은 버전을 다시 배포해도 중복되지 않는다.
+ * 노트 파일을 지우면(예: 여러 버전을 "1.x" 모음 노트 하나로 합칠 때) 그 버전의 공지는 지우지 않고 숨긴다.
  *
  * 파일 형식: 맨 위에 "title: 제목", "date: yyyy-MM-dd"(선택), 그다음 "---" 줄, 그 아래가 본문(글자만).
  */
@@ -57,7 +58,8 @@ public class ReleaseNotePublisher implements ApplicationRunner {
     @Transactional
     public int publishAll() {
         int published = 0;
-        for (ReleaseNote note : readAll()) {
+        List<ReleaseNote> notes = readAll();
+        for (ReleaseNote note : notes) {
             Map<String, Object> params = new HashMap<>();
             params.put("version", note.version());
             params.put("title", note.title());
@@ -69,8 +71,14 @@ public class ReleaseNotePublisher implements ApplicationRunner {
                     on conflict (release_version) where release_version is not null do nothing
                     """, params);
         }
-        if (published > 0) {
-            log.info("릴리스 노트 {}개를 공지로 올렸습니다", published);
+        // 파일이 있는 버전은 보이고, 파일이 없어진 버전은 숨긴다
+        List<String> versions = notes.stream().map(ReleaseNote::version).toList();
+        int hidden = versions.isEmpty() ? 0 : jdbc.update("""
+                update notice set hidden = (release_version not in (:versions))
+                where release_version is not null and hidden <> (release_version not in (:versions))
+                """, Map.of("versions", versions));
+        if (published > 0 || hidden > 0) {
+            log.info("릴리스 노트 {}개를 공지로 올리고, {}개의 보임 여부를 바꿨습니다", published, hidden);
         }
         return published;
     }

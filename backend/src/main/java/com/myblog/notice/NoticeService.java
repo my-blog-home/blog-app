@@ -57,7 +57,7 @@ public class NoticeService {
         int size = requestedSize == null ? limits.pageSize() : Math.min(Math.max(1, requestedSize), limits.pageSize());
         Map<String, Object> params = new HashMap<>();
         params.put("type", type == null ? null : type.name());
-        String where = " where (cast(:type as varchar) is null or type = :type)";
+        String where = " where not hidden and (cast(:type as varchar) is null or type = :type)";
         long total = jdbc.queryForObject("select count(*) from notice" + where, params, Long.class);
         int totalPages = (int) Math.max(1, (total + size - 1) / size);
         int page = Math.min(Math.max(1, requestedPage), totalPages);
@@ -70,7 +70,7 @@ public class NoticeService {
 
     @Transactional(readOnly = true)
     public NoticeDetail detail(long id) {
-        List<NoticeDetail> found = jdbc.query("select * from notice where id = :id", Map.of("id", id),
+        List<NoticeDetail> found = jdbc.query("select * from notice where id = :id and not hidden", Map.of("id", id),
                 (rs, row) -> {
                     Timestamp updated = rs.getTimestamp("updated_at");
                     return new NoticeDetail(rs.getLong("id"), NoticeType.valueOf(rs.getString("type")),
@@ -83,7 +83,7 @@ public class NoticeService {
         }
         NoticeDetail notice = found.get(0);
         List<NoticeItem> others = jdbc.query("select id, type, title, pinned, created_at, release_version from notice"
-                        + " where type = :type and id <> :id" + ORDER + " limit :limit",
+                        + " where type = :type and id <> :id and not hidden" + ORDER + " limit :limit",
                 Map.of("type", notice.type().name(), "id", id, "limit", limits.noticeRelatedCount()),
                 (rs, row) -> item(rs));
         return new NoticeDetail(notice.id(), notice.type(), notice.title(), notice.content(), notice.pinned(),
