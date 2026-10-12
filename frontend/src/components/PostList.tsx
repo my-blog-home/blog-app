@@ -42,14 +42,17 @@ export default function PostList({ items, showBlog = false }: { items: PostItem[
   )
 }
 
-/** 첫 화면의 카드 목록: 카드 어디를 눌러도 글로, 블로그 이름만 따로 블로그로 간다 */
+/**
+ * 첫 화면의 글 목록: 네이버 블로그·티스토리처럼 한 줄씩 놓고, 이미지가 있으면 오른쪽에 첫 이미지를 둔다.
+ * 줄 어디를 눌러도 글로, 블로그·작성자 이름만 따로 그쪽으로 간다
+ */
 export function PostCards({ items }: { items: PostItem[] }) {
   return (
-    <ul className="card-grid">
+    <ul className="feed-list">
       {items.map((post) => (
-        <li key={post.id} className="post-card">
-          <div className="card-top">
-            <span className="card-who">
+        <li key={post.id} className="feed-item">
+          <div className="feed-body">
+            <div className="feed-top">
               <Link to={`/blogs/${post.blogId}`} className="card-blog">
                 <span className="avatar sm" style={{ background: post.authorColor }}>
                   {[...post.blogName][0]}
@@ -60,21 +63,27 @@ export function PostCards({ items }: { items: PostItem[] }) {
               <Link to={`/users/${post.authorId}`} className="card-author">
                 {post.authorNickname}
               </Link>
-            </span>
-            <time className="card-date" dateTime={post.createdAt} title={formatDateTime(post.createdAt)}>
-              {formatPostDate(post.createdAt)}
-            </time>
+              <time className="card-date" dateTime={post.createdAt} title={formatDateTime(post.createdAt)}>
+                {formatPostDate(post.createdAt)}
+              </time>
+            </div>
+            <Link to={`/posts/${post.id}`} className="card-link">
+              <h3>{post.title}</h3>
+            </Link>
+            <p className="feed-excerpt">{post.excerpt}</p>
+            <div className="feed-foot">
+              <span className="cat-chip">
+                <i />
+                {post.topicName} · {post.categoryName}
+              </span>
+              <Reactions post={post} />
+            </div>
           </div>
-          <span className="cat-chip">
-            <i />
-            {post.topicName} · {post.categoryName}
-          </span>
-          {post.thumbnailUrl && <Thumb url={post.thumbnailUrl} label={post.categoryName} />}
-          <Link to={`/posts/${post.id}`} className="card-link">
-            <h3>{post.title}</h3>
-          </Link>
-          <p>{post.excerpt}</p>
-          <Reactions post={post} />
+          {post.thumbnailUrl && (
+            <figure className="feed-thumb">
+              <img src={post.thumbnailUrl} alt="" loading="lazy" referrerPolicy="no-referrer" />
+            </figure>
+          )}
         </li>
       ))}
     </ul>
