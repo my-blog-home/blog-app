@@ -73,4 +73,26 @@ class NoticeIT extends IntegrationTestBase {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("존재하지 않는 공지입니다"));
     }
+
+    @Test
+    void 업데이트는_공지와_이용법_뒤에_최신순으로_온다() throws Exception {
+        jdbc.update("insert into notice (type, title, content, pinned, created_at, release_version)"
+                + " values ('NOTICE', '[v9.0.0] 업데이트 A', '내용', false, now(), '9.0.0'),"
+                + " ('NOTICE', '[v9.0.1] 업데이트 B', '내용', false, now() + interval '1 minute', '9.0.1')");
+        try {
+            mvc.perform(get("/api/notices"))
+                    .andExpect(jsonPath("$.totalCount").value(11))
+                    .andExpect(jsonPath("$.items[0].title").value("서비스 이용 시 유의사항"))
+                    .andExpect(jsonPath("$.items[8].title").value("블로그 만들고 첫 글 쓰기"))
+                    .andExpect(jsonPath("$.items[9].title").value("[v9.0.1] 업데이트 B"));
+            mvc.perform(get("/api/notices").param("page", "2"))
+                    .andExpect(jsonPath("$.items[0].title").value("[v9.0.0] 업데이트 A"));
+            // 첫 화면(5개)에는 업데이트가 아니라 공지·이용법이 먼저 보인다
+            mvc.perform(get("/api/notices").param("size", "5"))
+                    .andExpect(jsonPath("$.items[*].releaseVersion", not(hasItem("9.0.1"))));
+        } finally {
+            // 다른 테스트가 보는 공지 수가 바뀌지 않게 지운다
+            jdbc.update("delete from notice where release_version like '9.0.%'");
+        }
+    }
 }
