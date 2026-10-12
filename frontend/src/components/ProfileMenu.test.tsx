@@ -22,7 +22,7 @@ describe('ProfileMenu', () => {
     fireEvent.click(toggle)
     expect(toggle.getAttribute('aria-expanded')).toBe('true')
     const items = screen.getAllByRole('menuitem').map((el) => el.textContent?.replace(/\d+$/, ''))
-    expect(items).toEqual(['관리자', '내 블로그', '블로그 관리', '내 활동', '마이페이지', '로그아웃'])
+    expect(items).toEqual(['관리자', '내 블로그', '블로그 관리', '내 활동', '북마크', '마이페이지', '로그아웃'])
     expect(document.activeElement).toBe(screen.getAllByRole('menuitem')[0])
     fireEvent.keyDown(document, { key: 'Escape' })
     expect(screen.queryByRole('menu')).toBeNull()

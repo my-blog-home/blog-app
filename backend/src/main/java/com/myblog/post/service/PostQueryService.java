@@ -69,7 +69,7 @@ public class PostQueryService {
                              Visibility visibility, PostStatus status, Instant createdAt, Instant updatedAt,
                              Long prevPostId, Long nextPostId, boolean editable, String authorColor,
                              long likeCount, boolean likedByMe, long commentCount, List<String> tags,
-                             long viewCount, long authorId, String authorNickname) {
+                             long viewCount, long authorId, String authorNickname, boolean bookmarkedByMe) {
     }
 
     private static final String SELECT_ITEMS = """
@@ -202,6 +202,20 @@ public class PostQueryService {
                 "(select pl.created_at from post_like pl where pl.post_id = p.id and pl.member_id = :me) desc, p.id desc");
     }
 
+    /** 내 북마크: 지금 읽을 수 있는 글만, 최근에 저장한 순서 */
+    @Transactional(readOnly = true)
+    public PageResult bookmarkedPosts(long memberId, int page) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("me", memberId);
+        String where = """
+                where exists (select 1 from bookmark bm where bm.post_id = p.id and bm.member_id = :me)
+                  and %s
+                """.formatted(PostVisibilitySql.readableBy("p",
+                "(select ob.owner_id from blog ob where ob.id = p.blog_id)", "me"));
+        return page(where, params, page,
+                "(select bm.created_at from bookmark bm where bm.post_id = p.id and bm.member_id = :me) desc, p.id desc");
+    }
+
     /** 검색 모듈이 만든 조건으로 공개 글을 읽는다 (search → post 방향) */
     @Transactional(readOnly = true)
     public PageResult searchPage(String where, Map<String, Object> params, int page) {
@@ -271,7 +285,9 @@ public class PostQueryService {
                         post.getId(), viewerId) > 0,
                 count("select count(*) from comment where post_id = :id", post.getId(), null),
                 tagService.tagsOf(post.getId()), post.getViewCount(), blog.getOwnerId(),
-                (String) author.get("nickname"));
+                (String) author.get("nickname"),
+                viewerId != null && count("select count(*) from bookmark where post_id = :id and member_id = :viewer",
+                        post.getId(), viewerId) > 0);
     }
 
     /** 좋아요·댓글 수는 표에서 직접 센다 (post가 comment 모듈을 부르지 않도록) */

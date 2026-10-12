@@ -5,6 +5,7 @@ import type { PostDetail } from '../api/types'
 import AuthorBox from '../components/AuthorBox'
 import BackButton from '../components/BackButton'
 import CommentSection from '../components/CommentSection'
+import BookmarkButton from '../components/BookmarkButton'
 import LikeButton from '../components/LikeButton'
 import MarkdownView from '../components/MarkdownView'
 import ReportModal from '../components/ReportModal'
@@ -143,6 +144,7 @@ export default function PostDetailPage() {
       )}
       <div className="reactions">
         <LikeButton key={post.id} postId={post.id} initialCount={post.likeCount} initialLiked={post.likedByMe} isMine={post.editable} />
+        <BookmarkButton key={`bm-${post.id}`} postId={post.id} initial={post.bookmarkedByMe} />
         <button type="button" onClick={copyLink}>
           링크 복사
         </button>

@@ -113,6 +113,7 @@ public class MyPageService {
         jdbc.update("delete from blog where owner_id = :id", params);
         jdbc.update("delete from post_like where member_id = :id", params);
         jdbc.update("delete from subscription where member_id = :id", params);
+        jdbc.update("delete from bookmark where member_id = :id", params);
         jdbc.update("delete from post_image where uploader_id = :id", params);
         member.withdraw(clock.instant());
         members.flush();
