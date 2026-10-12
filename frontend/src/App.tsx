@@ -10,6 +10,7 @@ import AdminNoticesPage from './pages/admin/AdminNoticesPage'
 import AdminReportsPage from './pages/admin/AdminReportsPage'
 import AdminSummaryPage from './pages/admin/AdminSummaryPage'
 import ActivityPage from './pages/ActivityPage'
+import BookmarksPage from './pages/BookmarksPage'
 import BlogPage from './pages/BlogPage'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
@@ -53,6 +54,7 @@ export default function App() {
           <Route path="/search" element={<SearchPage />} />
           <Route path="/me" element={<MyPage />} />
           <Route path="/me/activity" element={<ActivityPage />} />
+          <Route path="/me/bookmarks" element={<BookmarksPage />} />
           <Route path="/me/blog" element={<MyBlogPage />} />
           <Route path="/tags/:name" element={<TagPage />} />
           <Route path="/users/:userId" element={<UserProfilePage />} />

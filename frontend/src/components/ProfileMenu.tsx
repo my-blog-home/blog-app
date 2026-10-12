@@ -4,7 +4,7 @@ import type { Me } from '../api/types'
 
 /**
  * 프로필 메뉴: 머리글의 아바타를 누르면 열린다 (CR-60).
- * 순서: 관리자(관리자만) → 내 블로그 → 블로그 관리 → 내 활동 → 마이페이지 → 로그아웃.
+ * 순서: 관리자(관리자만) → 내 블로그 → 블로그 관리 → 내 활동 → 북마크 → 마이페이지 → 로그아웃.
  * 바깥을 누르거나 Esc로 닫고, 열면 첫 항목에, Esc로 닫으면 아바타 버튼에 초점을 둔다. ↑ ↓ 로 항목을 옮긴다 (NFR-08)
  */
 export default function ProfileMenu({ me, newCommentCount, onLogout }: { me: Me; newCommentCount: number; onLogout: () => void }) {
@@ -122,6 +122,9 @@ export default function ProfileMenu({ me, newCommentCount, onLogout }: { me: Me;
           )}
           <Link to="/me/activity" role="menuitem">
             내 활동
+          </Link>
+          <Link to="/me/bookmarks" role="menuitem">
+            북마크
           </Link>
           <Link to="/me" role="menuitem">
             마이페이지

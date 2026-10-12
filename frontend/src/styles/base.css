@@ -286,6 +286,7 @@ input[type="checkbox"], input[type="radio"] { width: 16px; height: 16px; accent-
 a.tag:hover { background: var(--primary-soft); color: var(--primary); }
 .reactions { display: flex; justify-content: center; align-items: center; gap: 12px; padding: 24px 0 32px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
 .like.on { color: var(--primary); border-color: var(--primary); background: var(--primary-soft); }
+.like.bookmark-on { color: #b7791f; border-color: #e9c46a; background: #fff8e6; }
 .prev-next { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
 .prev-next a {
   padding: 16px 20px; border: 1px solid var(--border); border-radius: var(--radius);

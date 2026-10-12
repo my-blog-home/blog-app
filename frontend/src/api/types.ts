@@ -102,6 +102,7 @@ export interface PostDetail {
   authorColor: string
   likeCount: number
   likedByMe: boolean
+  bookmarkedByMe: boolean
   commentCount: number
   tags: string[]
   viewCount: number
