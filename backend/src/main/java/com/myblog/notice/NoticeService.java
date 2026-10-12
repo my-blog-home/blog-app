@@ -16,7 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 공지·이용 안내 읽기 (FR-077, BR-30). 누구나 읽는다. 고정 글이 위로, 그 안에서는 최신 글이 먼저.
+ * 공지·이용 안내 읽기 (FR-077, BR-30). 누구나 읽는다. 공지와 이용법이 위에 고정되고(고정 글 먼저, 공지 다음 이용법,
+ * 그 안에서는 최신 글이 먼저) 업데이트(릴리스 노트)는 그 뒤에 최신 글부터 온다.
  * 쓰고 고치는 관리자 기능은 아직 없고, 처음 안내는 마이그레이션(V10)으로 넣는다.
  * 내용은 글자만 저장하고, 화면이 빈 줄로 문단을 나눠 보여 준다(HTML로 해석하지 않음).
  */
@@ -37,7 +38,9 @@ public class NoticeService {
                                Instant createdAt, Instant updatedAt, List<NoticeItem> others, String releaseVersion) {
     }
 
-    private static final String ORDER = " order by pinned desc, created_at desc, id desc";
+    /** 업데이트(release_version이 있는 글)는 맨 뒤로. 나머지는 고정 글, 공지, 이용법 순서 */
+    private static final String ORDER = " order by (release_version is not null), pinned desc,"
+            + " case type when 'NOTICE' then 0 else 1 end, created_at desc, id desc";
 
     private final NamedParameterJdbcTemplate jdbc;
     private final BlogLimits limits;
