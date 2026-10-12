@@ -90,6 +90,25 @@ export function PostCards({ items }: { items: PostItem[] }) {
   )
 }
 
+/** 첫 화면의 앨범형 목록: 첫 이미지를 크게, 이미지가 없으면 주제 이름 칸. 아래에 제목과 블로그 이름 */
+export function PostAlbum({ items }: { items: PostItem[] }) {
+  return (
+    <ul className="album-grid">
+      {items.map((post) => (
+        <li key={post.id}>
+          <Link to={`/posts/${post.id}`} className="thumb-card album-card">
+            <Thumb url={post.thumbnailUrl} label={post.topicName} />
+            <strong>{post.title}</strong>
+            <span>
+              {post.blogName} · {formatPostDate(post.createdAt)}
+            </span>
+          </Link>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
 /** 요즘것들처럼 정사각 썸네일 카드를 가로로 넘겨 보는 줄 */
 export function ThumbRow({ items }: { items: PostItem[] }) {
   return (

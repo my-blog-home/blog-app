@@ -7,11 +7,50 @@ import { useAuth } from '../auth/AuthContext'
 import Pagination from '../components/Pagination'
 import HotPostsSlider from '../components/home/HotPostsSlider'
 import { HotBloggersPanel, NoticePanel, PopularKeywordsPanel } from '../components/home/HomeSidePanels'
-import { PostCards, ThumbRow } from '../components/PostList'
+import { PostAlbum, PostCards, ThumbRow } from '../components/PostList'
 import { M } from '../messages'
 
 type Sort = 'latest' | 'popular'
 type Tab = 'all' | 'feed'
+type View = 'list' | 'album'
+
+const VIEW_KEY = 'ylog.homeView'
+
+/** 목록형/앨범형 선택은 이 브라우저에 기억한다. 저장소를 못 쓰면 목록형 */
+function loadView(): View {
+  try {
+    return localStorage.getItem(VIEW_KEY) === 'album' ? 'album' : 'list'
+  } catch {
+    return 'list'
+  }
+}
+
+function saveView(view: View) {
+  try {
+    localStorage.setItem(VIEW_KEY, view)
+  } catch {
+    // 저장하지 못해도 이번 화면에서는 바뀐다
+  }
+}
+
+function ListIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true">
+      <path d="M2.5 4h11M2.5 8h11M2.5 12h11" />
+    </svg>
+  )
+}
+
+function AlbumIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+      <rect x="2.2" y="2.2" width="4.6" height="4.6" rx="1.2" />
+      <rect x="9.2" y="2.2" width="4.6" height="4.6" rx="1.2" />
+      <rect x="2.2" y="9.2" width="4.6" height="4.6" rx="1.2" />
+      <rect x="9.2" y="9.2" width="4.6" height="4.6" rx="1.2" />
+    </svg>
+  )
+}
 
 /**
  * 첫 화면: 주제 버튼(글의 주제로 모아 보기)과 새 글 썸네일 줄, 아래에 전체 글을 카드로.
@@ -28,6 +67,12 @@ export default function HomePage() {
   const tab: Tab = params.get('tab') === 'feed' ? 'feed' : 'all'
   const { me, loading, requireLogin } = useAuth()
   const [feed, setFeed] = useState<PageResult | null>(null)
+  const [view, setView] = useState<View>(loadView)
+  const changeView = (next: View) => {
+    setView(next)
+    saveView(next)
+  }
+  const Posts = view === 'album' ? PostAlbum : PostCards
   const [hasSubscriptions, setHasSubscriptions] = useState(true)
   const [topics, setTopics] = useState<Topic[]>([])
   const [latest, setLatest] = useState<PageResult | null>(null)
@@ -151,10 +196,19 @@ export default function HomePage() {
               인기순
             </button>
           </div>
+          {/* 목록형(기본)과 앨범형 전환 */}
+          <div className="sort-toggle view-toggle" role="group" aria-label="보기 방식">
+            <button type="button" className={view === 'list' ? 'current' : ''} aria-pressed={view === 'list'} aria-label="목록형" title="목록형" onClick={() => changeView('list')}>
+              <ListIcon />
+            </button>
+            <button type="button" className={view === 'album' ? 'current' : ''} aria-pressed={view === 'album'} aria-label="앨범형" title="앨범형" onClick={() => changeView('album')}>
+              <AlbumIcon />
+            </button>
+          </div>
         </div>
         {tab === 'all' && result && (
           <>
-            {result.items.length === 0 ? <p className="empty">{M.emptyList}</p> : <PostCards items={result.items} />}
+            {result.items.length === 0 ? <p className="empty">{M.emptyList}</p> : <Posts items={result.items} />}
             <Pagination page={result.page} totalPages={result.totalPages} onChange={(p) => go({ page: p })} />
           </>
         )}
@@ -172,7 +226,7 @@ export default function HomePage() {
                 {feed.items.length === 0 ? (
                   <p className="empty">{hasSubscriptions ? M.emptyList : M.feedEmpty}</p>
                 ) : (
-                  <PostCards items={feed.items} />
+                  <Posts items={feed.items} />
                 )}
                 <Pagination page={feed.page} totalPages={feed.totalPages} onChange={(p) => go({ page: p })} />
               </>

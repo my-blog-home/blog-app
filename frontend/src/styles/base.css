@@ -184,6 +184,14 @@ input[type="checkbox"], input[type="radio"] { width: 16px; height: 16px; accent-
 }
 .cat-chip i, .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--c, var(--primary)); flex-shrink: 0; }
 
+/* 첫 화면 앨범형: 데스크톱 3칸, 휴대폰 2칸 */
+.album-grid { list-style: none; margin: 4px 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px 20px; }
+.album-card strong { -webkit-line-clamp: 2; }
+.album-card .thumb-placeholder { font-size: 16px; }
+@media (max-width: 640px) {
+  .album-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 14px; }
+}
+
 /* 첫 화면 글 목록: 한 줄씩, 이미지가 있으면 오른쪽 썸네일 */
 .feed-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 .feed-item { position: relative; display: flex; align-items: center; gap: 24px; padding: 22px 0; border-bottom: 1px solid var(--border); }
@@ -482,6 +490,9 @@ a.tag:hover { background: var(--primary-soft); color: var(--primary); }
 .section-head.with-sort { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .sort-toggle { display: inline-flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--bg-soft); }
 .sort-toggle button { height: 32px; padding: 0 14px; border: 0; border-radius: 999px; background: none; font-size: 14px; color: var(--text-sub); }
+/* 정렬 옆의 목록형/앨범형 아이콘 버튼 */
+.section-head.with-sort > div:first-child { margin-right: auto; }
+.view-toggle button { width: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
 .sort-toggle button.current { background: #fff; color: var(--primary); font-weight: 700; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08); }
 .article-topic { margin: 0; font-size: 14px; color: var(--text-faint); }
 .article-topic .topic-link { color: var(--text-sub); font-weight: 700; }
