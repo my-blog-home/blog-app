@@ -17,6 +17,7 @@ import LoginPage from './pages/LoginPage'
 import MyBlogPage from './pages/MyBlogPage'
 import MyPage from './pages/MyPage'
 import PasswordResetPage from './pages/PasswordResetPage'
+import PolicyPage from './pages/PolicyPage'
 import NotFoundPage from './pages/NotFoundPage'
 import PostDetailPage from './pages/PostDetailPage'
 import PostEditorPage from './pages/PostEditorPage'
@@ -76,6 +77,9 @@ export default function App() {
             <Route path="notices" element={<AdminNoticesPage />} />
           </Route>
           <Route path="/password-reset" element={<PasswordResetPage />} />
+          <Route path="/policies/privacy" element={<PolicyPage kind="privacy" />} />
+          <Route path="/policies/terms" element={<PolicyPage kind="terms" />} />
+          <Route path="/policies/operation" element={<PolicyPage kind="operation" />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>

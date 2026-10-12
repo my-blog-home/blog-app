@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { ApiError, post } from '../api/client'
 import { M } from '../messages'
 import { useDocumentMeta } from '../meta'
@@ -57,7 +57,9 @@ export default function SignupPage() {
   const checks = passwordChecks(password)
   const passwordOk = checks.every((c) => c.ok)
   const confirmOk = password === passwordConfirm && passwordConfirm.length > 0
-  const canSubmit = verified && nicknameOk && passwordOk && confirmOk && !busy
+  // 이용약관·개인정보처리방침 동의는 가입의 필수 조건이다
+  const [agreed, setAgreed] = useState(false)
+  const canSubmit = verified && nicknameOk && passwordOk && confirmOk && agreed && !busy
 
   /** 어긴 칸마다 이유를 보여 주고 맨 위 칸으로 커서를 옮긴다. 비밀번호 칸만 비운다 (CF-01-7) */
   const showError = (err: unknown, fallbackField: Field | 'form' = 'form') => {
@@ -223,6 +225,19 @@ export default function SignupPage() {
         </label>
 
         {errors.form && <p className="error">{errors.form}</p>}
+        <label className="check">
+          <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />
+          <span>
+            <Link to="/policies/terms" target="_blank">
+              이용약관
+            </Link>
+            과{' '}
+            <Link to="/policies/privacy" target="_blank">
+              개인정보처리방침
+            </Link>
+            에 동의합니다 (필수)
+          </span>
+        </label>
         <button type="submit" className="primary" disabled={!canSubmit}>
           가입하기
         </button>

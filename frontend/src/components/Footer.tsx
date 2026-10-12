@@ -19,6 +19,13 @@ export default function Footer() {
     <footer className="footer">
       <div className="footer-inner">
         <span>Ylog · 내 블로그</span>
+        <nav className="footer-links" aria-label="정책">
+          <Link to="/policies/terms">이용약관</Link>
+          <Link to="/policies/privacy">
+            <strong>개인정보처리방침</strong>
+          </Link>
+          <Link to="/policies/operation">운영정책</Link>
+        </nav>
         {info && (
           <span className="footer-version">
             v{info.version}
