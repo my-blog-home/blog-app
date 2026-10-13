@@ -35,6 +35,9 @@ server:
 # 원천 문서 각 파일의 '기본값' 표와 같은 값. 바꿀 때는 여기만 고친다 (NF-08).
 blog:
   zone: Asia/Seoul
+  cache:
+    # 실시간 인기 검색어 순위를 Redis에 담아 두는 시간. 이 동안은 DB에서 다시 집계하지 않는다
+    popular-keywords-ttl: 10m
   limits:
     nickname-min: 2
     nickname-max: 10
