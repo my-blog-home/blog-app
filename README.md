@@ -17,8 +17,8 @@
 8. [진행 기록](#8-진행-기록)
 9. [트러블슈팅](#9-트러블슈팅)
 10. [테스트](#10-테스트)
-11. [남은 일과 로드맵(안)](#11-남은-일과-로드맵안)
-12. [로컬에서 실행하기](#12-로컬에서-실행하기)
+11. [다음 목표(안)](#11-다음-목표안)
+12. [개발환경](#12-개발환경)
 13. [피드백 정리와 다음 과제](#13-피드백-정리와-다음-과제)
 
 ---
@@ -324,54 +324,115 @@ cd frontend && npm test          # Vitest
 
 ---
 
-## 11. 남은 일과 로드맵(안)
+## 11. 다음 목표(안)
 
 | 묶음 | 내용 |
 |---|---|
 | v2.0 정식 오픈 준비 | HTTPS, 메일 발송(인증번호), 이미지 압축(가로 1600px·WebP), 정책 페이지 빈칸(운영자 정보) 채우기, 약관 동의 기록 저장, 시험 모드(`SHOW_CODE_ON_SCREEN`) 끄기 |
-| v2.1 읽는 재미 | 목차·읽는 시간, 링크 미리보기·RSS, 시리즈(연재) |
-| v2.2 참여 | 알림, 예약 발행, 소셜 로그인 |
 
 ---
 
-## 12. 로컬에서 실행하기
+## 12. 개발환경
 
-필요한 것: Java 21, Node 20 이상, PostgreSQL 16, Redis 7
+### 도구와 버전
+
+| 구분 | 도구 | 버전 | 메모 |
+|---|---|---|---|
+| 서버 | Java (Temurin) | 21 | |
+| | Spring Boot | 3.5.6 | |
+| | Gradle | 8.14 (wrapper) | `backend/gradlew`를 쓰므로 따로 설치하지 않아도 된다 |
+| 화면 | Node.js | 22 (20 이상) | CI도 22 |
+| | Vite / TypeScript | 6 / 5.8 | |
+| | Vitest | 3 | 화면 테스트 |
+| 데이터 | PostgreSQL | 16 | 개발 `myblog`, 테스트 `myblog_test` |
+| | Redis | 7 | 개발 0번 DB, 테스트 15번 DB |
+| 배포 | Docker, GitHub Actions | | 서버에서는 Nginx 1.27 + 앱 컨테이너(블루-그린) |
+| 문서 | GitHub Spec Kit | 1.1 | 요구사항 문서는 [docs 저장소](https://github.com/my-blog-home/docs) |
+
+### 폴더
+
+```
+blog-app/
+├── backend/                 Spring Boot (Gradle)
+│   ├── src/main/java/com/myblog/   기능 모듈 (3-2 참고)
+│   ├── src/main/resources/
+│   │   ├── application.yml         공통 설정과 숫자(blog.limits.*)
+│   │   ├── application-dev.yml     로컬 개발 (DB·Redis 주소, 인증번호는 로그로)
+│   │   ├── application-prod.yml    배포 (모든 값은 환경변수)
+│   │   ├── db/migration/           Flyway V1~
+│   │   └── release-notes/          버전별 릴리스 노트
+│   └── src/test/                   통합 테스트 (application-test.yml)
+├── frontend/                React + Vite (3-3 참고). vite.config.ts가 /api·/images를 서버로 넘긴다
+├── deploy/deploy.sh         서버에서 도는 무중단 배포 스크립트
+├── .github/workflows/       ci.yml(PR 검사), test.yml(공용 테스트), deploy.yml(main 배포·릴리스)
+├── Dockerfile               화면 빌드 → 서버 빌드(화면 포함 jar) → 실행 이미지
+├── docker-compose.yml       개발용 PostgreSQL·Redis (Docker를 쓸 때)
+├── run.sh / build.sh        한 번에 켜기 / 배포용 jar 만들기
+└── CONTRIBUTING.md · RELEASING.md · DEPLOY.md   브랜치 전략 · 버전 · 배포
+```
+
+### 처음 준비
 
 ```bash
-# Homebrew로 설치하는 경우
-brew install openjdk@21 node postgresql@16 redis gradle
+# macOS(Homebrew) 예시
+brew install openjdk@21 node postgresql@16 redis
 brew services start postgresql@16
 brew services start redis
 
-# DB와 계정 만들기 (개발용, 테스트용)
+# 개발용·테스트용 DB와 계정 (로컬 전용 값)
 createuser -s myblog
 psql -d postgres -c "ALTER USER myblog PASSWORD 'myblog';"
 createdb -O myblog myblog
 createdb -O myblog myblog_test
 ```
 
-Docker를 쓴다면 위의 PostgreSQL·Redis 설치 대신 `docker compose up -d` 후 `myblog_test` DB만 만듭니다.
+Docker를 쓴다면 PostgreSQL·Redis 설치 대신 `docker compose up -d` 후 `myblog_test` DB만 만듭니다.
+
+### 실행
+
+한 번에 켜기(화면을 빌드해 서버 하나로 띄움):
 
 ```bash
-./run.sh        # DB·Redis를 켜고 화면을 빌드한 뒤 서버를 띄운다 → http://localhost:8080
-./run.sh stop   # 끈다
+./run.sh        # → http://localhost:8080
+./run.sh stop
 ```
 
-가입 인증번호는 메일 대신 가입 화면(시험 모드 상자)과 `.run/server.log`에 나옵니다.
-
-따로 켜서 개발할 때:
+화면과 서버를 따로 켜서 개발하기(화면 코드를 고치면 바로 반영됨):
 
 ```bash
-cd backend && ./gradlew bootRun                     # 서버 http://localhost:8080
-cd frontend && npm install && npm run dev           # 화면 http://localhost:5173 (/api는 서버로)
+cd backend && ./gradlew bootRun                # 서버 http://localhost:8080 (프로필 dev)
+cd frontend && npm install && npm run dev      # 화면 http://localhost:5173 → /api, /images는 8080으로
 ```
+
+- 가입 인증번호는 메일 대신 가입 화면(시험 모드 상자)과 서버 로그(`run.sh`면 `.run/server.log`)에 나옵니다.
+- DB 표는 서버가 켜질 때 Flyway가 만들고 바꿉니다. 표를 바꿀 때는 새 `V번호__설명.sql`을 더하고 옛 파일은 고치지 않습니다.
+
+### 테스트
+
+```bash
+cd backend && ./gradlew test     # 통합 테스트: myblog_test DB와 Redis 15번 DB (테스트 전마다 비움)
+cd frontend && npm test          # Vitest
+cd frontend && npx tsc -b        # 타입 검사
+```
+
+PR을 열면 GitHub Actions가 같은 테스트와 도커 빌드를 돌립니다.
+
+### 설정과 환경변수
+
+- 로컬 개발은 `application-dev.yml`의 기본값으로 돌아가서 따로 정할 값이 없습니다.
+- 배포 서버는 모든 값을 환경변수로 받고, 값은 GitHub 시크릿에만 둡니다(저장소에 올리지 않음). 이름과 뜻은 [DEPLOY.md](DEPLOY.md)에 있습니다: `DB_ADDRESS`, `DB_PORT`, `DB_NAME`, `DB_SCHEMA`, `DB_USERNAME`, `DB_PASSWORD`, `SSH_*`, `MAIL_MODE`, `SMTP_*`, `SHOW_CODE_ON_SCREEN`, `COOKIE_SECURE`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`.
+
+### 데이터가 있는 곳
 
 | 데이터 | 위치 |
 |---|---|
-| 회원, 블로그, 글, 댓글, 통계, 로그인 세션 | PostgreSQL `myblog` |
-| 인증번호, 재발송 제한, 조회수 중복 방지, 댓글 5초 제한 | Redis (자동 만료) |
-| 이미지 파일 | `~/.myblog/images` (설정 `blog.image.dir`) |
+| 회원, 블로그, 글, 댓글, 통계, 로그인 세션 | PostgreSQL |
+| 인증번호, 재발송 제한, 조회수 중복 방지, 댓글 5초 제한, 순위 캐시 | Redis (자동 만료) |
+| 이미지 파일 | 로컬 `~/.myblog/images`, 서버는 도커 볼륨 `ylog-images` |
+
+### 작업 흐름
+
+`develop`에서 `feature/이름` 브랜치를 만들어 작업하고 `develop`으로 PR을 엽니다. 내보낼 때는 `release/x.y.z`에서 버전을 올려 `main`으로 병합합니다(자동 배포). 자세한 건 [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
@@ -381,8 +442,9 @@ cd frontend && npm install && npm run dev           # 화면 http://localhost:51
 
 ### Git 브랜치 전략과 병렬 작업
 - `main`에서 바로 고치면 두 작업이 같은 파일을 건드릴 때 겹친다. 기능마다 브랜치를 따로 만들면 여러 작업을 동시에(병렬로) 진행하고 따로 병합할 수 있다.
-- **지금:** 작업마다 `feat/…`, `fix/…`, `docs/…` 브랜치를 만들고 PR로 `main`에 병합한다(PR #1~#27). `main`은 곧 배포본이라 직접 푸시하지 않는다.
-- **다음:** Git Flow(`main` / `develop` / `feature` / `release` / `hotfix`)를 공부하고, 이 프로젝트 규모에 맞는 전략(지금 방식에 가까운 GitHub Flow와 비교)을 정해 README에 적는다. 충돌 해결, rebase와 merge 차이 같은 Git 사용법을 익힌다.
+- **처음(PR #1~#31):** 작업마다 브랜치를 만들어 `main`으로 바로 PR하는 방식(GitHub Flow에 가까움). 병합할 때마다 배포됐다.
+- **완료:** Git Flow 적용. `develop`에 기능을 모으고 `release`·`hotfix` 브랜치에서만 버전을 올려 `main`으로 내보낸다. CI는 `develop`·`main`으로 가는 PR마다, 배포는 `main` 병합 때만 → [CONTRIBUTING.md](CONTRIBUTING.md)
+- **다음:** 충돌 해결, rebase와 merge 차이 같은 Git 사용법을 익힌다.
 
 ### 버전 관리
 - **지금:** `주.부.수` 버전, 버전마다 릴리스 노트, 배포 때 공지·GitHub 릴리스 자동 생성 → [7. 버전과 릴리스 노트](#7-버전과-릴리스-노트)

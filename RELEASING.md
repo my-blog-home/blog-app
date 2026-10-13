@@ -10,6 +10,8 @@ Ylog는 `주.부.수` 버전을 씁니다. 지금 버전은 `backend/build.gradl
 
 ## 새 버전을 낼 때
 
+버전은 `release/x.y.z`(기능 묶음) 또는 `hotfix/x.y.z`(급한 수정) 브랜치에서만 올린다. `feature/*` PR은 버전을 올리지 않는다. 브랜치 전략은 [CONTRIBUTING.md](CONTRIBUTING.md)를 본다.
+
 1. `backend/build.gradle`의 `version`을 새 버전으로 바꾼다.
 2. `backend/src/main/resources/release-notes/새버전.md`를 만든다.
 
