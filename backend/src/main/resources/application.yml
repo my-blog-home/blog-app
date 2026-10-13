@@ -38,6 +38,8 @@ blog:
   cache:
     # 실시간 인기 검색어 순위를 Redis에 담아 두는 시간. 이 동안은 DB에서 다시 집계하지 않는다
     popular-keywords-ttl: 10m
+    # 지금 핫한 글·이번 주 인기 블로거를 주제마다 Redis에 담아 두는 시간. 좋아요·댓글은 이 안에 반영된다
+    home-rankings-ttl: 1m
   limits:
     nickname-min: 2
     nickname-max: 10

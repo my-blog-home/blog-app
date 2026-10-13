@@ -1,14 +1,16 @@
 package com.myblog.stats;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.myblog.common.cache.ShortCache;
 import com.myblog.common.config.BlogLimits;
 import com.myblog.common.sql.PostVisibilitySql;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 첫 화면의 "지금 핫한 글"과 "이번 주 인기 블로거" (FR-072, FR-074, BR-33, BR-45).
@@ -30,16 +32,23 @@ public class HomeRankingService {
     private final NamedParameterJdbcTemplate jdbc;
     private final BlogLimits limits;
     private final String zone;
+    private final ShortCache cache;
+    private final Duration cacheTtl;
 
-    public HomeRankingService(NamedParameterJdbcTemplate jdbc, BlogLimits limits, @Value("${blog.zone}") String zone) {
+    public HomeRankingService(NamedParameterJdbcTemplate jdbc, BlogLimits limits, @Value("${blog.zone}") String zone,
+                              ShortCache cache, @Value("${blog.cache.home-rankings-ttl:1m}") Duration cacheTtl) {
         this.jdbc = jdbc;
         this.limits = limits;
         this.zone = zone;
+        this.cache = cache;
+        this.cacheTtl = cacheTtl;
     }
 
     /**
-     * 기간 안의 공개 글(별칭 p)과 점수(score)를 고르는 공통 조건.
-     * 글이 올라온 한국 날짜가 (가장 최근 공개 글의 한국 날짜 - days)보다 뒤여야 한다
+     * 기간 안의 공개 글(별칭 p)과 좋아요 수·댓글 수.
+     * 글이 올라온 한국 날짜가 (가장 최근 공개 글의 한국 날짜 - days)보다 뒤여야 한다.
+     * 날짜 조건은 "그 날짜의 한국 자정 이후"라는 시각 하나로 바꿔 비교한다. 글마다 날짜로 바꿔 비교하면
+     * 색인을 못 쓰고 글 표 전체를 읽기 때문이다(가장 최근 글 찾기도 같음). 공개 글의 올린 시각 색인은 V17.
      */
     private String windowedPosts(int days, Map<String, Object> params, Long topicId) {
         params.put("zone", zone);
@@ -53,18 +62,27 @@ public class HomeRankingService {
                 from post p
                 where %1$s
                   and (cast(:topicId as bigint) is null or p.topic_id = :topicId)
-                  and (p.published_at at time zone :zone)::date > (
-                      select (max(lp.published_at) at time zone :zone)::date - cast(:days as int)
+                  and p.published_at >= (
+                      select (((lp.published_at at time zone :zone)::date - cast(:days as int) + 1)::timestamp
+                              at time zone :zone)
                       from post lp
-                      where %2$s and (cast(:topicId as bigint) is null or lp.topic_id = :topicId))
+                      where %2$s and (cast(:topicId as bigint) is null or lp.topic_id = :topicId)
+                      order by lp.published_at desc
+                      limit 1)
                 """.formatted(PostVisibilitySql.PUBLIC, PostVisibilitySql.publicPost("lp"));
     }
 
     /** 점수가 같으면 조회수가 큰 글, 그래도 같으면 최근 글이 앞선다 (BR-33) */
-    @Transactional(readOnly = true)
+    /** 주제·개수마다 1분 동안 Redis에 담아 둔다(ShortCache). 좋아요·댓글은 1분 안에 반영된다 */
     public List<HotPost> hotPosts(Long topicId, Integer requestedLimit) {
         int max = limits.hotPostCount();
         int limit = requestedLimit == null ? max : Math.min(Math.max(1, requestedLimit), 10);
+        return cache.get("cache:hot-posts:" + (topicId == null ? "all" : topicId) + ":" + limit, cacheTtl,
+                new TypeReference<>() {
+                }, () -> computeHotPosts(topicId, limit));
+    }
+
+    private List<HotPost> computeHotPosts(Long topicId, int limit) {
         Map<String, Object> params = new HashMap<>();
         String windowed = windowedPosts(limits.hotPostDays(), params, topicId);
         params.put("limit", limit);
@@ -87,8 +105,14 @@ public class HomeRankingService {
     }
 
     /** 블로그마다 기간 안 글의 점수를 더한다. 같으면 구독자가 많은 블로그, 그래도 같으면 최근 글이 있는 블로그 (BR-45) */
-    @Transactional(readOnly = true)
+    /** 주제마다 1분 동안 Redis에 담아 둔다(ShortCache) */
     public List<HotBlogger> hotBloggers(Long topicId) {
+        return cache.get("cache:hot-bloggers:" + (topicId == null ? "all" : topicId), cacheTtl,
+                new TypeReference<>() {
+                }, () -> computeHotBloggers(topicId));
+    }
+
+    private List<HotBlogger> computeHotBloggers(Long topicId) {
         Map<String, Object> params = new HashMap<>();
         String windowed = windowedPosts(limits.hotBloggerDays(), params, topicId);
         params.put("limit", limits.hotBloggerCount());
