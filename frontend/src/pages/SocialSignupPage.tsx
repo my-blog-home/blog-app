@@ -6,7 +6,8 @@ import { useDocumentMeta } from '../meta'
 
 interface Pending {
   provider: string
-  email: string
+  /** 카카오처럼 이메일을 주지 않는 제공자면 null */
+  email: string | null
   suggestedNickname: string
 }
 
@@ -74,10 +75,14 @@ export default function SocialSignupPage() {
         {PROVIDER_NAME[pending.provider] ?? pending.provider} 계정으로 처음 오셨어요. 닉네임만 정하면 가입이 끝나요.
       </p>
       <form className="form" onSubmit={submit}>
-        <label>
-          이메일
-          <input value={pending.email} disabled />
-        </label>
+        {pending.email ? (
+          <label>
+            이메일
+            <input value={pending.email} disabled />
+          </label>
+        ) : (
+          <p className="muted small">이메일 없이 {PROVIDER_NAME[pending.provider] ?? pending.provider} 계정으로 가입해요. 다음부터 같은 계정으로 로그인하면 돼요.</p>
+        )}
         <label>
           닉네임
           <input value={nickname} onChange={(e) => setNickname(e.target.value)} placeholder="한글·영문·숫자 2~10자" autoFocus />
@@ -100,7 +105,7 @@ export default function SocialSignupPage() {
         <button type="submit" className="primary" disabled={busy || !nicknameOk || !agreed}>
           가입하기
         </button>
-        <p className="auth-foot">비밀번호 없이 가입돼요. 나중에 이메일로도 로그인하려면 비밀번호 찾기에서 정할 수 있어요.</p>
+        {pending.email && <p className="auth-foot">비밀번호 없이 가입돼요. 나중에 이메일로도 로그인하려면 비밀번호 찾기에서 정할 수 있어요.</p>}
       </form>
     </section>
   )

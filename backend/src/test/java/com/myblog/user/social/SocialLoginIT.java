@@ -127,4 +127,33 @@ class SocialLoginIT extends IntegrationTestBase {
                 .andExpect(status().isNotFound());
         mvc.perform(get("/api/auth/social/providers")).andExpect(jsonPath("$.providers").isEmpty());
     }
+
+    @Test
+    void 카카오는_이메일_없이_회원번호와_닉네임만으로_가입하고_이메일로_연결하지_않는다() throws Exception {
+        LoggedIn existing = signupAndLogin("기존회원", "mine@example.com");
+        // 카카오는 이메일을 주지 않는다: 기존 회원과 이메일로 연결하지 않고 새로 가입시킨다
+        SocialProfile kakao = new SocialProfile("kakao", "777", null, false, "카카오닉");
+        assertThat(social.login(kakao)).isInstanceOf(SocialLoginService.NeedsSignup.class);
+
+        Cookie session = pendingSession(kakao);
+        mvc.perform(get("/api/auth/social/pending").cookie(session))
+                .andExpect(jsonPath("$.provider").value("kakao"))
+                .andExpect(jsonPath("$.email").doesNotExist());
+        session = sessionOf(mvc.perform(jsonPost("/api/auth/social/complete", Map.of("nickname", "카카오닉", "agreed", true))
+                        .cookie(session))
+                .andExpect(status().isOk()).andReturn(), session);
+        mvc.perform(get("/api/auth/me").cookie(session))
+                .andExpect(jsonPath("$.nickname").value("카카오닉"))
+                .andExpect(jsonPath("$.email").doesNotExist())
+                .andExpect(jsonPath("$.hasPassword").value(false));
+        long kakaoMember = jdbc.queryForObject("select id from member where nickname = '카카오닉'", Long.class);
+        assertThat(kakaoMember).isNotEqualTo(existing.memberId());
+        assertThat(jdbc.queryForObject("select email from member where id = ?", String.class, kakaoMember))
+                .isEqualTo("kakao_777@social.invalid");
+
+        // 다음부터는 카카오 회원번호로 그 회원에 로그인한다
+        assertThat(social.login(kakao)).isEqualTo(new SocialLoginService.LoggedIn(kakaoMember, false));
+        // GitHub처럼 이메일을 주는 제공자는 인증 이메일이 없으면 여전히 가입하지 않는다
+        assertThat(social.login(github("9009", null, false))).isEqualTo(new SocialLoginService.Rejected("email"));
+    }
 }

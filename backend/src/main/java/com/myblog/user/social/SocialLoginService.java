@@ -25,7 +25,8 @@ import org.springframework.transaction.annotation.Transactional;
  * 1. 이미 연결된 소셜 계정이면 그 회원으로 로그인한다.
  * 2. 처음 보는 소셜 계정이지만 제공자가 인증한 이메일이 기존 회원과 같으면, 그 회원에 연결하고 로그인한다(중복 계정을 만들지 않는다).
  * 3. 그 밖에는 닉네임과 약관 동의를 받아 새 회원과 블로그를 만든다(이메일 가입과 같은 규칙: 닉네임 규칙, 탈퇴 후 30일 대기).
- * 제공자가 인증한 이메일이 없으면 가입하거나 연결할 수 없다. 정지된 회원은 이메일 로그인과 같이 막는다.
+ * 제공자가 인증한 이메일이 없으면 이메일로 연결하지 않는다. 이메일을 주지 않는 제공자(카카오)는 회원번호로만 알아보고
+ * 이메일 없이 가입하며, 그 밖의 제공자는 인증 이메일이 없으면 가입하지 않는다. 정지된 회원은 이메일 로그인과 같이 막는다.
  */
 @Service
 public class SocialLoginService {
@@ -68,8 +69,11 @@ public class SocialLoginService {
         if (linked.isPresent()) {
             return allowed(linked.get(), false);
         }
-        if (profile.email() == null || profile.email().isBlank() || !profile.emailVerified()) {
-            return new Rejected("email");
+        if (!hasVerifiedEmail(profile)) {
+            // 인증 이메일이 없으면 기존 계정에 연결하지 않는다(남의 계정을 가로채지 못하게)
+            return SocialProviders.allowsNoEmail(profile.provider())
+                    ? new NeedsSignup(profile, suggestNickname(profile.nickname()))
+                    : new Rejected("email");
         }
         String email = profile.email().strip().toLowerCase(java.util.Locale.ROOT);
         Optional<Member> existing = members.findByEmail(email).filter(m -> !m.isWithdrawn());
@@ -100,11 +104,18 @@ public class SocialLoginService {
             throw ApiException.field("agreed", Messages.TERMS_REQUIRED);
         }
         String nickname = rules.checkNickname(rawNickname);
-        String email = rules.normalizeEmail(profile.email());
+        boolean noEmail = !hasVerifiedEmail(profile);
+        if (noEmail && !SocialProviders.allowsNoEmail(profile.provider())) {
+            throw new ApiException(ErrorCode.CONFLICT, Messages.SOCIAL_SIGNUP_EXPIRED);
+        }
+        String email = noEmail ? Member.noEmailFor(profile.provider(), profile.providerUserId())
+                : rules.normalizeEmail(profile.email());
         if (linkedMember(profile).isPresent() || members.existsByEmail(email)) {
             throw new ApiException(ErrorCode.CONFLICT, Messages.EMAIL_DUPLICATE);
         }
-        rejoin.check(email);
+        if (!noEmail) {
+            rejoin.check(email);
+        }
         if (members.existsByNickname(nickname)) {
             throw ApiException.field("nickname", Messages.NICKNAME_DUPLICATE);
         }
@@ -118,6 +129,10 @@ public class SocialLoginService {
         blogCreation.createFor(member.getId(), nickname, now);
         link(member.getId(), profile);
         return member.getId();
+    }
+
+    private static boolean hasVerifiedEmail(SocialProfile profile) {
+        return profile.email() != null && !profile.email().isBlank() && profile.emailVerified();
     }
 
     private Outcome allowed(long memberId, boolean linkedNow) {

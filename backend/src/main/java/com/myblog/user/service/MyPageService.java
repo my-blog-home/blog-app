@@ -49,7 +49,7 @@ public class MyPageService {
         Member member = get(memberId);
         Long blogId = jdbc.queryForList("select id from blog where owner_id = :id order by id limit 1",
                 Map.of("id", memberId), Long.class).stream().findFirst().orElse(null);
-        return new MyInfo(member.getEmail(), member.getNickname(), member.getBio(), member.getProfileColor(),
+        return new MyInfo(member.getPublicEmail(), member.getNickname(), member.getBio(), member.getProfileColor(),
                 member.getCreatedAt(), blogId);
     }
 

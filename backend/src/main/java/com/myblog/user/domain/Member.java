@@ -179,6 +179,21 @@ public class Member {
         return profileColor;
     }
 
+    /**
+     * 이메일을 주지 않는 소셜 로그인(카카오 등)으로 가입한 회원의 이메일 자리. 회원 표의 이메일은 비울 수 없고 겹치면 안 되므로
+     * "제공자_회원번호@social.invalid"를 넣는다(.invalid는 어디에도 쓰이지 않는 예약 도메인). 화면에는 이메일 없음으로 보인다.
+     */
+    public static final String NO_EMAIL_DOMAIN = "@social.invalid";
+
+    public static String noEmailFor(String provider, String providerUserId) {
+        return provider + "_" + providerUserId + NO_EMAIL_DOMAIN;
+    }
+
+    /** 화면에 보일 이메일. 이메일 없이 가입한 회원은 null */
+    public String getPublicEmail() {
+        return email != null && email.endsWith(NO_EMAIL_DOMAIN) ? null : email;
+    }
+
     /** 소셜 로그인으로만 가입해 비밀번호를 정하지 않은 회원은 false (비밀번호 찾기로 정할 수 있다) */
     public boolean hasPassword() {
         return !UNUSABLE_PASSWORD.equals(passwordHash);
