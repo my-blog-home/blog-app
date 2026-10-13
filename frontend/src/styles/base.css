@@ -912,7 +912,6 @@ body.is-dragging, body.is-dragging * { cursor: grabbing !important; user-select:
 .social-button { width: 100%; height: 44px; border-radius: var(--radius-sm); font-weight: 600; }
 .social-github { background: #24292f; border-color: #24292f; color: #fff; }
 .social-kakao { background: #fee500; border-color: #fee500; color: #191919; }
-.social-google { background: var(--surface); border-color: var(--border); color: var(--text); }
 /* 아직 설정되지 않은 제공자: 흐리게 두고, 마우스를 올리거나 누르면 "준비 중입니다" */
 .social-preparing { position: relative; display: block; }
 .social-button.is-preparing { opacity: 0.55; cursor: not-allowed; }
