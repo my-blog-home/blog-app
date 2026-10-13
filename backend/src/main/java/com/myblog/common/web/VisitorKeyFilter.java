@@ -50,7 +50,7 @@ public class VisitorKeyFilter extends OncePerRequestFilter {
             return existing.get();
         }
         String id = UUID.randomUUID().toString();
-        response.addHeader("Set-Cookie", ResponseCookie.from(COOKIE, id).path("/").httpOnly(true).sameSite("Lax")
+        response.addHeader("Set-Cookie", ResponseCookie.from(COOKIE, id).path("/").httpOnly(true).sameSite("Lax").secure(request.isSecure())
                 .maxAge(Duration.ofDays(365)).build().toString());
         return id;
     }
