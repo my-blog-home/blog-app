@@ -20,3 +20,4 @@ blog:
   cache:
     # 테스트는 기록하자마자 순위가 바뀌는지 보므로 캐시를 끈다 (PopularKeywordCacheIT가 따로 확인)
     popular-keywords-ttl: 0s
+    home-rankings-ttl: 0s
