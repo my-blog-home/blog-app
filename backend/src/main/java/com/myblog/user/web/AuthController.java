@@ -6,7 +6,6 @@ import com.myblog.common.error.ApiException;
 import com.myblog.common.error.ErrorCode;
 import com.myblog.common.error.Messages;
 import com.myblog.common.security.CurrentMember;
-import com.myblog.common.security.MemberPrincipal;
 import com.myblog.user.domain.Member;
 import com.myblog.user.domain.MemberRepository;
 import com.myblog.user.service.LoginService;
@@ -21,11 +20,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -45,25 +40,26 @@ public class AuthController {
      * role: MEMBER 또는 ADMIN. 관리자는 블로그가 없을 수 있다(blogId 비어 있음).
      * pendingReportCount는 관리자에게만 채운다(처리 대기 신고 건수, 메뉴의 "관리자" 옆 숫자) (FR-078, FR-079).
      * email은 프로필 메뉴 머리에 보인다 (CR-60)
+     * hasPassword가 false면 소셜 로그인으로만 가입한 회원이다(탈퇴할 때 비밀번호를 묻지 않는다)
      */
     public record Me(long id, String nickname, Long blogId, String profileColor, String role,
-                     Long pendingReportCount, String email) {
+                     Long pendingReportCount, String email, boolean hasPassword) {
     }
 
     private final LoginService loginService;
     private final MemberRepository members;
     private final BlogRepository blogs;
-    private final SecurityContextRepository contextRepository;
+    private final SessionLogin sessionLogin;
     private final NamedParameterJdbcTemplate jdbc;
     private final ZoneId zone;
 
     public AuthController(LoginService loginService, MemberRepository members, BlogRepository blogs,
-                          SecurityContextRepository contextRepository, NamedParameterJdbcTemplate jdbc,
+                          SessionLogin sessionLogin, NamedParameterJdbcTemplate jdbc,
                           @Value("${blog.zone}") String zone) {
         this.loginService = loginService;
         this.members = members;
         this.blogs = blogs;
-        this.contextRepository = contextRepository;
+        this.sessionLogin = sessionLogin;
         this.jdbc = jdbc;
         this.zone = ZoneId.of(zone);
     }
@@ -114,22 +110,10 @@ public class AuthController {
                 ? jdbc.queryForObject("select count(*) from report where status = 'PENDING'", Map.of(), Long.class)
                 : null;
         return new Me(member.getId(), member.getNickname(), blogId, member.getProfileColor(), member.getRole().name(),
-                pendingReports, member.getEmail());
+                pendingReports, member.getEmail(), member.hasPassword());
     }
 
-    /** 로그인할 때마다 세션 ID를 새로 발급한다 (NF-12) */
     private void startSession(long memberId, HttpServletRequest http, HttpServletResponse response) {
-        if (http.getSession(false) != null) {
-            http.changeSessionId();
-        } else {
-            http.getSession(true);
-        }
-        var authentication = UsernamePasswordAuthenticationToken.authenticated(
-                new MemberPrincipal(memberId), null, List.of(new SimpleGrantedAuthority("ROLE_MEMBER")));
-        // 관리자 권한은 세션에 담지 않고 관리자 API가 요청마다 회원 표의 role로 확인한다 (FR-078)
-        SecurityContext context = SecurityContextHolder.createEmptyContext();
-        context.setAuthentication(authentication);
-        SecurityContextHolder.setContext(context);
-        contextRepository.saveContext(context, http, response);
+        sessionLogin.start(memberId, http, response);
     }
 }

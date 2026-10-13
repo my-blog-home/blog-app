@@ -35,6 +35,14 @@ server:
 # 원천 문서 각 파일의 '기본값' 표와 같은 값. 바꿀 때는 여기만 고친다 (NF-08).
 blog:
   zone: Asia/Seoul
+  # 소셜 로그인. 값이 있는 제공자만 켜진다(없으면 버튼이 안 보인다). 값은 환경변수로만 넣는다
+  social:
+    github:
+      client-id: ${GITHUB_CLIENT_ID:}
+      client-secret: ${GITHUB_CLIENT_SECRET:}
+    kakao:
+      client-id: ${KAKAO_CLIENT_ID:}
+      client-secret: ${KAKAO_CLIENT_SECRET:}
   cache:
     # 실시간 인기 검색어 순위를 Redis에 담아 두는 시간. 이 동안은 DB에서 다시 집계하지 않는다
     popular-keywords-ttl: 10m

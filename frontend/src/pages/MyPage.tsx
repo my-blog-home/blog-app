@@ -60,6 +60,7 @@ export default function MyPage() {
       {tab === 'withdraw' && me.role === 'ADMIN' && <p className="warning">관리자 계정은 탈퇴할 수 없습니다</p>}
       {tab === 'withdraw' && me.role !== 'ADMIN' && (
         <WithdrawForm
+          needsPassword={me.hasPassword}
           onDone={async () => {
             await refresh()
             navigate('/', { replace: true, state: { notice: '탈퇴가 완료되었습니다' } })
@@ -199,7 +200,7 @@ function PasswordForm() {
   )
 }
 
-function WithdrawForm({ onDone }: { onDone: () => void }) {
+function WithdrawForm({ onDone, needsPassword }: { onDone: () => void; needsPassword: boolean }) {
   const [password, setPassword] = useState('')
   const [agreed, setAgreed] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -230,15 +231,18 @@ function WithdrawForm({ onDone }: { onDone: () => void }) {
           <strong>다시 가입</strong>: 같은 이메일로는 탈퇴한 날부터 30일이 지나야 다시 가입할 수 있습니다. 닉네임은 바로 다른 사람이 쓸 수 있습니다
         </p>
       </div>
-      <label>
-        비밀번호
-        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
-      </label>
+      {/* 소셜 로그인으로만 가입한 회원은 비밀번호가 없어 동의만 받는다 */}
+      {needsPassword && (
+        <label>
+          비밀번호
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
+        </label>
+      )}
       <label className="check">
         <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} /> 안내를 읽었고 동의합니다
       </label>
       {error && <p className="error">{error}</p>}
-      <button className="primary danger-bg" disabled={!agreed || !password}>
+      <button className="primary danger-bg" disabled={!agreed || (needsPassword && !password)}>
         탈퇴하기
       </button>
     </form>

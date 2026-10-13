@@ -66,13 +66,18 @@ jobs:
           # 관리자 계정 (선택). 둘 다 등록하면 처음 켤 때 그 이메일로 관리자를 만든다
           ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          # 소셜 로그인 (선택). 값이 있는 제공자만 켜진다
+          GITHUB_CLIENT_ID: ${{ secrets.SOCIAL_GITHUB_CLIENT_ID }}
+          GITHUB_CLIENT_SECRET: ${{ secrets.SOCIAL_GITHUB_CLIENT_SECRET }}
+          KAKAO_CLIENT_ID: ${{ secrets.SOCIAL_KAKAO_CLIENT_ID }}
+          KAKAO_CLIENT_SECRET: ${{ secrets.SOCIAL_KAKAO_CLIENT_SECRET }}
         with:
           host: ${{ secrets.SSH_ADDRESS }}
           port: ${{ secrets.SSH_PORT }}
           username: ${{ secrets.SSH_ID }}
           password: ${{ secrets.SSH_PASSWORD }}
           command_timeout: 10m
-          envs: DB_ADDRESS,DB_PORT,DB_NAME,DB_SCHEMA,DB_DATABASE,DB_USERNAME,DB_PASSWORD,SUDO_PASSWORD,MAIL_MODE,SHOW_CODE_ON_SCREEN,COOKIE_SECURE,SMTP_HOST,SMTP_PORT,SMTP_USERNAME,SMTP_PASSWORD,SMTP_FROM,ADMIN_EMAIL,ADMIN_PASSWORD
+          envs: DB_ADDRESS,DB_PORT,DB_NAME,DB_SCHEMA,DB_DATABASE,DB_USERNAME,DB_PASSWORD,SUDO_PASSWORD,MAIL_MODE,SHOW_CODE_ON_SCREEN,COOKIE_SECURE,SMTP_HOST,SMTP_PORT,SMTP_USERNAME,SMTP_PASSWORD,SMTP_FROM,ADMIN_EMAIL,ADMIN_PASSWORD,GITHUB_CLIENT_ID,GITHUB_CLIENT_SECRET,KAKAO_CLIENT_ID,KAKAO_CLIENT_SECRET
           # 비어 있는 선택 값은 deploy.sh가 기본값으로 바꾼다
           script: bash "$HOME/ylog/deploy.sh"
 

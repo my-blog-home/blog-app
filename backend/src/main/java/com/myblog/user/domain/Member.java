@@ -179,6 +179,11 @@ public class Member {
         return profileColor;
     }
 
+    /** 소셜 로그인으로만 가입해 비밀번호를 정하지 않은 회원은 false (비밀번호 찾기로 정할 수 있다) */
+    public boolean hasPassword() {
+        return !UNUSABLE_PASSWORD.equals(passwordHash);
+    }
+
     public String getPasswordHash() {
         return passwordHash;
     }
