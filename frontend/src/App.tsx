@@ -23,6 +23,7 @@ import NotFoundPage from './pages/NotFoundPage'
 import PostDetailPage from './pages/PostDetailPage'
 import PostEditorPage from './pages/PostEditorPage'
 import SearchPage from './pages/SearchPage'
+import SocialSignupPage from './pages/SocialSignupPage'
 import SignupPage from './pages/SignupPage'
 import TagPage from './pages/TagPage'
 import NoticeDetailPage from './pages/NoticeDetailPage'
@@ -48,6 +49,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/signup" element={<SignupPage />} />
+          <Route path="/signup/social" element={<SocialSignupPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/blogs/:blogId" element={<BlogPage />} />
           <Route path="/posts/:postId" element={<PostDetailPage />} />

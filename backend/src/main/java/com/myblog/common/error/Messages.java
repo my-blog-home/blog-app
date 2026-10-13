@@ -32,6 +32,8 @@ public final class Messages {
     public static final String CURRENT_PASSWORD_WRONG = "현재 비밀번호가 올바르지 않습니다";
     public static final String NEW_PASSWORD_SAME = "현재 비밀번호와 다른 값을 입력해 주세요";
     public static final String WITHDRAW_AGREE = "안내를 읽고 동의해 주세요";
+    public static final String TERMS_REQUIRED = "이용약관과 개인정보처리방침에 동의해 주세요";
+    public static final String SOCIAL_SIGNUP_EXPIRED = "소셜 로그인을 처음부터 다시 해 주세요";
     public static final String BIO_TOO_LONG = "소개는 100자 이하로 입력해 주세요";
 
     public static final String TITLE_REQUIRED = "제목을 입력해 주세요";

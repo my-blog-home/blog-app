@@ -10,6 +10,9 @@ export default defineConfig({
     proxy: {
       '/api': 'http://localhost:8080',
       '/images': 'http://localhost:8080',
+      // 소셜 로그인 시작과 제공자 콜백은 서버가 처리한다
+      '/oauth2': 'http://localhost:8080',
+      '/login/oauth2': 'http://localhost:8080',
     },
   },
   test: {
