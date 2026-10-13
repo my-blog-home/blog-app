@@ -1,5 +1,8 @@
 # 배포 환경. 모든 접속 정보와 비밀 값은 환경변수로 받는다 (DEPLOY.md 참고)
 spring:
+  # graceful shutdown 때 처리 중인 요청을 기다리는 최대 시간
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}
@@ -31,6 +34,8 @@ spring:
 
 server:
   port: ${PORT:8080}
+  # 끌 때(무중단 배포로 옛 컨테이너를 멈출 때) 처리 중인 요청을 마치고 끈다
+  shutdown: graceful
   # Nginx·로드밸런서 뒤에서 HTTPS 여부와 원래 주소를 알 수 있게 한다
   forward-headers-strategy: framework
   servlet:

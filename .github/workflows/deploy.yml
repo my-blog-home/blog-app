@@ -24,7 +24,10 @@ jobs:
         run: |
           docker build -t ylog:latest .
           docker save ylog:latest | gzip > ylog-image.tar.gz
-          mkdir -p upload && mv ylog-image.tar.gz upload/ && cp deploy/deploy.sh upload/
+          # 무중단 배포의 앞단 Nginx 이미지도 함께 보낸다(서버가 인터넷에서 받지 않아도 되게)
+          docker pull nginx:1.27-alpine
+          docker save nginx:1.27-alpine | gzip > proxy-image.tar.gz
+          mkdir -p upload && mv ylog-image.tar.gz proxy-image.tar.gz upload/ && cp deploy/deploy.sh upload/
 
       - name: 서버로 이미지와 실행 스크립트 보내기
         uses: appleboy/scp-action@v0.1.7
@@ -33,7 +36,7 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           username: ${{ secrets.SSH_ID }}
           password: ${{ secrets.SSH_PASSWORD }}
-          source: "upload/ylog-image.tar.gz,upload/deploy.sh"
+          source: "upload/ylog-image.tar.gz,upload/proxy-image.tar.gz,upload/deploy.sh"
           target: "ylog"
           strip_components: 1
 

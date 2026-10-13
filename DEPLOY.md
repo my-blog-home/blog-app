@@ -52,7 +52,13 @@ java -jar /opt/ylog/app.jar
 
 1. 테스트(PostgreSQL·Redis 서비스 컨테이너로 서버 통합 테스트, 화면 테스트)
 2. 도커 이미지 빌드 → 압축 파일로 서버 `~/ylog`에 복사(SSH)
-3. 서버에서 `deploy/deploy.sh` 실행: Redis 컨테이너 준비, 이전 앱 컨테이너 교체, **포트 8330**으로 실행, 켜질 때까지 확인
+3. 서버에서 `deploy/deploy.sh` 실행: **무중단(블루-그린) 배포**
+   - 바깥 포트 8330은 Nginx 컨테이너(`ylog-proxy`)가 열고, 앱은 `ylog-app-blue`/`ylog-app-green` 두 자리 중 하나에서 돈다(앱 포트는 바깥에 열지 않음).
+   - 쓰지 않는 자리에 새 버전을 띄우고, 응답하면 Nginx 설정을 바꿔 reload한 뒤, 옛 컨테이너를 graceful shutdown으로 끈다.
+   - 새 버전이 3분 안에 켜지지 않으면 새 컨테이너만 지우고 실패로 끝난다. 사이트는 옛 버전으로 계속 동작한다.
+   - 지금 쓰는 자리는 서버의 `~/ylog/active-color`, Nginx 설정은 `~/ylog/nginx/default.conf`에 있다.
+   - DB 마이그레이션은 새 버전이 켜질 때 돌고 그동안 옛 버전도 같은 DB를 쓰므로, 표를 바꿀 때는 옛 버전이 깨지지 않게 **더하는 방향**(열·표 추가)으로 나눠서 바꾼다.
+   - 처음 이 방식으로 바뀌는 배포 한 번은 옛 방식 컨테이너가 포트를 내주고 Nginx가 받는 순간 잠깐 끊긴다.
 
 PR에서는 `.github/workflows/ci.yml`이 테스트와 도커 빌드만 확인한다(배포 안 함). Actions 탭의 "Deploy"에서 손으로 다시 돌릴 수도 있다.
 
