@@ -1,6 +1,13 @@
 #!/bin/bash
-# 서버에서 실행: 올라온 도커 이미지를 불러와 Ylog를 다시 띄운다.
+# 서버에서 실행: 올라온 도커 이미지로 Ylog를 무중단으로 바꿔 띄운다 (블루-그린 배포).
 # GitHub Actions가 SSH로 접속해 환경변수와 함께 실행한다 (.github/workflows/deploy.yml).
+#
+#   바깥(포트 8330) → ylog-proxy(Nginx) → ylog-app-blue 또는 ylog-app-green(앱, 포트를 바깥에 열지 않음)
+#
+# 1. 지금 쓰지 않는 색으로 새 컨테이너를 띄운다. 옛 컨테이너는 계속 요청을 받는다.
+# 2. 새 컨테이너가 응답할 때까지 기다린다. 끝내 안 켜지면 새 것만 지우고 끝낸다(사이트는 옛 버전으로 계속 동작).
+# 3. Nginx 설정을 새 색으로 바꾸고 reload한다. reload는 처리 중인 요청을 끊지 않는다.
+# 4. 옛 컨테이너를 graceful shutdown으로 끈다(처리 중인 요청을 마치고 꺼짐).
 #
 # 필요한 환경변수: DB_ADDRESS, DB_PORT, DB_NAME, DB_USERNAME, DB_PASSWORD
 # 선택: DB_DATABASE(nhnacademy), DB_SCHEMA(DB_NAME 값), APP_PORT(8330), MAIL_MODE(log), SHOW_CODE_ON_SCREEN(true), COOKIE_SECURE(false),
@@ -10,10 +17,16 @@ set -euo pipefail
 
 APP_DIR="${APP_DIR:-$HOME/ylog}"
 IMAGE="ylog:latest"
-APP="ylog-app"
+PROXY_IMAGE="nginx:1.27-alpine"
+APP_PREFIX="ylog-app"
+LEGACY_APP="ylog-app"        # 무중단 배포 전에 포트 8330을 직접 열던 컨테이너
+PROXY="ylog-proxy"
 REDIS="ylog-redis"
 NETWORK="ylog-net"
-APP_PORT="${APP_PORT:-8330}"
+APP_PORT="${APP_PORT:-8330}" # 바깥에서 들어오는 포트(Nginx가 연다)
+INNER_PORT=8080              # 앱 컨테이너 안 포트(네트워크 안에서만 쓴다)
+ACTIVE_FILE="$APP_DIR/active-color"
+NGINX_DIR="$APP_DIR/nginx"
 
 cd "$APP_DIR"
 
@@ -27,17 +40,23 @@ else
   DOCKER=(sudo -n docker)
 fi
 d() { "${DOCKER[@]}" "$@"; }
+exists() { d ps -a --format '{{.Names}}' | grep -qx "$1"; }
+running() { [ "$(d inspect -f '{{.State.Running}}' "$1" 2>/dev/null)" = "true" ]; }
 
 echo "▶ 이미지 불러오기"
 gunzip -c ylog-image.tar.gz | d load
+# Nginx 이미지는 서버가 인터넷에서 받지 않아도 되게 GitHub Actions가 함께 보낸다
+if [ -f proxy-image.tar.gz ]; then
+  d image inspect "$PROXY_IMAGE" >/dev/null 2>&1 || gunzip -c proxy-image.tar.gz | d load
+fi
 
 echo "▶ 네트워크와 Redis 준비"
 d network inspect "$NETWORK" >/dev/null 2>&1 || d network create "$NETWORK"
-if ! d ps -a --format '{{.Names}}' | grep -qx "$REDIS"; then
+if ! exists "$REDIS"; then
   # Redis는 바깥에 포트를 열지 않고 앱만 접속한다
   d run -d --name "$REDIS" --network "$NETWORK" --restart unless-stopped \
     -v ylog-redis-data:/data redis:7 redis-server --appendonly yes
-elif [ "$(d inspect -f '{{.State.Running}}' "$REDIS")" != "true" ]; then
+elif ! running "$REDIS"; then
   d start "$REDIS"
 fi
 
@@ -54,16 +73,18 @@ DB_DATABASE="${DB_DATABASE:-nhnacademy}"
 DB_SCHEMA="${DB_SCHEMA:-$DB_NAME}"
 DB_URL="jdbc:postgresql://$DB_HOST:$DB_PORT/$DB_DATABASE?currentSchema=$DB_SCHEMA"
 
-echo "▶ 이전 컨테이너 정리"
-d rm -f "$APP" >/dev/null 2>&1 || true
+CURRENT="$(cat "$ACTIVE_FILE" 2>/dev/null || true)"
+if [ "$CURRENT" = "blue" ]; then NEXT="green"; else NEXT="blue"; fi
+NEW_APP="$APP_PREFIX-$NEXT"
+OLD_APP="${CURRENT:+$APP_PREFIX-$CURRENT}"
 
-echo "▶ 새 컨테이너 실행 (포트 $APP_PORT)"
-d run -d --name "$APP" --network "$NETWORK" --restart unless-stopped \
+echo "▶ 새 컨테이너 실행: $NEW_APP (지금 서비스 중: ${OLD_APP:-$LEGACY_APP})"
+d rm -f "$NEW_APP" >/dev/null 2>&1 || true
+d run -d --name "$NEW_APP" --network "$NETWORK" --restart unless-stopped \
   --add-host host.docker.internal:host-gateway \
-  -p "$APP_PORT:$APP_PORT" \
   -v ylog-images:/var/lib/ylog/images \
   -e SPRING_PROFILES_ACTIVE=prod \
-  -e PORT="$APP_PORT" \
+  -e PORT="$INNER_PORT" \
   -e DB_URL="$DB_URL" \
   -e DB_SCHEMA="$DB_SCHEMA" \
   -e DB_USERNAME="$DB_USERNAME" \
@@ -81,17 +102,75 @@ d run -d --name "$APP" --network "$NETWORK" --restart unless-stopped \
   -e ADMIN_PASSWORD="${ADMIN_PASSWORD:-}" \
   "$IMAGE"
 
-echo "▶ 켜질 때까지 기다리기"
-for i in $(seq 1 60); do
-  if curl -fs "http://localhost:$APP_PORT/api/config/limits" >/dev/null 2>&1; then
-    echo "✅ 배포 완료: http://<서버 주소>:$APP_PORT"
-    d image prune -f >/dev/null 2>&1 || true
-    rm -f ylog-image.tar.gz
-    exit 0
+echo "▶ 새 컨테이너가 응답할 때까지 기다리기"
+NEW_IP=""
+healthy=false
+for i in $(seq 1 90); do
+  NEW_IP="$(d inspect -f "{{(index .NetworkSettings.Networks \"$NETWORK\").IPAddress}}" "$NEW_APP" 2>/dev/null || true)"
+  # 서버에서 컨테이너 주소로 직접 묻고, 안 되면 Nginx 컨테이너 안에서 컨테이너 이름으로 묻는다
+  if [ -n "$NEW_IP" ] && curl -fs --max-time 2 "http://$NEW_IP:$INNER_PORT/api/config/limits" >/dev/null 2>&1; then
+    healthy=true
+    break
+  fi
+  if running "$PROXY" && d exec "$PROXY" wget -q -T 2 -O /dev/null "http://$NEW_APP:$INNER_PORT/api/config/limits" >/dev/null 2>&1; then
+    healthy=true
+    break
   fi
   sleep 2
 done
+if [ "$healthy" != true ]; then
+  echo "❌ 새 컨테이너가 3분 안에 켜지지 않았습니다. 새 컨테이너만 지우고, 사이트는 지금 버전으로 계속 동작합니다. 최근 로그:"
+  d logs --tail 100 "$NEW_APP" || true
+  d rm -f "$NEW_APP" >/dev/null 2>&1 || true
+  exit 1
+fi
 
-echo "❌ 2분 안에 켜지지 않았습니다. 최근 로그:"
-d logs --tail 100 "$APP" || true
-exit 1
+echo "▶ Nginx를 $NEW_APP 쪽으로 바꾸기"
+mkdir -p "$NGINX_DIR"
+cat > "$NGINX_DIR/default.conf" <<CONF
+# deploy.sh가 배포할 때마다 새로 쓴다. 지금 서비스 중인 앱: $NEW_APP
+server {
+    listen 80;
+    client_max_body_size 6m;
+    location / {
+        proxy_pass http://$NEW_APP:$INNER_PORT;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$http_host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header X-Forwarded-Host \$http_host;
+        proxy_set_header X-Forwarded-Port $APP_PORT;
+    }
+}
+CONF
+
+if exists "$PROXY" && running "$PROXY"; then
+  d exec "$PROXY" nginx -t
+  d exec "$PROXY" nginx -s reload
+else
+  # 처음 한 번: 포트 8330을 직접 열던 옛 컨테이너를 내리고 Nginx가 그 포트를 맡는다(이때만 잠깐 끊긴다)
+  d rm -f "$LEGACY_APP" "$PROXY" >/dev/null 2>&1 || true
+  d run -d --name "$PROXY" --network "$NETWORK" --restart unless-stopped \
+    -p "$APP_PORT:80" -v "$NGINX_DIR:/etc/nginx/conf.d:ro" "$PROXY_IMAGE"
+fi
+echo "$NEXT" > "$ACTIVE_FILE"
+
+echo "▶ 바깥 주소로 확인"
+for i in $(seq 1 15); do
+  if curl -fs --max-time 2 "http://localhost:$APP_PORT/api/config/limits" >/dev/null 2>&1; then
+    break
+  fi
+  sleep 1
+done
+
+if [ -n "$OLD_APP" ] && exists "$OLD_APP"; then
+  echo "▶ 옛 컨테이너 끄기: $OLD_APP (처리 중인 요청을 마치고 꺼짐)"
+  sleep 5
+  d stop -t 30 "$OLD_APP" >/dev/null || true
+  d rm -f "$OLD_APP" >/dev/null 2>&1 || true
+fi
+
+d image prune -f >/dev/null 2>&1 || true
+rm -f ylog-image.tar.gz proxy-image.tar.gz
+echo "✅ 배포 완료: $NEW_APP (http://<서버 주소>:$APP_PORT)"
