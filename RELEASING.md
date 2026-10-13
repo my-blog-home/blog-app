@@ -10,7 +10,7 @@ Ylog는 `주.부.수` 버전을 씁니다. 지금 버전은 `backend/build.gradl
 
 ## 새 버전을 낼 때
 
-버전은 `release/x.y.z`(기능 묶음) 또는 `hotfix/x.y.z`(급한 수정) 브랜치에서만 올린다. `feature/*` PR은 버전을 올리지 않는다. 브랜치 전략은 [CONTRIBUTING.md](CONTRIBUTING.md)를 본다.
+버전은 **릴리스 때 한 번에** 올린다. `release/x.y.z`(기능 묶음) 또는 `hotfix/x.y.z`(급한 수정) 브랜치에서만 올리고, `feature/*` PR은 버전도 릴리스 노트도 건드리지 않는다. 릴리스 노트에는 그 릴리스에 묶인 기능을 모두 적는다(공지는 버전마다 하나). 브랜치 전략은 [CONTRIBUTING.md](CONTRIBUTING.md)를 본다.
 
 1. `backend/build.gradle`의 `version`을 새 버전으로 바꾼다.
 2. `backend/src/main/resources/release-notes/새버전.md`를 만든다.
@@ -21,12 +21,12 @@ Ylog는 `주.부.수` 버전을 씁니다. 지금 버전은 `backend/build.gradl
    ---
    사람이 읽는 변경 내용(글자만, 빈 줄로 문단 구분, "- "로 목록)
    ```
-3. PR로 올려 `main`에 병합하면 자동으로:
+3. `release`·`hotfix` 브랜치를 `main`으로 PR해 병합하면 자동으로:
    - 배포되고, 서버가 켜질 때 그 노트가 **공지사항**에 "업데이트" 표시로 한 번 올라간다(다시 배포해도 중복 없음).
    - 화면 바닥글에 새 버전과 "릴리스 노트" 링크가 보인다.
    - GitHub에 `v새버전` 태그와 릴리스가 만들어진다.
 
-버전을 올리지 않은 병합은 같은 버전으로 다시 배포만 되고, 공지와 GitHub 릴리스는 새로 생기지 않는다.
+버전을 올리지 않은 병합은 같은 버전으로 다시 배포만 되고, 공지와 GitHub 릴리스는 새로 생기지 않는다. 병합 뒤에는 `main`을 `develop`에도 합친다.
 
 ## 여러 버전의 노트를 하나로 합칠 때
 
