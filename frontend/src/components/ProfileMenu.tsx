@@ -95,7 +95,7 @@ export default function ProfileMenu({ me, newCommentCount, onLogout }: { me: Me;
         <div className="dropdown-menu" id={menuId} role="menu" aria-label="내 메뉴" ref={menuRef} onKeyDown={onMenuKey}>
           <div className="menu-head" role="presentation">
             <strong>{me.nickname}</strong>
-            <small>{me.email}</small>
+            <small>{me.email ?? '이메일 없이 가입한 계정'}</small>
           </div>
           {me.role === 'ADMIN' && (
             <Link to="/admin" role="menuitem">

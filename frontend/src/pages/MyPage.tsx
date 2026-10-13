@@ -9,7 +9,7 @@ import { passwordChecks } from './SignupPage'
 import { useDocumentMeta } from '../meta'
 
 interface MyInfo {
-  email: string
+  email: string | null
   nickname: string
   bio: string | null
   profileColor: string
@@ -130,7 +130,7 @@ function InfoForm({ info, onSaved }: { info: MyInfo; onSaved: (info: MyInfo) => 
       </fieldset>
       <label>
         이메일
-        <input value={info.email} readOnly />
+        <input value={info.email ?? '이메일 없이 가입한 계정이에요'} readOnly />
       </label>
       <label>
         닉네임

@@ -17,7 +17,8 @@ import org.springframework.stereotype.Component;
  * 아무것도 설정되지 않으면 소셜 로그인이 꺼지고 화면에도 버튼이 나오지 않는다.
  *
  * - GitHub: http 주소와 IP 주소도 콜백으로 등록할 수 있어 지금 서버에서 바로 쓸 수 있다.
- * - 카카오: 국내 사용자가 많다. 이메일을 받으려면 카카오 앱을 "개인 개발자 비즈 앱"으로 바꾸고 이메일 동의항목을 켜야 한다.
+ * - 카카오: 국내 사용자가 많다. 이메일을 받으려면 비즈 앱 전환이 필요해서 이메일 없이 닉네임만 받는다(profile_nickname).
+ *   그래서 카카오 회원은 카카오 회원번호로만 알아보고, 이메일로 기존 계정에 연결하지 않는다.
  * - 구글: 콜백 주소가 https 도메인이어야 한다(IP·http 불가). 공개 주소 https://ylog.java21.net으로 등록하면 쓸 수 있다.
  */
 @Component
@@ -53,7 +54,7 @@ public class SocialProviders {
                     .clientId(kakaoId)
                     .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                     .redirectUri(redirect)
-                    .scope("profile_nickname", "account_email")
+                    .scope("profile_nickname")
                     .authorizationUri("https://kauth.kakao.com/oauth/authorize")
                     .tokenUri("https://kauth.kakao.com/oauth/token")
                     .userInfoUri("https://kapi.kakao.com/v2/user/me")
@@ -71,6 +72,11 @@ public class SocialProviders {
                     .redirectUri(redirect)
                     .build());
         }
+    }
+
+    /** 이메일 없이 가입할 수 있는 제공자(제공자 회원번호로만 알아본다) */
+    public static boolean allowsNoEmail(String provider) {
+        return KAKAO.equals(provider);
     }
 
     /** 켜진 제공자 이름 (화면이 버튼을 그릴 때 쓴다) */
