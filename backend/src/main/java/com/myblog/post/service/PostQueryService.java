@@ -314,7 +314,8 @@ public class PostQueryService {
                 rs.getString("author_nickname"));
     }
 
-    static String thumbnail(String body) {
+    /** 본문의 첫 이미지 주소. 없으면 null (목록 썸네일과 링크 미리보기에 쓴다) */
+    public static String thumbnail(String body) {
         java.util.regex.Matcher m = FIRST_IMAGE.matcher(body);
         return m.find() ? m.group(1) : null;
     }
