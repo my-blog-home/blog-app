@@ -13,7 +13,8 @@
 # 선택: DB_DATABASE(nhnacademy), DB_SCHEMA(DB_NAME 값), APP_PORT(8330), MAIL_MODE(log), SHOW_CODE_ON_SCREEN(true), COOKIE_SECURE(false),
 #       SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, SMTP_FROM, SUDO_PASSWORD,
 #       ADMIN_EMAIL, ADMIN_PASSWORD(둘 다 있을 때만 처음 켤 때 관리자 계정을 만든다. 기본은 빈 값),
-#       GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, KAKAO_CLIENT_ID, KAKAO_CLIENT_SECRET(소셜 로그인. 값이 있는 제공자만 켜진다)
+#       GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, KAKAO_CLIENT_ID, KAKAO_CLIENT_SECRET(소셜 로그인. 값이 있는 제공자만 켜진다),
+#       PUBLIC_URL(사이트 공개 주소. 링크 미리보기와 소셜 로그인 콜백 주소에 쓴다)
 set -euo pipefail
 
 APP_DIR="${APP_DIR:-$HOME/ylog}"
@@ -101,10 +102,13 @@ d run -d --name "$NEW_APP" --network "$NETWORK" --restart unless-stopped \
   -e SMTP_FROM="${SMTP_FROM:-no-reply@ylog.local}" \
   -e ADMIN_EMAIL="${ADMIN_EMAIL:-}" \
   -e ADMIN_PASSWORD="${ADMIN_PASSWORD:-}" \
+  -e PUBLIC_URL="${PUBLIC_URL:-}" \
   -e GITHUB_CLIENT_ID="${GITHUB_CLIENT_ID:-}" \
   -e GITHUB_CLIENT_SECRET="${GITHUB_CLIENT_SECRET:-}" \
   -e KAKAO_CLIENT_ID="${KAKAO_CLIENT_ID:-}" \
   -e KAKAO_CLIENT_SECRET="${KAKAO_CLIENT_SECRET:-}" \
+  -e GOOGLE_CLIENT_ID="${GOOGLE_CLIENT_ID:-}" \
+  -e GOOGLE_CLIENT_SECRET="${GOOGLE_CLIENT_SECRET:-}" \
   "$IMAGE"
 
 echo "▶ 새 컨테이너가 응답할 때까지 기다리기"
@@ -134,6 +138,11 @@ echo "▶ Nginx를 $NEW_APP 쪽으로 바꾸기"
 mkdir -p "$NGINX_DIR"
 cat > "$NGINX_DIR/default.conf" <<CONF
 # deploy.sh가 배포할 때마다 새로 쓴다. 지금 서비스 중인 앱: $NEW_APP
+# 바깥에 또 프록시(도메인·HTTPS)가 있으면 그쪽이 보낸 원래 주소 정보를 그대로 넘기고, 없으면 이 서버 기준으로 채운다
+map \$http_x_forwarded_proto \$ylog_proto {
+    default \$http_x_forwarded_proto;
+    ""      \$scheme;
+}
 server {
     listen 80;
     client_max_body_size 6m;
@@ -143,9 +152,7 @@ server {
         proxy_set_header Host \$http_host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_set_header X-Forwarded-Host \$http_host;
-        proxy_set_header X-Forwarded-Port $APP_PORT;
+        proxy_set_header X-Forwarded-Proto \$ylog_proto;
     }
 }
 CONF

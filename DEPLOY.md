@@ -27,8 +27,10 @@ Ylog는 **jar 하나**(서버 + 화면)로 돌아갑니다. 함께 필요한 것
 | `IMAGE_DIR` | | 기본 `/var/lib/ylog/images` |
 | `PORT` | | 기본 8080 |
 | `COOKIE_SECURE` | | 기본 `true`. HTTP로 잠깐 시험할 때만 `false` |
-| `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | | GitHub 로그인(선택). GitHub 시크릿 이름은 `SOCIAL_GITHUB_CLIENT_ID`, `SOCIAL_GITHUB_CLIENT_SECRET`. 둘 다 있을 때만 켜진다. 콜백 주소: `http(s)://<사이트 주소>/login/oauth2/code/github` |
-| `KAKAO_CLIENT_ID`, `KAKAO_CLIENT_SECRET` | | 카카오 로그인(선택). GitHub 시크릿 이름은 `SOCIAL_KAKAO_CLIENT_ID`(REST API 키), `SOCIAL_KAKAO_CLIENT_SECRET`. 둘 다 있을 때만 켜진다. 리다이렉트 URI: `http(s)://<사이트 주소>/login/oauth2/code/kakao` |
+| `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET` | | GitHub 로그인(선택). GitHub 시크릿 이름은 `SOCIAL_GITHUB_CLIENT_ID`, `SOCIAL_GITHUB_CLIENT_SECRET`. 둘 다 있을 때만 켜진다. 콜백 주소: `https://ylog.java21.net/login/oauth2/code/github` |
+| `KAKAO_CLIENT_ID`, `KAKAO_CLIENT_SECRET` | | 카카오 로그인(선택). GitHub 시크릿 이름은 `SOCIAL_KAKAO_CLIENT_ID`(REST API 키), `SOCIAL_KAKAO_CLIENT_SECRET`. 둘 다 있을 때만 켜진다. 리다이렉트 URI: `https://ylog.java21.net/login/oauth2/code/kakao` |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | | 구글 로그인(선택). GitHub 시크릿 이름은 `SOCIAL_GOOGLE_CLIENT_ID`, `SOCIAL_GOOGLE_CLIENT_SECRET`. 승인된 리디렉션 URI: `https://ylog.java21.net/login/oauth2/code/google` (구글은 https 도메인만 받는다) |
+| `PUBLIC_URL` | | 사이트 공개 주소(지금 `https://ylog.java21.net`, deploy.yml에 적혀 있음). 링크 미리보기와 소셜 로그인 콜백 주소를 이 주소로 만든다 |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | | 관리자 계정(선택). 둘 다 값이 있고 그 이메일로 가입한 회원이 없을 때만, 서버를 켤 때 관리자(닉네임 "운영자", 블로그 없음)를 하나 만든다. 이미 있으면 아무것도 바꾸지 않는다(비밀번호를 바꿔도 반영되지 않음). 비밀번호는 가입 규칙(영문·숫자·특수문자 8자 이상)을 따라야 한다. 관리자는 회원가입으로 만들 수 없다 |
 
 ## 3-A. 도커로 배포
