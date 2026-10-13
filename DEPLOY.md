@@ -70,7 +70,7 @@ Crowfoot에서 발급한 PostgreSQL을 쓰므로 `DB_NAME`에는 발급받은 **
 
 **필수 시크릿**: `SSH_ADDRESS`, `SSH_PORT`, `SSH_ID`, `SSH_PASSWORD`, `DB_ADDRESS`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`
 
-**선택 시크릿**(없으면 괄호 안 기본값): `DB_DATABASE`(nhnacademy), `DB_SCHEMA`(`DB_NAME` 값), `MAIL_MODE`(log), `SHOW_CODE_ON_SCREEN`(true), `COOKIE_SECURE`(false), `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`(둘 다 등록하면 처음 켤 때 관리자 계정을 만든다. 없으면 관리자 없이 켜진다)
+**선택 시크릿**(없으면 괄호 안 기본값): `DB_DATABASE`(nhnacademy), `DB_SCHEMA`(`DB_NAME` 값), `MAIL_MODE`(log), `SHOW_CODE_ON_SCREEN`(true), `COOKIE_SECURE`(true), `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`(둘 다 등록하면 처음 켤 때 관리자 계정을 만든다. 없으면 관리자 없이 켜진다)
 
 서버 조건: Docker가 설치돼 있어야 한다. SSH 계정이 docker를 바로 못 쓰면 `SSH_PASSWORD`로 sudo를 쓴다. DB가 같은 서버에 있으면(`DB_ADDRESS`가 localhost) 컨테이너가 `host.docker.internal`로 접속하므로 PostgreSQL이 도커 네트워크(172.x)에서 오는 접속도 받아야 한다.
 
