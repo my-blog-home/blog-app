@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { Me } from '../api/types'
 import ProfileMenu from './ProfileMenu'
 
-const admin: Me = { id: 1, nickname: '관리자', blogId: 3, profileColor: '#c9dcfb', role: 'ADMIN', pendingReportCount: 2, email: 'a@example.com' }
+const admin: Me = { id: 1, nickname: '관리자', blogId: 3, profileColor: '#c9dcfb', role: 'ADMIN', pendingReportCount: 2, email: 'a@example.com', hasPassword: true }
 
 // 프로필 메뉴 순서와 닫기 (CR-60, NFR-08)
 describe('ProfileMenu', () => {
