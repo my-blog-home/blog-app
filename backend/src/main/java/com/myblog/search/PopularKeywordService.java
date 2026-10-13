@@ -42,14 +42,16 @@ public class PopularKeywordService {
 
     private final NamedParameterJdbcTemplate jdbc;
     private final StringRedisTemplate redis;
+    private final PopularKeywordCache cache;
     private final BlogLimits limits;
     private final Clock clock;
     private final ZoneId zone;
 
     public PopularKeywordService(NamedParameterJdbcTemplate jdbc, StringRedisTemplate redis, BlogLimits limits,
-                                 Clock clock, @Value("${blog.zone}") String zone) {
+                                 Clock clock, @Value("${blog.zone}") String zone, PopularKeywordCache cache) {
         this.jdbc = jdbc;
         this.redis = redis;
+        this.cache = cache;
         this.limits = limits;
         this.clock = clock;
         this.zone = ZoneId.of(zone);
@@ -78,8 +80,12 @@ public class PopularKeywordService {
                 Map.of("keyword", keyword, "key", key, "now", Timestamp.from(clock.instant())));
     }
 
-    @Transactional(readOnly = true)
+    /** 순위는 Redis에 잠깐 담아 두고 쓴다(PopularKeywordCache). 캐시에 없을 때만 DB에서 집계한다 */
     public PopularKeywords popular() {
+        return cache.get(this::compute);
+    }
+
+    private PopularKeywords compute() {
         Instant now = clock.instant();
         List<Ranked> current = rank(now);
         List<Ranked> before = rank(now.minus(limits.popularKeywordCompare()));
