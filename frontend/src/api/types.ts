@@ -13,6 +13,8 @@ export interface Me {
   pendingReportCount: number | null
   /** 프로필 메뉴 머리에 보인다 (CR-60) */
   email: string
+  /** 소셜 로그인으로만 가입해 비밀번호가 없으면 false (탈퇴할 때 비밀번호를 묻지 않는다) */
+  hasPassword: boolean
 }
 
 export interface Topic {

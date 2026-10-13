@@ -11,6 +11,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import com.myblog.user.social.SocialAuthHandlers;
+import com.myblog.user.social.SocialProviders;
+import com.myblog.user.social.SocialUserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
@@ -35,7 +38,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, ObjectMapper objectMapper) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, ObjectMapper objectMapper, SocialProviders social,
+                                           SocialUserService socialUsers, SocialAuthHandlers socialHandlers)
+            throws Exception {
         CsrfTokenRequestAttributeHandler csrfHandler = new CsrfTokenRequestAttributeHandler();
         csrfHandler.setCsrfRequestAttributeName(null);
 
@@ -55,6 +60,15 @@ public class SecurityConfig {
                 .exceptionHandling(ex -> ex
                         .accessDeniedHandler((request, response, denied) ->
                                 writeError(objectMapper, response, ErrorCode.FORBIDDEN, Messages.TRY_LATER)));
+        // 소셜 로그인: 클라이언트 ID가 설정된 제공자가 있을 때만 켠다(/oauth2/authorization/{제공자} → 콜백)
+        var socialClients = social.repository();
+        if (socialClients.isPresent()) {
+            http.oauth2Login(oauth -> oauth
+                    .clientRegistrationRepository(socialClients.get())
+                    .userInfoEndpoint(user -> user.userService(socialUsers))
+                    .successHandler(socialHandlers)
+                    .failureHandler(socialHandlers));
+        }
         return http.build();
     }
 

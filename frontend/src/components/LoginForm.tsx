@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
+import SocialButtons from './SocialButtons'
 
 /** 로그인 화면과 로그인 창이 함께 쓰는 입력 폼 (CF-02) */
 export default function LoginForm({ onSuccess }: { onSuccess: () => void }) {
@@ -47,6 +48,7 @@ export default function LoginForm({ onSuccess }: { onSuccess: () => void }) {
       <button type="submit" className="primary" disabled={submitting || !email.trim() || !password}>
         로그인
       </button>
+      <SocialButtons />
       <p className="auth-foot">
         <Link to="/password-reset">비밀번호를 잊으셨나요?</Link>
       </p>

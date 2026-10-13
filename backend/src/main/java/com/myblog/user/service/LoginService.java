@@ -88,6 +88,12 @@ public class LoginService {
         return new Success(member.getId());
     }
 
+    /** 소셜 로그인처럼 비밀번호 없이 들어올 때도 정지 여부를 같은 규칙으로 본다 */
+    @Transactional(readOnly = true)
+    public Optional<Suspended> activeSuspension(long memberId) {
+        return activeSuspension(memberId, clock.instant());
+    }
+
     /** 효력 있는 정지 중 가장 오래 가는 것 (영구가 먼저, BR-49) */
     private Optional<Suspended> activeSuspension(long memberId, Instant now) {
         List<Suspended> found = jdbc.query("select s.ends_at, s.reason from suspension s where s.member_id = :id and "
