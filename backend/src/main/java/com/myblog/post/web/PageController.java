@@ -43,10 +43,14 @@ public class PageController {
     }
 
     private final NamedParameterJdbcTemplate jdbc;
+    private final String publicUrl;
     private volatile String template;
 
-    public PageController(NamedParameterJdbcTemplate jdbc) {
+    /** publicUrl: 공개 주소(예: https://ylog.java21.net). 있으면 미리보기의 주소·이미지를 이 주소로 만든다 */
+    public PageController(NamedParameterJdbcTemplate jdbc,
+                          @org.springframework.beans.factory.annotation.Value("${blog.public-url:}") String publicUrl) {
         this.jdbc = jdbc;
+        this.publicUrl = publicUrl.replaceAll("/+$", "");
     }
 
     @GetMapping({"/", "/{path:^(?!api$|images$|assets$|oauth2$)[^.]*}", "/{path:^(?!api$|images$|assets$|oauth2$)[^.]*}/**"})
@@ -56,7 +60,8 @@ public class PageController {
             // 화면을 빌드하지 않고 서버만 켠 개발 환경(화면은 Vite 개발 서버가 내려 줌)
             return ResponseEntity.notFound().build();
         }
-        String base = ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString();
+        String base = publicUrl.isBlank()
+                ? ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString() : publicUrl;
         String path = request.getRequestURI().substring(request.getContextPath().length());
         Meta meta = metaFor(path);
         String url = base + path;
