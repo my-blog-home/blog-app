@@ -58,7 +58,7 @@ public class SearchController {
         String id = existing.orElseGet(() -> {
             String created = UUID.randomUUID().toString();
             response.addHeader("Set-Cookie", ResponseCookie.from(SEARCH_SESSION_COOKIE, created).path("/")
-                    .httpOnly(true).sameSite("Lax").build().toString());
+                    .httpOnly(true).sameSite("Lax").secure(request.isSecure()).build().toString());
             return created;
         });
         return "s:" + id;
