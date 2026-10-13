@@ -104,7 +104,10 @@ public class MyPageService {
         if (member.isAdmin()) {
             throw new ApiException(ErrorCode.ADMIN_CANNOT_WITHDRAW, Messages.ADMIN_CANNOT_WITHDRAW);
         }
-        passwordCheck.verify(member, password);
+        // 소셜 로그인으로만 가입한 회원은 비밀번호가 없으므로 동의만 받는다(로그인한 세션으로 본인 확인)
+        if (member.hasPassword()) {
+            passwordCheck.verify(member, password);
+        }
         if (!agreed) {
             throw ApiException.field("agreed", Messages.WITHDRAW_AGREE);
         }
@@ -115,6 +118,7 @@ public class MyPageService {
         jdbc.update("delete from subscription where member_id = :id", params);
         jdbc.update("delete from bookmark where member_id = :id", params);
         jdbc.update("delete from post_image where uploader_id = :id", params);
+        jdbc.update("delete from member_social where member_id = :id", params);
         member.withdraw(clock.instant());
         members.flush();
         sessions.terminateAll(memberId);

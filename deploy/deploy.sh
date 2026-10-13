@@ -12,7 +12,8 @@
 # 필요한 환경변수: DB_ADDRESS, DB_PORT, DB_NAME, DB_USERNAME, DB_PASSWORD
 # 선택: DB_DATABASE(nhnacademy), DB_SCHEMA(DB_NAME 값), APP_PORT(8330), MAIL_MODE(log), SHOW_CODE_ON_SCREEN(true), COOKIE_SECURE(false),
 #       SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, SMTP_FROM, SUDO_PASSWORD,
-#       ADMIN_EMAIL, ADMIN_PASSWORD(둘 다 있을 때만 처음 켤 때 관리자 계정을 만든다. 기본은 빈 값)
+#       ADMIN_EMAIL, ADMIN_PASSWORD(둘 다 있을 때만 처음 켤 때 관리자 계정을 만든다. 기본은 빈 값),
+#       GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, KAKAO_CLIENT_ID, KAKAO_CLIENT_SECRET(소셜 로그인. 값이 있는 제공자만 켜진다)
 set -euo pipefail
 
 APP_DIR="${APP_DIR:-$HOME/ylog}"
@@ -100,6 +101,10 @@ d run -d --name "$NEW_APP" --network "$NETWORK" --restart unless-stopped \
   -e SMTP_FROM="${SMTP_FROM:-no-reply@ylog.local}" \
   -e ADMIN_EMAIL="${ADMIN_EMAIL:-}" \
   -e ADMIN_PASSWORD="${ADMIN_PASSWORD:-}" \
+  -e GITHUB_CLIENT_ID="${GITHUB_CLIENT_ID:-}" \
+  -e GITHUB_CLIENT_SECRET="${GITHUB_CLIENT_SECRET:-}" \
+  -e KAKAO_CLIENT_ID="${KAKAO_CLIENT_ID:-}" \
+  -e KAKAO_CLIENT_SECRET="${KAKAO_CLIENT_SECRET:-}" \
   "$IMAGE"
 
 echo "▶ 새 컨테이너가 응답할 때까지 기다리기"
