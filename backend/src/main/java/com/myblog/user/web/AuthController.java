@@ -110,7 +110,7 @@ public class AuthController {
                 ? jdbc.queryForObject("select count(*) from report where status = 'PENDING'", Map.of(), Long.class)
                 : null;
         return new Me(member.getId(), member.getNickname(), blogId, member.getProfileColor(), member.getRole().name(),
-                pendingReports, member.getEmail(), member.hasPassword());
+                pendingReports, member.getPublicEmail(), member.hasPassword());
     }
 
     private void startSession(long memberId, HttpServletRequest http, HttpServletResponse response) {

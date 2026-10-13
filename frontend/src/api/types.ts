@@ -11,8 +11,8 @@ export interface Me {
   profileColor: string
   role: MemberRole
   pendingReportCount: number | null
-  /** 프로필 메뉴 머리에 보인다 (CR-60) */
-  email: string
+  /** 프로필 메뉴 머리에 보인다 (CR-60). 카카오처럼 이메일 없이 가입했으면 null */
+  email: string | null
   /** 소셜 로그인으로만 가입해 비밀번호가 없으면 false (탈퇴할 때 비밀번호를 묻지 않는다) */
   hasPassword: boolean
 }

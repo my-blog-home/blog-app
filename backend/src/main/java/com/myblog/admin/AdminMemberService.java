@@ -120,7 +120,7 @@ public class AdminMemberService {
                     Timestamp ends = rs.getTimestamp("ends_at");
                     Long blogId = rs.getObject("blog_id", Long.class);
                     return new MemberRow(rs.getLong("id"),
-                            withdrawn ? null : rs.getString("nickname"), withdrawn ? null : rs.getString("email"),
+                            withdrawn ? null : rs.getString("nickname"), withdrawn || rs.getString("email").endsWith(com.myblog.user.domain.Member.NO_EMAIL_DOMAIN) ? null : rs.getString("email"),
                             rs.getTimestamp("created_at").toInstant(),
                             withdrawn ? rs.getTimestamp("withdrawn_at").toInstant() : null,
                             rs.getString("role"),
