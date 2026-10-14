@@ -56,7 +56,10 @@ java -jar /opt/ylog/app.jar
 1. 테스트(PostgreSQL·Redis 서비스 컨테이너로 서버 통합 테스트, 화면 테스트)
 2. 도커 이미지 빌드 → 압축 파일로 서버 `~/ylog`에 복사(SSH)
 3. 서버에서 `deploy/deploy.sh` 실행: **무중단(블루-그린) 배포**
-   - 바깥 포트 8330은 Nginx 컨테이너(`ylog-proxy`)가 열고, 앱은 `ylog-app-blue`/`ylog-app-green` 두 자리 중 하나에서 돈다(앱 포트는 바깥에 열지 않음).
+   - 바깥 포트 8330은 Nginx 컨테이너(`ylog-proxy`)가 열고, 앱은 blue/green 두 색 중 하나에서 돈다. 색마다 앱이 `APP_COUNT`개(기본 2: `ylog-app-blue-1`, `ylog-app-blue-2`)이고 Nginx가 요청을 차례로 나눠 보낸다(로드 밸런싱). 하나가 응답하지 않으면 나머지로 보낸다. 앱 포트는 바깥에 열지 않는다.
+   - 응답 헤더 `X-Ylog-Instance`에 답한 앱 이름이 들어 있어, 요청이 번갈아 가는지 확인할 수 있다.
+   - 로그인 세션은 PostgreSQL(Spring Session JDBC), 캐시는 Redis에 있어서 요청이 어느 앱으로 가도 로그인이 유지된다.
+   - 앱 하나당 메모리를 2GB로 묶었다(평소 약 0.7GB). `APP_COUNT=1`로 배포하면 다시 앱 하나로 돈다.
    - 쓰지 않는 자리에 새 버전을 띄우고, 응답하면 Nginx 설정을 바꿔 reload한 뒤, 옛 컨테이너를 graceful shutdown으로 끈다.
    - 새 버전이 3분 안에 켜지지 않으면 새 컨테이너만 지우고 실패로 끝난다. 사이트는 옛 버전으로 계속 동작한다.
    - 지금 쓰는 자리는 서버의 `~/ylog/active-color`, Nginx 설정은 `~/ylog/nginx/default.conf`에 있다.
