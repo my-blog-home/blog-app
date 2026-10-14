@@ -10,8 +10,9 @@
 # 4. 옛 컨테이너를 graceful shutdown으로 끈다(처리 중인 요청을 마치고 꺼짐).
 #
 # 필요한 환경변수: DB_ADDRESS, DB_PORT, DB_NAME, DB_USERNAME, DB_PASSWORD
-# 선택: DB_DATABASE(nhnacademy), DB_SCHEMA(DB_NAME 값), APP_PORT(8330), MAIL_MODE(log), SHOW_CODE_ON_SCREEN(true), COOKIE_SECURE(true),
-#       SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, SMTP_FROM, SUDO_PASSWORD,
+# 선택: DB_DATABASE(nhnacademy), DB_SCHEMA(DB_NAME 값), APP_PORT(8330), SHOW_CODE_ON_SCREEN(false), COOKIE_SECURE(true),
+#       SMTP_USERNAME, SMTP_PASSWORD(둘 다 있으면 인증 메일을 실제로 보낸다. Gmail 주소와 앱 비밀번호),
+#       SMTP_HOST(smtp.gmail.com), SMTP_PORT(587), SMTP_FROM("Ylog <SMTP_USERNAME>"), MAIL_MODE(SMTP 계정이 있으면 smtp, 없으면 log), SUDO_PASSWORD,
 #       ADMIN_EMAIL, ADMIN_PASSWORD(둘 다 있을 때만 처음 켤 때 관리자 계정을 만든다. 기본은 빈 값),
 #       GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, KAKAO_CLIENT_ID, KAKAO_CLIENT_SECRET(소셜 로그인. 값이 있는 제공자만 켜진다),
 #       PUBLIC_URL(사이트 공개 주소. 링크 미리보기와 소셜 로그인 콜백 주소에 쓴다), APP_COUNT(색마다 앱 개수, 기본 2)
@@ -77,6 +78,16 @@ DB_URL="jdbc:postgresql://$DB_HOST:$DB_PORT/$DB_DATABASE?currentSchema=$DB_SCHEM
 
 CURRENT="$(cat "$ACTIVE_FILE" 2>/dev/null || true)"
 if [ "$CURRENT" = "blue" ]; then NEXT="green"; else NEXT="blue"; fi
+# 인증 메일: SMTP 계정이 있으면 실제로 보내고, 없으면 인증번호를 서버 로그에만 찍는다
+SMTP_HOST="${SMTP_HOST:-smtp.gmail.com}"
+if [ -n "${SMTP_USERNAME:-}" ] && [ -n "${SMTP_PASSWORD:-}" ]; then
+  MAIL_MODE="${MAIL_MODE:-smtp}"
+  SMTP_FROM="${SMTP_FROM:-Ylog <$SMTP_USERNAME>}"
+else
+  MAIL_MODE="${MAIL_MODE:-log}"
+  echo "⚠️  SMTP_USERNAME·SMTP_PASSWORD 시크릿이 없어 인증 메일을 보내지 않습니다(인증번호는 서버 로그에만 남음)"
+fi
+
 # 색마다 띄우는 앱 개수. Nginx가 이 앱들에 요청을 나눠 보낸다(로드 밸런싱). 1로 바꾸면 다시 앱 하나로 돈다
 APP_COUNT="${APP_COUNT:-2}"
 NEW_APPS=()
@@ -104,10 +115,10 @@ run_app() {
     -e DB_USERNAME="$DB_USERNAME" \
     -e DB_PASSWORD="$DB_PASSWORD" \
     -e REDIS_HOST="$REDIS" \
-    -e MAIL_MODE="${MAIL_MODE:-log}" \
-    -e SHOW_CODE_ON_SCREEN="${SHOW_CODE_ON_SCREEN:-true}" \
+    -e MAIL_MODE="$MAIL_MODE" \
+    -e SHOW_CODE_ON_SCREEN="${SHOW_CODE_ON_SCREEN:-false}" \
     -e COOKIE_SECURE="${COOKIE_SECURE:-true}" \
-    -e SMTP_HOST="${SMTP_HOST:-}" \
+    -e SMTP_HOST="$SMTP_HOST" \
     -e SMTP_PORT="${SMTP_PORT:-587}" \
     -e SMTP_USERNAME="${SMTP_USERNAME:-}" \
     -e SMTP_PASSWORD="${SMTP_PASSWORD:-}" \

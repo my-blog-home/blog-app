@@ -272,7 +272,7 @@ flowchart LR
 - **브랜치** : 기능은 `develop`으로, 배포는 `release`·`hotfix`를 `main`으로 병합할 때만 일어납니다([CONTRIBUTING.md](CONTRIBUTING.md)).
 - **설정은 전부 GitHub 시크릿**에서 환경변수로 넘깁니다(DB 접속, SSH, 관리자 계정, 메일). 값은 코드·로그에 남기지 않습니다.
 - **운영 DB**는 Crowfoot에서 발급받은 PostgreSQL입니다. 공용 데이터베이스 안의 내 스키마를 쓰기 때문에 `currentSchema=<스키마>`로 접속하고, Flyway도 그 스키마에 표를 만듭니다.
-- 메일 계정을 정하기 전까지는 `MAIL_MODE=log` + `SHOW_CODE_ON_SCREEN=true`(가입 화면에 인증번호 표시)로 시험 운영 중입니다. 정식 오픈 전에 반드시 끕니다.
+- **인증 메일**은 Gmail SMTP(`smtp.gmail.com:587`, STARTTLS)로 보냅니다. Gmail 주소와 앱 비밀번호를 GitHub 시크릿 `SMTP_USERNAME`, `SMTP_PASSWORD`에 두면 배포 때 켜지고, 화면에 인증번호를 보여 주던 시험 모드(`SHOW_CODE_ON_SCREEN`)는 기본으로 꺼져 있습니다. 메일을 보내지 못하면 인증번호 대신 "메일을 보내지 못했습니다" 안내가 뜹니다.
 
 자세한 환경변수는 [DEPLOY.md](DEPLOY.md)를 봅니다.
 
@@ -431,7 +431,7 @@ cd frontend && npm test          # Vitest
 
 | 묶음 | 내용 |
 |---|---|
-| v2.0 정식 오픈 준비 | 메일 발송(인증번호), 이미지 압축(가로 1600px·WebP), 정책 페이지 빈칸(운영자 정보) 채우기, 약관 동의 기록 저장, 시험 모드(`SHOW_CODE_ON_SCREEN`) 끄기 |
+| v2.0 정식 오픈 준비 | 이미지 압축(가로 1600px·WebP), 정책 페이지 빈칸(운영자 정보) 채우기, 약관 동의 기록 저장 |
 
 ---
 

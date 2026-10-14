@@ -8,7 +8,7 @@ Ylog는 **jar 하나**(서버 + 화면)로 돌아갑니다. 함께 필요한 것
 |---|---|
 | PostgreSQL 16 | 빈 DB와 계정 하나. 표는 서버가 처음 켜질 때 Flyway로 만든다 |
 | Redis 7 | 인증번호, 조회수 중복 방지, 인기 검색어 제한에 쓴다. 바깥에 열지 않는다 |
-| SMTP 계정 | Gmail(앱 비밀번호) 또는 네이버. 없으면 `MAIL_MODE=log`로 임시 운영(인증번호가 서버 로그에 찍힘) |
+| SMTP 계정 | Gmail 주소와 앱 비밀번호. 학교 서버에서 `smtp.gmail.com:587`로 나갈 수 있는 것을 확인했다(2026-10-14). 없으면 인증번호가 서버 로그에만 찍혀 가입할 수 없다 |
 | 이미지 폴더 | `IMAGE_DIR`. 서버를 다시 만들어도 남는 곳(도커면 볼륨) |
 | HTTPS | 로그인 쿠키가 `Secure`라서 HTTPS가 필요하다. Nginx·로드밸런서가 HTTPS를 맡고 서버(8080)로 넘긴다 |
 
@@ -21,8 +21,9 @@ Ylog는 **jar 하나**(서버 + 화면)로 돌아갑니다. 함께 필요한 것
 | `SPRING_PROFILES_ACTIVE` | O | `prod` (빠뜨리면 개발 설정으로 켜진다) |
 | `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` | O | 예: `jdbc:postgresql://db:5432/myblog` |
 | `REDIS_HOST` | O | `REDIS_PORT`(기본 6379), `REDIS_PASSWORD`(선택) |
-| `MAIL_MODE` | | `smtp`(기본) 또는 `log` |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM` | smtp일 때 O | 인증 메일 발송 |
+| `MAIL_MODE` | | `smtp`(기본) 또는 `log`(개발용. 인증번호를 로그에 찍음) |
+| `SMTP_USERNAME`, `SMTP_PASSWORD` | smtp일 때 O | 인증 메일을 보낼 Gmail 주소와 앱 비밀번호 |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_FROM` | | 기본 `smtp.gmail.com`, `587`, `Ylog <SMTP_USERNAME>` |
 | `SHOW_CODE_ON_SCREEN` | | 기본 `false`. `true`면 가입·비밀번호 찾기 화면에 인증번호가 보인다. 메일 없이 시험할 때만 쓰고, 켜 두면 남의 이메일로도 가입할 수 있다 |
 | `IMAGE_DIR` | | 기본 `/var/lib/ylog/images` |
 | `PORT` | | 기본 8080 |
@@ -72,7 +73,7 @@ Crowfoot에서 발급한 PostgreSQL을 쓰므로 `DB_NAME`에는 발급받은 **
 
 **필수 시크릿**: `SSH_ADDRESS`, `SSH_PORT`, `SSH_ID`, `SSH_PASSWORD`, `DB_ADDRESS`, `DB_PORT`, `DB_NAME`, `DB_USERNAME`, `DB_PASSWORD`
 
-**선택 시크릿**(없으면 괄호 안 기본값): `DB_DATABASE`(nhnacademy), `DB_SCHEMA`(`DB_NAME` 값), `MAIL_MODE`(log), `SHOW_CODE_ON_SCREEN`(true), `COOKIE_SECURE`(true), `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`(둘 다 등록하면 처음 켤 때 관리자 계정을 만든다. 없으면 관리자 없이 켜진다)
+**선택 시크릿**(없으면 괄호 안 기본값): `DB_DATABASE`(nhnacademy), `DB_SCHEMA`(`DB_NAME` 값), `SMTP_USERNAME`, `SMTP_PASSWORD`(둘 다 있어야 인증 메일을 보낸다. 없으면 가입 인증이 안 된다), `SMTP_HOST`(smtp.gmail.com), `SMTP_PORT`(587), `SMTP_FROM`(Ylog <SMTP_USERNAME>), `MAIL_MODE`(SMTP 계정이 있으면 smtp), `SHOW_CODE_ON_SCREEN`(false), `COOKIE_SECURE`(true), `ADMIN_EMAIL`, `ADMIN_PASSWORD`(둘 다 등록하면 처음 켤 때 관리자 계정을 만든다. 없으면 관리자 없이 켜진다)
 
 서버 조건: Docker가 설치돼 있어야 한다. SSH 계정이 docker를 바로 못 쓰면 `SSH_PASSWORD`로 sudo를 쓴다. DB가 같은 서버에 있으면(`DB_ADDRESS`가 localhost) 컨테이너가 `host.docker.internal`로 접속하므로 PostgreSQL이 도커 네트워크(172.x)에서 오는 접속도 받아야 한다.
 
