@@ -11,7 +11,7 @@
 #
 # 필요한 환경변수: DB_ADDRESS, DB_PORT, DB_NAME, DB_USERNAME, DB_PASSWORD
 # 선택: DB_DATABASE(nhnacademy), DB_SCHEMA(DB_NAME 값), APP_PORT(8330), SHOW_CODE_ON_SCREEN(false), COOKIE_SECURE(true),
-#       SMTP_USERNAME, SMTP_PASSWORD(둘 다 있으면 인증 메일을 실제로 보낸다. Gmail 주소와 앱 비밀번호),
+#       SMTP_USERNAME, SMTP_PASSWORD(둘 다 있으면 인증 메일을 실제로 보낸다. 메일 계정과 앱 비밀번호. Gmail·네이버 등 SMTP_HOST만 바꾸면 된다),
 #       SMTP_HOST(smtp.gmail.com), SMTP_PORT(587), SMTP_FROM("Ylog <SMTP_USERNAME>"), MAIL_MODE(SMTP 계정이 있으면 smtp, 없으면 log), SUDO_PASSWORD,
 #       ADMIN_EMAIL, ADMIN_PASSWORD(둘 다 있을 때만 처음 켤 때 관리자 계정을 만든다. 기본은 빈 값),
 #       GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, KAKAO_CLIENT_ID, KAKAO_CLIENT_SECRET(소셜 로그인. 값이 있는 제공자만 켜진다),
@@ -78,11 +78,15 @@ DB_URL="jdbc:postgresql://$DB_HOST:$DB_PORT/$DB_DATABASE?currentSchema=$DB_SCHEM
 
 CURRENT="$(cat "$ACTIVE_FILE" 2>/dev/null || true)"
 if [ "$CURRENT" = "blue" ]; then NEXT="green"; else NEXT="blue"; fi
-# 인증 메일: SMTP 계정이 있으면 실제로 보내고, 없으면 인증번호를 서버 로그에만 찍는다
+# 인증 메일: SMTP 계정이 있으면 실제로 보내고, 없으면 인증번호를 서버 로그에만 찍는다.
+# 메일 서비스는 SMTP_HOST로 고른다(예: smtp.gmail.com, smtp.naver.com). 둘 다 587(STARTTLS)
 SMTP_HOST="${SMTP_HOST:-smtp.gmail.com}"
 if [ -n "${SMTP_USERNAME:-}" ] && [ -n "${SMTP_PASSWORD:-}" ]; then
   MAIL_MODE="${MAIL_MODE:-smtp}"
-  SMTP_FROM="${SMTP_FROM:-Ylog <$SMTP_USERNAME>}"
+  # 보낸 사람은 로그인한 계정 주소여야 한다. 네이버는 아이디만 넣어도 되게 @naver.com을 붙인다
+  SENDER="$SMTP_USERNAME"
+  if [[ "$SENDER" != *@* && "$SMTP_HOST" == *naver.com ]]; then SENDER="$SENDER@naver.com"; fi
+  SMTP_FROM="${SMTP_FROM:-Ylog <$SENDER>}"
 else
   MAIL_MODE="${MAIL_MODE:-log}"
   echo "⚠️  SMTP_USERNAME·SMTP_PASSWORD 시크릿이 없어 인증 메일을 보내지 않습니다(인증번호는 서버 로그에만 남음)"

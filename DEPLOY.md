@@ -8,7 +8,7 @@ Ylog는 **jar 하나**(서버 + 화면)로 돌아갑니다. 함께 필요한 것
 |---|---|
 | PostgreSQL 16 | 빈 DB와 계정 하나. 표는 서버가 처음 켜질 때 Flyway로 만든다 |
 | Redis 7 | 인증번호, 조회수 중복 방지, 인기 검색어 제한에 쓴다. 바깥에 열지 않는다 |
-| SMTP 계정 | Gmail 주소와 앱 비밀번호. 학교 서버에서 `smtp.gmail.com:587`로 나갈 수 있는 것을 확인했다(2026-10-14). 없으면 인증번호가 서버 로그에만 찍혀 가입할 수 없다 |
+| SMTP 계정 | Gmail이나 네이버 메일 계정과 앱 비밀번호. 학교 서버에서 `smtp.gmail.com`, `smtp.naver.com`의 587·465로 나갈 수 있는 것을 확인했다(2026-10-14). 없으면 인증번호가 서버 로그에만 찍혀 가입할 수 없다 |
 | 이미지 폴더 | `IMAGE_DIR`. 서버를 다시 만들어도 남는 곳(도커면 볼륨) |
 | HTTPS | 로그인 쿠키가 `Secure`라서 HTTPS가 필요하다. Nginx·로드밸런서가 HTTPS를 맡고 서버(8080)로 넘긴다 |
 
@@ -22,8 +22,8 @@ Ylog는 **jar 하나**(서버 + 화면)로 돌아갑니다. 함께 필요한 것
 | `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` | O | 예: `jdbc:postgresql://db:5432/myblog` |
 | `REDIS_HOST` | O | `REDIS_PORT`(기본 6379), `REDIS_PASSWORD`(선택) |
 | `MAIL_MODE` | | `smtp`(기본) 또는 `log`(개발용. 인증번호를 로그에 찍음) |
-| `SMTP_USERNAME`, `SMTP_PASSWORD` | smtp일 때 O | 인증 메일을 보낼 Gmail 주소와 앱 비밀번호 |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_FROM` | | 기본 `smtp.gmail.com`, `587`, `Ylog <SMTP_USERNAME>` |
+| `SMTP_USERNAME`, `SMTP_PASSWORD` | smtp일 때 O | 인증 메일을 보낼 계정과 앱 비밀번호(Gmail은 주소 전체, 네이버는 아이디) |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_FROM` | | 기본 `smtp.gmail.com`, `587`, `Ylog <계정 주소>`. 네이버는 `SMTP_HOST`만 `smtp.naver.com`으로 |
 | `SHOW_CODE_ON_SCREEN` | | 기본 `false`. `true`면 가입·비밀번호 찾기 화면에 인증번호가 보인다. 메일 없이 시험할 때만 쓰고, 켜 두면 남의 이메일로도 가입할 수 있다 |
 | `IMAGE_DIR` | | 기본 `/var/lib/ylog/images` |
 | `PORT` | | 기본 8080 |
