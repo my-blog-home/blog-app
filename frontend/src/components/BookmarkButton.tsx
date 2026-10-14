@@ -3,7 +3,7 @@ import { ApiError, put } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 
 /** 북마크: 나중에 읽을 글로 저장한다. 숫자는 보이지 않고 나만 본다 */
-export default function BookmarkButton({ postId, initial }: { postId: number; initial: boolean }) {
+export default function BookmarkButton({ postId, initial }: Readonly<{ postId: number; initial: boolean }>) {
   const { requireLogin } = useAuth()
   const [saved, setSaved] = useState(initial)
   const [busy, setBusy] = useState(false)
@@ -30,9 +30,9 @@ export default function BookmarkButton({ postId, initial }: { postId: number; in
         <span aria-hidden="true">{saved ? '★' : '☆'}</span> {saved ? '북마크됨' : '북마크'}
       </button>
       {message && (
-        <span className="muted small" role="status">
+        <output className="muted small">
           {message}
-        </span>
+        </output>
       )}
     </>
   )

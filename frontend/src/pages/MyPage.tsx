@@ -79,7 +79,7 @@ export default function MyPage() {
   )
 }
 
-function InfoForm({ info, onSaved }: { info: MyInfo; onSaved: (info: MyInfo) => void }) {
+function InfoForm({ info, onSaved }: Readonly<{ info: MyInfo; onSaved: (info: MyInfo) => void }>) {
   const [nickname, setNickname] = useState(info.nickname)
   const [bio, setBio] = useState(info.bio ?? '')
   const [profileColor, setProfileColor] = useState(info.profileColor)
@@ -129,15 +129,15 @@ function InfoForm({ info, onSaved }: { info: MyInfo; onSaved: (info: MyInfo) => 
         </span>
       </fieldset>
       <label>
-        이메일
+        {'이메일'}
         <input value={info.email ?? '이메일 없이 가입한 계정이에요'} readOnly />
       </label>
       <label>
-        닉네임
+        {'닉네임'}
         <input value={nickname} onChange={(e) => setNickname(e.target.value)} maxLength={10} />
       </label>
       <label>
-        소개
+        {'소개'}
         <textarea value={bio} onChange={(e) => setBio(e.target.value)} maxLength={100} rows={3} />
         <span className="hint muted">{[...bio].length}/100</span>
       </label>
@@ -173,11 +173,11 @@ function PasswordForm() {
   return (
     <form className="form" onSubmit={submit}>
       <label>
-        현재 비밀번호
+        {'현재 비밀번호'}
         <input type="password" value={current} onChange={(e) => setCurrent(e.target.value)} autoComplete="current-password" />
       </label>
       <label>
-        새 비밀번호
+        {'새 비밀번호'}
         <input type="password" value={next} onChange={(e) => setNext(e.target.value)} autoComplete="new-password" />
         <span className="checks">
           {passwordChecks(next).map((c) => (
@@ -188,7 +188,7 @@ function PasswordForm() {
         </span>
       </label>
       <label>
-        새 비밀번호 확인
+        {'새 비밀번호 확인'}
         <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" />
         {confirm && next !== confirm && <span className="hint error">{M.passwordMismatch}</span>}
       </label>
@@ -200,7 +200,7 @@ function PasswordForm() {
   )
 }
 
-function WithdrawForm({ onDone, needsPassword }: { onDone: () => void; needsPassword: boolean }) {
+function WithdrawForm({ onDone, needsPassword }: Readonly<{ onDone: () => void; needsPassword: boolean }>) {
   const [password, setPassword] = useState('')
   const [agreed, setAgreed] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -234,7 +234,7 @@ function WithdrawForm({ onDone, needsPassword }: { onDone: () => void; needsPass
       {/* 소셜 로그인으로만 가입한 회원은 비밀번호가 없어 동의만 받는다 */}
       {needsPassword && (
         <label>
-          비밀번호
+          {'비밀번호'}
           <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
         </label>
       )}

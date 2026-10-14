@@ -23,7 +23,7 @@ function usePrefersReducedMotion() {
  * 지금 핫한 글 슬라이드 (FR-072, BR-33). 최대 3개, 5초마다 넘어가고 마우스를 올리거나 키보드로 들어오면 멈춘다.
  * 움직임 줄이기 설정이면 자동으로 넘기지 않고, 글이 하나뿐이면 넘김 버튼과 점이 없다. 주제를 고르면 그 주제의 글만.
  */
-export default function HotPostsSlider({ topicId }: { topicId: string | null }) {
+export default function HotPostsSlider({ topicId }: Readonly<{ topicId: string | null }>) {
   const [items, setItems] = useState<HotPost[] | null>(null)
   const [current, setCurrent] = useState(0)
   const [paused, setPaused] = useState(false)

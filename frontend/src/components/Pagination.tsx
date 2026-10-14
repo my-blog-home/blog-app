@@ -14,7 +14,7 @@ export function pageWindow(page: number, totalPages: number, size = PAGE_WINDOW)
 }
 
 /** 현재 페이지를 강조하고, 처음·끝에서는 이전·다음을 막는다 (CF-10-2, 3, BR-09) */
-export default function Pagination({ page, totalPages, onChange }: { page: number; totalPages: number; onChange: (page: number) => void }) {
+export default function Pagination({ page, totalPages, onChange }: Readonly<{ page: number; totalPages: number; onChange: (page: number) => void }>) {
   if (totalPages <= 1) return null
   const pages = pageWindow(page, totalPages)
   return (

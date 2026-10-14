@@ -71,6 +71,7 @@ export default function AdminContentPage() {
   }
 
   const data = kind === 'posts' ? posts : comments
+  const noItemsText = kind === 'posts' ? '글이 없습니다' : '댓글이 없습니다'
 
   return (
     <>
@@ -116,7 +117,7 @@ export default function AdminContentPage() {
       </form>
       {notice && <p className="notice">{notice}</p>}
       {error && <p className="error">{error}</p>}
-      {data && data.items.length === 0 && <p className="empty">{q ? '검색 결과가 없습니다' : kind === 'posts' ? '글이 없습니다' : '댓글이 없습니다'}</p>}
+      {data && data.items.length === 0 && <p className="empty">{q ? '검색 결과가 없습니다' : noItemsText}</p>}
       {kind === 'posts' && posts && posts.items.length > 0 && (
         <div className="table-wrap">
           <table className="data-table admin-table">

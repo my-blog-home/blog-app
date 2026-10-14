@@ -7,12 +7,12 @@ import { useAuth } from '../auth/AuthContext'
 /**
  * 글 상세 아래의 글쓴이 상자 (FR-076): 아바타, 블로그 이름(블로그로), 닉네임(작성자 프로필로), 블로그 소개, 구독 버튼(내 글이 아니면)
  */
-export default function AuthorBox({ blogId, authorId, authorNickname, authorColor }: {
+export default function AuthorBox({ blogId, authorId, authorNickname, authorColor }: Readonly<{
   blogId: number
   authorId: number
   authorNickname: string
   authorColor: string
-}) {
+}>) {
   const { me, requireLogin } = useAuth()
   const [blog, setBlog] = useState<BlogView | null>(null)
   const [busy, setBusy] = useState(false)

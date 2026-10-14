@@ -136,13 +136,13 @@ export default function MyBlogPage() {
           내 활동
         </Link>
       </nav>
-      <div className="sort-toggle" role="group" aria-label="상태로 거르기" style={{ marginBottom: 16 }}>
+      <fieldset className="sort-toggle" aria-label="상태로 거르기" style={{ marginBottom: 16 }}>
         {STATUS_TABS.map((t) => (
           <button key={t.value} type="button" aria-pressed={status === t.value} className={status === t.value ? 'current' : ''} onClick={() => setFilter(t.value)}>
             {t.label}
           </button>
         ))}
-      </div>
+      </fieldset>
 
       {posts &&
         (posts.items.length === 0 ? (

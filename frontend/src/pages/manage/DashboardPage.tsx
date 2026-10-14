@@ -102,7 +102,7 @@ export default function DashboardPage() {
   )
 }
 
-function StatTile({ label, counts }: { label: string; counts: Counts }) {
+function StatTile({ label, counts }: Readonly<{ label: string; counts: Counts }>) {
   return (
     <div className="tile">
       <span className="muted small">오늘 {label}</span>

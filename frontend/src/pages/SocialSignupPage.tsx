@@ -77,14 +77,14 @@ export default function SocialSignupPage() {
       <form className="form" onSubmit={submit}>
         {pending.email ? (
           <label>
-            이메일
+            {'이메일'}
             <input value={pending.email} disabled />
           </label>
         ) : (
           <p className="muted small">이메일 없이 {PROVIDER_NAME[pending.provider] ?? pending.provider} 계정으로 가입해요. 다음부터 같은 계정으로 로그인하면 돼요.</p>
         )}
         <label>
-          닉네임
+          {'닉네임'}
           <input value={nickname} onChange={(e) => setNickname(e.target.value)} placeholder="한글·영문·숫자 2~10자" autoFocus />
           {nickname && !nicknameOk && <span className="hint error">한글·영문·숫자 2~10자로 정해 주세요</span>}
         </label>

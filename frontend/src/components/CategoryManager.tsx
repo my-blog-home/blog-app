@@ -33,13 +33,13 @@ export default function CategoryManager({
   categories,
   onChanged,
   initialEditId,
-}: {
+}: Readonly<{
   blogId: number
   categories: CategoryView[]
   onChanged: () => void
   /** 내 블로그 화면의 [수정]으로 들어오면 그 분류를 바로 고친다 (FR-32) */
   initialEditId?: number | null
-}) {
+}>) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [editingId, setEditingId] = useState<number | null>(null)
@@ -314,9 +314,9 @@ export default function CategoryManager({
         <button>추가</button>
       </form>
       {error && <p className="error" role="alert">{error}</p>}
-      <p className="sr-only" role="status" aria-live="polite">
+      <output className="sr-only" aria-live="polite">
         {status}
-      </p>
+      </output>
       <p className="note">
         왼쪽 손잡이를 끌거나 손잡이에서 ↑ ↓ 키로 순서를 바꿀 수 있습니다. 글이 하나라도 있는 분류는 삭제할 수 없습니다. 글은 글 수정에서 다른 분류로 옮길 수 있습니다. "미분류"는 항상 맨 뒤에 있습니다. 비공개 분류의 글은 나만 볼 수 있습니다.
       </p>

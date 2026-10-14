@@ -167,13 +167,47 @@ export default function AdminMembersPage() {
   )
 }
 
-function MemberStatusBadge({ member }: { member: MemberRow }) {
-  const cls = member.status === 'SUSPENDED' ? 'status-suspended' : member.status === 'WITHDRAWN' ? 'status-withdrawn' : 'status-active'
+function statusClass(status: MemberRow['status']) {
+  if (status === 'SUSPENDED') return 'status-suspended'
+  if (status === 'WITHDRAWN') return 'status-withdrawn'
+  return 'status-active'
+}
+
+function MemberStatusBadge({ member }: Readonly<{ member: MemberRow }>) {
+  const cls = statusClass(member.status)
   return <span className={`badge ${cls}`}>{MEMBER_STATUS_LABEL[member.status]}</span>
 }
 
+/** 정지 이력의 끝: 정지 중, 해제(언제·누가), 끝남 */
+function historyEnd(h: SuspensionHistory) {
+  if (h.active) return '정지 중'
+  if (!h.liftedAt) return '끝남'
+  const by = h.liftedBy ? ` (${h.liftedBy})` : ''
+  return `해제 ${formatDate(h.liftedAt)}${by}`
+}
+
+/** 정지 이력 목록. 읽는 동안과 이력이 없을 때는 안내 한 줄 */
+function HistoryList({ history }: Readonly<{ history: SuspensionHistory[] | null }>) {
+  if (history == null) return <p className="muted small">불러오는 중…</p>
+  if (history.length === 0) return <p className="muted small">정지 이력이 없습니다</p>
+  return (
+    <ul className="mini-list">
+      {history.map((h) => (
+        <li key={h.id}>
+          <span>
+            {formatDate(h.startsAt)} · {h.permanent ? '영구' : `${until(h.endsAt)}`}
+            {h.reason ? ` · ${h.reason}` : ''}
+            {h.reportId ? ' · 신고 처리' : ''}
+          </span>
+          <span className="faint">{historyEnd(h)}</span>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
 /** 정지·해제 창: 받은 신고 수, 정지 이력, 지금 정지(있으면 해제), 새 정지(기간·사유) */
-function SuspendDialog({ member, onClose, onDone }: { member: MemberRow; onClose: () => void; onDone: (message: string) => void }) {
+function SuspendDialog({ member, onClose, onDone }: Readonly<{ member: MemberRow; onClose: () => void; onDone: (message: string) => void }>) {
   const [history, setHistory] = useState<SuspensionHistory[] | null>(null)
   const [days, setDays] = useState<string>('3')
   const [reason, setReason] = useState('')
@@ -244,30 +278,13 @@ function SuspendDialog({ member, onClose, onDone }: { member: MemberRow; onClose
       )}
 
       <h3 className="dialog-sub">정지 이력</h3>
-      {history == null ? (
-        <p className="muted small">불러오는 중…</p>
-      ) : history.length === 0 ? (
-        <p className="muted small">정지 이력이 없습니다</p>
-      ) : (
-        <ul className="mini-list">
-          {history.map((h) => (
-            <li key={h.id}>
-              <span>
-                {formatDate(h.startsAt)} · {h.permanent ? '영구' : `${until(h.endsAt)}`}
-                {h.reason ? ` · ${h.reason}` : ''}
-                {h.reportId ? ' · 신고 처리' : ''}
-              </span>
-              <span className="faint">{h.active ? '정지 중' : h.liftedAt ? `해제 ${formatDate(h.liftedAt)}${h.liftedBy ? ` (${h.liftedBy})` : ''}` : '끝남'}</span>
-            </li>
-          ))}
-        </ul>
-      )}
+      <HistoryList history={history} />
 
       <form className="form" onSubmit={suspend} noValidate>
         <h3 className="dialog-sub">{member.suspension ? '정지 더하기' : '정지하기'}</h3>
         <p className="muted small">정지하면 로그인할 수 없고, 로그인해 둔 곳에서도 바로 로그아웃됩니다. 쓴 글과 댓글은 그대로 보입니다. 겹치면 가장 오래 가는 정지가 적용됩니다.</p>
         <label>
-          정지 기간
+          {'정지 기간'}
           <select value={days} onChange={(e) => setDays(e.target.value)}>
             {SUSPEND_OPTIONS.map((o) => (
               <option key={o.label} value={o.value == null ? 'P' : String(o.value)}>
@@ -277,7 +294,7 @@ function SuspendDialog({ member, onClose, onDone }: { member: MemberRow; onClose
           </select>
         </label>
         <label>
-          정지 사유 (선택)
+          {'정지 사유 (선택)'}
           <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={3} placeholder="예: 광고성 댓글을 반복해서 작성함. 정지된 본인에게 보입니다" />
           <span className={`field-count ${charCount(reason.trim()) > REASON_MAX ? 'over' : ''}`}>
             {charCount(reason.trim())} / {REASON_MAX}

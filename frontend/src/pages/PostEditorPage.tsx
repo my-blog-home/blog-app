@@ -23,6 +23,28 @@ interface Draft {
 
 const IMAGES_PER_POST = 10
 
+/** 올릴 때(publishing)는 제목과 본문이 있어야 한다. 임시저장은 비워도 된다 */
+function requiredErrors(draft: Draft, publishing: boolean) {
+  const next: Record<string, string> = {}
+  if (publishing && !draft.title.trim()) next.title = M.titleRequired
+  if (publishing && !draft.body.trim()) next.body = M.bodyRequired
+  return next
+}
+
+/** 임시저장한 글의 제목. 제목을 비운 채 아직 올리지 않은 글이면 기본 제목을 붙인다 */
+function keptTitle(draft: Draft, published: boolean) {
+  if (draft.title.trim() || published) return draft.title
+  return M.draftTitle
+}
+
+/** 저장 실패를 칸별 오류로 나눈다. 칸에 붙지 않으면 form에 */
+function saveErrors(err: unknown): Record<string, string> {
+  if (!(err instanceof ApiError)) return { form: '잠시 뒤 다시 시도해 주세요' }
+  const fields: Record<string, string> = {}
+  err.fieldErrors.forEach((f) => (fields[f.field] = f.message))
+  return Object.keys(fields).length > 0 ? fields : { form: err.message }
+}
+
 /**
  * 글쓰기·글 수정 (CF-05, CF-13). 권한은 서버가 최종 확인한다.
  * [임시저장]은 제목·본문을 비워도 저장하고 화면에 남는다. [작성완료]는 올린다 (FR-09, FR-11, CR-06)
@@ -198,10 +220,7 @@ export default function PostEditorPage() {
   // asDraft: 임시저장. 이미 작성완료한 글이면 서버가 작성완료 상태를 그대로 두고 내용만 저장한다 (BR-04)
   const save = async (asDraft: boolean) => {
     if (saving) return
-    const publishing = !asDraft || published
-    const next: Record<string, string> = {}
-    if (publishing && !draft.title.trim()) next.title = M.titleRequired
-    if (publishing && !draft.body.trim()) next.body = M.bodyRequired
+    const next = requiredErrors(draft, !asDraft || published)
     setErrors(next)
     setNotice(null)
     if (Object.keys(next).length > 0) return
@@ -215,7 +234,7 @@ export default function PostEditorPage() {
         : await httpPost<{ id: number }>(`/api/blogs/${blog.id}/posts`, body)
       if (asDraft) {
         // 임시저장하면 안내를 띄우고 글쓰기 화면에 남는다. 주소는 이 글의 수정 주소로 바뀐다
-        const kept = { ...draft, title: draft.title.trim() ? draft.title : published ? draft.title : M.draftTitle }
+        const kept = { ...draft, title: keptTitle(draft, published) }
         setDraft(kept)
         setSaved(kept)
         setNotice(M.draftSaved)
@@ -229,13 +248,7 @@ export default function PostEditorPage() {
       navigate(`/posts/${result.id}`, { replace: true })
     } catch (err) {
       // 저장에 실패하면 입력한 내용을 그대로 둔다 (CF-05-8)
-      if (err instanceof ApiError) {
-        const fields: Record<string, string> = {}
-        err.fieldErrors.forEach((f) => (fields[f.field] = f.message))
-        setErrors(Object.keys(fields).length > 0 ? fields : { form: err.message })
-      } else {
-        setErrors({ form: '잠시 뒤 다시 시도해 주세요' })
-      }
+      setErrors(saveErrors(err))
     } finally {
       setSaving(false)
     }
@@ -308,7 +321,7 @@ export default function PostEditorPage() {
             {editing ? '글 수정' : '새 글'}
             {editing && status === 'DRAFT' && <span className="badge" style={{ marginLeft: 8 }}>임시저장</span>}
           </h4>
-          {notice && <p className="notice" role="status">{notice}</p>}
+          {notice && <output className="notice">{notice}</output>}
           {errors.form && <p className="error">{errors.form}</p>}
           <div className="row">
             <button type="button" disabled={saving} onClick={() => save(true)}>
@@ -350,11 +363,11 @@ export default function PostEditorPage() {
           <div className="radio-row">
             <label>
               <input type="radio" checked={draft.visibility === 'PUBLIC'} onChange={() => update('visibility', 'PUBLIC')} />
-              공개
+              {'공개'}
             </label>
             <label>
               <input type="radio" checked={draft.visibility === 'PRIVATE'} onChange={() => update('visibility', 'PRIVATE')} />
-              비공개
+              {'비공개'}
             </label>
           </div>
         </div>

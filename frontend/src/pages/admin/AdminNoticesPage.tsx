@@ -64,7 +64,7 @@ export default function AdminNoticesPage() {
   return (
     <>
       <h1 className="row-between">
-        공지 관리
+        {'공지 관리'}
         <button type="button" className="primary sm" onClick={() => setEditing({ id: null, type: 'NOTICE', title: '', content: '', pinned: false })}>
           새 공지 쓰기
         </button>
@@ -130,7 +130,7 @@ export default function AdminNoticesPage() {
 }
 
 /** 공지 쓰기·고치기 창. 내용은 글자만 저장하고(HTML로 해석하지 않음) 빈 줄로 문단을 나눈다 */
-function NoticeEditor({ initial, onClose, onSaved }: { initial: Editing; onClose: () => void; onSaved: (message: string) => void }) {
+function NoticeEditor({ initial, onClose, onSaved }: Readonly<{ initial: Editing; onClose: () => void; onSaved: (message: string) => void }>) {
   const [form, setForm] = useState<Editing>(initial)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [busy, setBusy] = useState(false)
@@ -170,7 +170,7 @@ function NoticeEditor({ initial, onClose, onSaved }: { initial: Editing; onClose
     <AdminModal title={form.id == null ? '공지 쓰기' : '공지 고치기'} wide onClose={onClose}>
       <form className="form" onSubmit={submit} noValidate>
         <label>
-          종류
+          {'종류'}
           <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as NoticeType })}>
             <option value="NOTICE">공지</option>
             <option value="GUIDE">이용법</option>
@@ -178,7 +178,7 @@ function NoticeEditor({ initial, onClose, onSaved }: { initial: Editing; onClose
         </label>
         {errors.type && <p className="error">{errors.type}</p>}
         <label>
-          제목
+          {'제목'}
           <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="제목을 입력해 주세요" />
           <span className={`field-count ${titleLength > TITLE_MAX ? 'over' : ''}`}>
             {titleLength} / {TITLE_MAX}
@@ -186,7 +186,7 @@ function NoticeEditor({ initial, onClose, onSaved }: { initial: Editing; onClose
         </label>
         {errors.title && <p className="error">{errors.title}</p>}
         <label>
-          내용
+          {'내용'}
           <textarea
             value={form.content}
             onChange={(e) => setForm({ ...form, content: e.target.value })}

@@ -68,6 +68,9 @@ export default function PasswordResetPage() {
 
   const passwordOk = passwordChecks(password).every((c) => c.ok) && password === confirm
 
+  // 인증번호를 받은 뒤에는 다시 받기, 기다리는 동안은 남은 초를 보인다
+  const resendLabel = cooldown > 0 ? `다시 받기 (${cooldown}초)` : '다시 받기'
+
   return (
     <section className="narrow">
       <h1>비밀번호 찾기</h1>
@@ -78,7 +81,7 @@ export default function PasswordResetPage() {
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} readOnly={step === 'password'} />
             {step !== 'password' && (
               <button type="button" onClick={requestCode} disabled={!email.trim() || cooldown > 0}>
-                {step === 'code' ? (cooldown > 0 ? `다시 받기 (${cooldown}초)` : '다시 받기') : '인증번호 받기'}
+                {step === 'code' ? resendLabel : '인증번호 받기'}
               </button>
             )}
           </div>
@@ -103,7 +106,7 @@ export default function PasswordResetPage() {
         {step === 'password' && (
           <>
             <label>
-              새 비밀번호
+              {'새 비밀번호'}
               <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" />
               <span className="checks">
                 {passwordChecks(password).map((c) => (
@@ -114,7 +117,7 @@ export default function PasswordResetPage() {
               </span>
             </label>
             <label>
-              새 비밀번호 확인
+              {'새 비밀번호 확인'}
               <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" />
               {confirm && password !== confirm && <span className="hint error">{M.passwordMismatch}</span>}
             </label>

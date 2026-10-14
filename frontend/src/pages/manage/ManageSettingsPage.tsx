@@ -37,11 +37,11 @@ export default function ManageSettingsPage() {
       <h1>설정</h1>
       <form className="form panel-card" style={{ maxWidth: 520 }} onSubmit={submit}>
         <label>
-          블로그 이름
+          {'블로그 이름'}
           <input value={name} onChange={(e) => setName(e.target.value)} maxLength={30} />
         </label>
         <label>
-          주제
+          {'주제'}
           <select value={topicId} onChange={(e) => setTopicId(Number(e.target.value))}>
             {(topics.length > 0 ? topics : [{ ...blog.topic, postCount: 0 }]).map((t) => (
               <option key={t.id} value={t.id}>
@@ -52,7 +52,7 @@ export default function ManageSettingsPage() {
           <span className="hint muted">대표 주제를 바꿔도 이미 쓴 글의 주제는 바뀌지 않습니다</span>
         </label>
         <label>
-          소개
+          {'소개'}
           <textarea value={description} onChange={(e) => setDescription(e.target.value)} maxLength={200} rows={4} />
           <span className="hint muted">{[...description].length}/200</span>
         </label>

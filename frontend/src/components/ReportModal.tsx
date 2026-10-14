@@ -13,11 +13,11 @@ const REASONS = [
 export type ReportTarget = { kind: 'post' | 'comment'; id: number }
 
 /** 신고: 사유를 고르고 기타면 설명을 쓴다. 글·댓글이 같은 창을 쓴다 (CF-21, FR-071). 접수되면 onDone을 부른다 */
-export default function ReportModal({ target, onClose, onDone }: { target: ReportTarget; onClose: () => void; onDone?: () => void }) {
+export default function ReportModal({ target, onClose, onDone }: Readonly<{ target: ReportTarget; onClose: () => void; onDone?: () => void }>) {
   const [reason, setReason] = useState('SPAM')
   const [detail, setDetail] = useState('')
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null)
-  const ref = useDialog<HTMLDivElement>(onClose)
+  const ref = useDialog<HTMLDialogElement>(onClose)
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
@@ -32,8 +32,9 @@ export default function ReportModal({ target, onClose, onDone }: { target: Repor
   }
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div ref={ref} className="modal" role="dialog" aria-modal="true" aria-label={target.kind === 'post' ? '글 신고하기' : '댓글 신고하기'} onClick={(e) => e.stopPropagation()}>
+    <div className="modal-backdrop">
+      <button type="button" className="modal-scrim" tabIndex={-1} aria-hidden="true" onClick={onClose} />
+      <dialog ref={ref} className="modal" open aria-modal="true" aria-label={target.kind === 'post' ? '글 신고하기' : '댓글 신고하기'}>
         <div className="modal-head">
           <h2>{target.kind === 'post' ? '글 신고하기' : '댓글 신고하기'}</h2>
           <button type="button" className="link" onClick={onClose} aria-label="닫기">
@@ -54,7 +55,7 @@ export default function ReportModal({ target, onClose, onDone }: { target: Repor
             <button className="primary">신고</button>
           </form>
         )}
-      </div>
+      </dialog>
     </div>
   )
 }

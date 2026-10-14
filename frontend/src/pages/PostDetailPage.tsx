@@ -150,9 +150,9 @@ export default function PostDetailPage() {
         </button>
         {!post.editable && <button onClick={() => requireLogin(() => setReporting(true)) && setReporting(true)}>신고</button>}
       </div>
-      <p className="copy-toast" role="status" aria-live="polite">
+      <output className="copy-toast" aria-live="polite">
         {copyMessage}
-      </p>
+      </output>
       {reporting && <ReportModal target={{ kind: 'post', id: post.id }} onClose={() => setReporting(false)} />}
       <CommentSection postId={post.id} onCountChange={onCountChange} />
       <AuthorBox blogId={post.blog.id} authorId={post.authorId} authorNickname={post.authorNickname} authorColor={post.authorColor} />

@@ -7,7 +7,7 @@ import type { Me } from '../api/types'
  * 순서: 관리자(관리자만) → 내 블로그 → 블로그 관리 → 내 활동 → 북마크 → 마이페이지 → 로그아웃.
  * 바깥을 누르거나 Esc로 닫고, 열면 첫 항목에, Esc로 닫으면 아바타 버튼에 초점을 둔다. ↑ ↓ 로 항목을 옮긴다 (NFR-08)
  */
-export default function ProfileMenu({ me, newCommentCount, onLogout }: { me: Me; newCommentCount: number; onLogout: () => void }) {
+export default function ProfileMenu({ me, newCommentCount, onLogout }: Readonly<{ me: Me; newCommentCount: number; onLogout: () => void }>) {
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
   const toggleRef = useRef<HTMLButtonElement>(null)
@@ -92,8 +92,8 @@ export default function ProfileMenu({ me, newCommentCount, onLogout }: { me: Me;
         {alerts && <span className="notify-dot" aria-hidden="true" />}
       </button>
       {open && (
-        <div className="dropdown-menu" id={menuId} role="menu" aria-label="내 메뉴" ref={menuRef} onKeyDown={onMenuKey}>
-          <div className="menu-head" role="presentation">
+        <div className="dropdown-menu" id={menuId} role="menu" tabIndex={-1} aria-label="내 메뉴" ref={menuRef} onKeyDown={onMenuKey}>
+          <div className="menu-head">
             <strong>{me.nickname}</strong>
             <small>{me.email ?? '이메일 없이 가입한 계정'}</small>
           </div>
@@ -129,7 +129,7 @@ export default function ProfileMenu({ me, newCommentCount, onLogout }: { me: Me;
           <Link to="/me" role="menuitem">
             마이페이지
           </Link>
-          <hr role="presentation" />
+          <hr />
           <button
             type="button"
             role="menuitem"

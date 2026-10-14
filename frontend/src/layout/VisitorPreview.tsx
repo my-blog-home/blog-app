@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useMemo, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { AuthContext, useAuth } from '../auth/AuthContext'
 import { leavePreview, PREVIEW_PARAM, PREVIEW_VALUE, previewActive, withoutPreview } from '../preview'
@@ -15,7 +15,7 @@ export function usePreview(): boolean {
  * me를 비워서 내려 준다(글쓰기·관리·댓글 쓰기 같은 주인·회원 버튼이 숨는다). 실제 로그인 회원은 sessionMe에 남는다.
  * 블로그·글 사이를 옮겨도 미리보기를 이어 가도록 주소에 view=visitor를 다시 붙인다.
  */
-export function VisitorPreviewScope({ children }: { children: ReactNode }) {
+export function VisitorPreviewScope({ children }: Readonly<{ children: ReactNode }>) {
   const auth = useAuth()
   const location = useLocation()
   const navigate = useNavigate()
@@ -30,8 +30,10 @@ export function VisitorPreviewScope({ children }: { children: ReactNode }) {
     }
   }, [preview, location.pathname, location.search, location.hash, navigate])
 
+  const visitorAuth = useMemo(() => ({ ...auth, me: null, newCommentCount: 0 }), [auth])
+
   if (!preview) return <>{children}</>
-  return <AuthContext.Provider value={{ ...auth, me: null, newCommentCount: 0 }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={visitorAuth}>{children}</AuthContext.Provider>
 }
 
 /** 미리보기 안내 띠: [내 화면으로 보기] [블로그 관리로 돌아가기] */

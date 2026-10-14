@@ -7,7 +7,7 @@ export function paragraphs(text: string): string[][] {
     .filter((lines) => lines.some((line) => line.trim() !== ''))
 }
 
-export default function PlainText({ text }: { text: string }) {
+export default function PlainText({ text }: Readonly<{ text: string }>) {
   return (
     <div className="plain-text">
       {paragraphs(text).map((lines, i) => (

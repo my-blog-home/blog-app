@@ -17,7 +17,7 @@ export async function upload(file: File): Promise<string> {
 }
 
 /** 이미지를 올리고 본문에 마크다운 이미지로 넣는다 (CF-22) */
-export default function ImageUploadButton({ onUploaded }: { onUploaded: (markdown: string) => void }) {
+export default function ImageUploadButton({ onUploaded }: Readonly<{ onUploaded: (markdown: string) => void }>) {
   const input = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
