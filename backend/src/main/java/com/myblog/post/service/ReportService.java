@@ -48,8 +48,8 @@ public class ReportService {
         if (ownerId == memberId) {
             throw ApiException.field(REASON, Messages.REPORT_OWN_POST);
         }
-        save(new Target(TargetType.POST, post.getId(), null, post.getTitle(), ownerId), memberId, reason, rawDetail,
-                Messages.REPORT_DUPLICATE);
+        saveReport(new Target(TargetType.POST, post.getId(), null, post.getTitle(), ownerId), memberId, reason,
+                rawDetail, Messages.REPORT_DUPLICATE);
     }
 
     /** 신고 대상: 글 또는 댓글. 댓글 신고는 그 댓글이 달린 글 번호도 함께 둔다 */
@@ -66,6 +66,10 @@ public class ReportService {
      */
     @Transactional
     public void save(Target target, long memberId, String reason, String rawDetail, String duplicateMessage) {
+        saveReport(target, memberId, reason, rawDetail, duplicateMessage);
+    }
+
+    private void saveReport(Target target, long memberId, String reason, String rawDetail, String duplicateMessage) {
         if (reason == null || !REASONS.contains(reason)) {
             throw ApiException.field(REASON, Messages.REPORT_REASON);
         }

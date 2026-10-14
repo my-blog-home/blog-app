@@ -105,8 +105,8 @@ class AdminAccessIT extends IntegrationTestBase {
         assertThat(initializer.ensureAdmin("Boss@Example.com", "boss12!@")).isTrue();
         assertThat(initializer.ensureAdmin("boss@example.com", "boss12!@")).isFalse();
         Map<String, Object> row = jdbc.queryForMap("select id, role, nickname from member where email = 'boss@example.com'");
-        assertThat(row.get("role")).isEqualTo("ADMIN");
-        assertThat(row.get("nickname")).isEqualTo("운영자");
+        assertThat(row).containsEntry("role", "ADMIN");
+        assertThat(row).containsEntry("nickname", "운영자");
         assertThat(jdbc.queryForObject("select count(*) from blog where owner_id = ?", Long.class, row.get("id"))).isZero();
         mvc.perform(jsonPost("/api/auth/login", Map.of("email", "boss@example.com", "password", "boss12!@")))
                 .andExpect(status().isOk())

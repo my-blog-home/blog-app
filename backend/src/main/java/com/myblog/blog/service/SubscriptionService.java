@@ -10,6 +10,7 @@ import java.time.Clock;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -85,8 +86,9 @@ public class SubscriptionService {
         int max = limits.drawerSubscriptionMax();
         int limit = requestedLimit == null ? max : Math.min(Math.max(1, requestedLimit), max);
         Map<String, Object> params = Map.of(MEMBER_ID, memberId, "limit", limit);
-        long total = jdbc.queryForObject("select count(*) from subscription where member_id = :memberId",
-                params, Long.class);
+        long total = Objects.requireNonNullElse(
+                jdbc.queryForObject("select count(*) from subscription where member_id = :memberId",
+                        params, Long.class), 0L);
         List<SubscribedBlog> items = jdbc.query("""
                 select b.id, b.name, m.nickname
                 from subscription s

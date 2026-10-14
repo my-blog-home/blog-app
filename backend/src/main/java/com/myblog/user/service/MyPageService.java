@@ -46,6 +46,10 @@ public class MyPageService {
 
     @Transactional(readOnly = true)
     public MyInfo info(long memberId) {
+        return infoOf(memberId);
+    }
+
+    private MyInfo infoOf(long memberId) {
         Member member = get(memberId);
         Long blogId = jdbc.queryForList("select id from blog where owner_id = :id order by id limit 1",
                 Map.of("id", memberId), Long.class).stream().findFirst().orElse(null);
@@ -76,7 +80,7 @@ public class MyPageService {
             }
         }
         member.updateProfile(nickname, bio, profileColor, clock.instant());
-        return info(memberId);
+        return infoOf(memberId);
     }
 
     /** 바꾸면 지금 기기만 남기고 다른 기기의 로그인을 끊는다 (CF-15-10~15) */

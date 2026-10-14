@@ -17,6 +17,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -128,7 +129,7 @@ public class PostQueryService {
      */
     @Transactional(readOnly = true)
     public PageResult blogPosts(long blogId, Long categoryId, int page, Long viewerId) {
-        return blogPosts(blogId, categoryId, null, page, viewerId);
+        return findBlogPosts(blogId, categoryId, null, page, viewerId);
     }
 
     /**
@@ -137,6 +138,10 @@ public class PostQueryService {
      */
     @Transactional(readOnly = true)
     public PageResult blogPosts(long blogId, Long categoryId, String q, int page, Long viewerId) {
+        return findBlogPosts(blogId, categoryId, q, page, viewerId);
+    }
+
+    private PageResult findBlogPosts(long blogId, Long categoryId, String q, int page, Long viewerId) {
         Blog blog = blogService.get(blogId);
         boolean owner = blog.isOwnedBy(viewerId);
         if (categoryId != null) {
@@ -237,7 +242,8 @@ public class PostQueryService {
     }
 
     private PageResult page(String where, Map<String, Object> params, int requestedPage, String orderBy) {
-        long total = jdbc.queryForObject("select count(*) from post p " + where, params, Long.class);
+        long total = Objects.requireNonNullElse(
+                jdbc.queryForObject("select count(*) from post p " + where, params, Long.class), 0L);
         int size = limits.pageSize();
         int totalPages = (int) Math.max(1, (total + size - 1) / size);
         int page = Math.min(Math.max(1, requestedPage), totalPages);
@@ -300,7 +306,7 @@ public class PostQueryService {
         Map<String, Object> params = new HashMap<>();
         params.put("id", postId);
         params.put("viewer", viewerId);
-        return jdbc.queryForObject(sql, params, Long.class);
+        return Objects.requireNonNullElse(jdbc.queryForObject(sql, params, Long.class), 0L);
     }
 
     RowMapper<PostItem> itemMapper() {

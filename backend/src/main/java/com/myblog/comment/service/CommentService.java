@@ -136,6 +136,10 @@ public class CommentService {
     /** 댓글을 읽을 수 있을 때만 돌려준다. 글을 볼 수 없거나 가려진 비밀 댓글이면 "존재하지 않는 댓글입니다" (NF-02) */
     @Transactional(readOnly = true)
     public Readable getReadable(long commentId, Long viewerId) {
+        return readable(commentId, viewerId);
+    }
+
+    private Readable readable(long commentId, Long viewerId) {
         Comment comment = comments.findById(commentId).orElseThrow(CommentService::notFound);
         Post post;
         try {
@@ -161,7 +165,7 @@ public class CommentService {
         Post post = postService.getVisible(postId, memberId);
         boolean secret = rawSecret;
         if (parentId != null) {
-            Comment parent = getReadable(parentId, memberId).comment();
+            Comment parent = readable(parentId, memberId).comment();
             if (!parent.getPostId().equals(post.getId())) {
                 throw notFound();
             }
@@ -187,7 +191,7 @@ public class CommentService {
     /** 남의 댓글이면 존재 자체를 숨긴다 (CF-18-4, NF-02). 답글은 표의 ON DELETE CASCADE로 함께 지워진다 (BR-15) */
     @Transactional
     public void delete(long commentId, long memberId) {
-        Readable readable = getReadable(commentId, memberId);
+        Readable readable = readable(commentId, memberId);
         if (!readable.comment().isAuthoredBy(memberId) && !readable.blog().isOwnedBy(memberId)) {
             throw notFound();
         }

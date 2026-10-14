@@ -47,16 +47,22 @@ public class ReleaseNotePublisher implements ApplicationRunner {
         this.publishOnStartup = publishOnStartup;
     }
 
+    /** 서버가 켜질 때 올리기와 숨기기를 한 트랜잭션으로 묶는다 */
     @Override
+    @Transactional
     public void run(ApplicationArguments args) {
         if (publishOnStartup) {
-            publishAll();
+            publish();
         }
     }
 
     /** 아직 공지에 없는 버전의 노트를 올리고, 새로 올린 개수를 돌려준다 */
     @Transactional
     public int publishAll() {
+        return publish();
+    }
+
+    private int publish() {
         int published = 0;
         List<ReleaseNote> notes = readAll();
         for (ReleaseNote note : notes) {

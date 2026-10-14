@@ -9,6 +9,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,9 +59,9 @@ public class ManageCommentService {
         blogService.getOwned(blogId, memberId);
         Map<String, Object> params = new HashMap<>();
         params.put(BLOG_ID, blogId);
-        long total = jdbc.queryForObject("""
+        long total = Objects.requireNonNullElse(jdbc.queryForObject("""
                 select count(*) from comment c join post p on p.id = c.post_id where p.blog_id = :blogId
-                """, params, Long.class);
+                """, params, Long.class), 0L);
         int size = limits.pageSize();
         int totalPages = (int) Math.max(1, (total + size - 1) / size);
         int page = Math.min(Math.max(1, requestedPage), totalPages);
@@ -101,10 +102,10 @@ public class ManageCommentService {
     }
 
     public long countNew(long blogId) {
-        return jdbc.queryForObject("""
+        return Objects.requireNonNullElse(jdbc.queryForObject("""
                 select count(*) from comment c join post p on p.id = c.post_id join blog b on b.id = p.blog_id
                 where p.blog_id = :blogId and
-                """ + IS_NEW, Map.of(BLOG_ID, blogId), Long.class);
+                """ + IS_NEW, Map.of(BLOG_ID, blogId), Long.class), 0L);
     }
 
     static String excerpt(String content) {

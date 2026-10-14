@@ -126,8 +126,9 @@ public class AdminReportService {
     private ReportPage list(Status status, int requestedPage, int size) {
         Map<String, Object> params = new HashMap<>();
         params.put(STATUS, status.name());
-        long total = jdbc.queryForObject("select count(distinct " + GROUP_KEY + ") from report r where" + FILTER,
-                params, Long.class);
+        long total = Objects.requireNonNullElse(
+                jdbc.queryForObject("select count(distinct " + GROUP_KEY + ") from report r where" + FILTER,
+                        params, Long.class), 0L);
         int totalPages = (int) Math.max(1, (total + size - 1) / size);
         int page = Math.min(Math.max(1, requestedPage), totalPages);
         params.put("limit", size);
@@ -136,12 +137,16 @@ public class AdminReportService {
                 select g.gkey from (select %s as gkey, r.created_at from report r where %s) g
                 group by g.gkey order by max(g.created_at) desc, g.gkey limit :limit offset :offset
                 """.formatted(GROUP_KEY, FILTER), params, String.class);
-        return new ReportPage(counts(), total, page, totalPages, groups(keys, status));
+        return new ReportPage(countByStatus(), total, page, totalPages, groups(keys, status));
     }
 
     /** 상태별 신고 건수 (탭의 숫자) */
     @Transactional(readOnly = true)
     public Map<String, Long> counts() {
+        return countByStatus();
+    }
+
+    private Map<String, Long> countByStatus() {
         Map<String, Long> counts = new LinkedHashMap<>();
         for (Status s : Status.values()) {
             counts.put(s.name(), 0L);

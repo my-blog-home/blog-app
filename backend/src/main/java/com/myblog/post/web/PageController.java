@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 /**
@@ -55,7 +56,9 @@ public class PageController {
     }
 
     @GetMapping({"/", "/{path:^(?!api$|images$|assets$|oauth2$)[^.]*}", "/{path:^(?!api$|images$|assets$|oauth2$)[^.]*}/**"})
-    public ResponseEntity<String> page(HttpServletRequest request) throws IOException {
+    public ResponseEntity<String> page(HttpServletRequest request,
+                                       @PathVariable(required = false) String path) throws IOException {
+        // 경로 변수 path는 주소를 고르는 데만 쓴다(첫 칸만 담긴다). 미리보기에 쓸 경로는 요청 주소 전체에서 읽는다
         String html = template();
         if (html == null) {
             // 화면을 빌드하지 않고 서버만 켠 개발 환경(화면은 Vite 개발 서버가 내려 줌)
@@ -63,9 +66,9 @@ public class PageController {
         }
         String base = publicUrl.isBlank()
                 ? ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString() : publicUrl;
-        String path = request.getRequestURI().substring(request.getContextPath().length());
-        Meta meta = metaFor(path);
-        String url = base + path;
+        String pagePath = request.getRequestURI().substring(request.getContextPath().length());
+        Meta meta = metaFor(pagePath);
+        String url = base + pagePath;
         String image = absolute(base, meta.image());
         StringBuilder tags = new StringBuilder();
         tags.append(tag("name", "description", meta.description()));

@@ -66,7 +66,7 @@ public class PostService {
      */
     @Transactional
     public Post update(long postId, long memberId, PostInput input) {
-        Post post = getOwned(postId, memberId);
+        Post post = owned(postId, memberId);
         boolean publishing = post.isPublished() || !input.draft();
         Valid valid = validate(post.getBlogId(), input, publishing, post.getTopicId());
         Instant now = clock.instant();
@@ -80,7 +80,7 @@ public class PostService {
     /** 댓글·좋아요·태그·이미지는 표의 ON DELETE CASCADE로 함께 지워진다 (CF-05-15) */
     @Transactional
     public long delete(long postId, long memberId) {
-        Post post = getOwned(postId, memberId);
+        Post post = owned(postId, memberId);
         posts.delete(post);
         return post.getBlogId();
     }
@@ -88,6 +88,10 @@ public class PostService {
     /** 작성자 본인의 글만 돌려준다. 아니면 "존재하지 않는 글입니다" (CF-05-12) */
     @Transactional(readOnly = true)
     public Post getOwned(long postId, long memberId) {
+        return owned(postId, memberId);
+    }
+
+    private Post owned(long postId, long memberId) {
         Post post = posts.findById(postId).orElseThrow(PostService::notFound);
         Blog blog = blogService.get(post.getBlogId());
         if (!blog.isOwnedBy(memberId)) {

@@ -20,8 +20,8 @@ class NoticeIT extends IntegrationTestBase {
         assertThat(jdbc.queryForObject("select count(*) from notice where type = 'GUIDE'", Long.class)).isEqualTo(7);
         List<String> contents = jdbc.queryForList("select title || ' ' || content from notice", String.class);
         assertThat(contents).noneMatch(c -> c.contains("데모") || c.contains("8~10자") || c.contains("여러 개")
-                || c.contains("새 블로그 만들기") || c.contains("<"));
-        assertThat(contents).anyMatch(c -> c.contains("8자 이상") && c.contains("특수문자"));
+                || c.contains("새 블로그 만들기") || c.contains("<"))
+                .anyMatch(c -> c.contains("8자 이상") && c.contains("특수문자"));
     }
 
     @Test
