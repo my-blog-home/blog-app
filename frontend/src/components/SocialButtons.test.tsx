@@ -13,7 +13,7 @@ describe('소셜 로그인 버튼', () => {
     const kakao = screen.getByText('카카오로 계속하기')
     expect(kakao.closest('a')).toBeNull()
     expect(kakao.getAttribute('aria-disabled')).toBe('true')
-    expect(screen.getByText('Google로 계속하기').closest('a')).toBeNull()
+    expect(screen.queryByText('Google로 계속하기')).toBeNull()
     fireEvent.click(kakao)
     expect(document.getElementById('social-tip-kakao')?.className).toContain('show')
     expect(document.getElementById('social-tip-kakao')?.textContent).toBe('준비 중입니다')

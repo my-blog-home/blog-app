@@ -107,8 +107,6 @@ d run -d --name "$NEW_APP" --network "$NETWORK" --restart unless-stopped \
   -e GITHUB_CLIENT_SECRET="${GITHUB_CLIENT_SECRET:-}" \
   -e KAKAO_CLIENT_ID="${KAKAO_CLIENT_ID:-}" \
   -e KAKAO_CLIENT_SECRET="${KAKAO_CLIENT_SECRET:-}" \
-  -e GOOGLE_CLIENT_ID="${GOOGLE_CLIENT_ID:-}" \
-  -e GOOGLE_CLIENT_SECRET="${GOOGLE_CLIENT_SECRET:-}" \
   "$IMAGE"
 
 echo "▶ 새 컨테이너가 응답할 때까지 기다리기"
