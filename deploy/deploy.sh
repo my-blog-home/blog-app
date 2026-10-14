@@ -2,11 +2,11 @@
 # 서버에서 실행: 올라온 도커 이미지로 Ylog를 무중단으로 바꿔 띄운다 (블루-그린 배포).
 # GitHub Actions가 SSH로 접속해 환경변수와 함께 실행한다 (.github/workflows/deploy.yml).
 #
-#   바깥(포트 8330) → ylog-proxy(Nginx) → ylog-app-blue 또는 ylog-app-green(앱, 포트를 바깥에 열지 않음)
+#   바깥(포트 8330) → ylog-proxy(Nginx, 로드 밸런서) → ylog-app-blue-1·2 또는 ylog-app-green-1·2(앱, 포트를 바깥에 열지 않음)
 #
-# 1. 지금 쓰지 않는 색으로 새 컨테이너를 띄운다. 옛 컨테이너는 계속 요청을 받는다.
+# 1. 지금 쓰지 않는 색으로 새 앱들(APP_COUNT개, 기본 2)을 하나씩 띄운다. 옛 앱들은 계속 요청을 받는다.
 # 2. 새 컨테이너가 응답할 때까지 기다린다. 끝내 안 켜지면 새 것만 지우고 끝낸다(사이트는 옛 버전으로 계속 동작).
-# 3. Nginx 설정을 새 색으로 바꾸고 reload한다. reload는 처리 중인 요청을 끊지 않는다.
+# 3. Nginx upstream을 새 색의 앱들로 바꾸고 reload한다. reload는 처리 중인 요청을 끊지 않는다. 평소에는 앱들이 요청을 나눠 받는다.
 # 4. 옛 컨테이너를 graceful shutdown으로 끈다(처리 중인 요청을 마치고 꺼짐).
 #
 # 필요한 환경변수: DB_ADDRESS, DB_PORT, DB_NAME, DB_USERNAME, DB_PASSWORD
@@ -14,7 +14,7 @@
 #       SMTP_HOST, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, SMTP_FROM, SUDO_PASSWORD,
 #       ADMIN_EMAIL, ADMIN_PASSWORD(둘 다 있을 때만 처음 켤 때 관리자 계정을 만든다. 기본은 빈 값),
 #       GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, KAKAO_CLIENT_ID, KAKAO_CLIENT_SECRET(소셜 로그인. 값이 있는 제공자만 켜진다),
-#       PUBLIC_URL(사이트 공개 주소. 링크 미리보기와 소셜 로그인 콜백 주소에 쓴다)
+#       PUBLIC_URL(사이트 공개 주소. 링크 미리보기와 소셜 로그인 콜백 주소에 쓴다), APP_COUNT(색마다 앱 개수, 기본 2)
 set -euo pipefail
 
 APP_DIR="${APP_DIR:-$HOME/ylog}"
@@ -77,75 +77,100 @@ DB_URL="jdbc:postgresql://$DB_HOST:$DB_PORT/$DB_DATABASE?currentSchema=$DB_SCHEM
 
 CURRENT="$(cat "$ACTIVE_FILE" 2>/dev/null || true)"
 if [ "$CURRENT" = "blue" ]; then NEXT="green"; else NEXT="blue"; fi
-NEW_APP="$APP_PREFIX-$NEXT"
-OLD_APP="${CURRENT:+$APP_PREFIX-$CURRENT}"
-
-echo "▶ 새 컨테이너 실행: $NEW_APP (지금 서비스 중: ${OLD_APP:-$LEGACY_APP})"
-d rm -f "$NEW_APP" >/dev/null 2>&1 || true
-d run -d --name "$NEW_APP" --network "$NETWORK" --restart unless-stopped \
-  --add-host host.docker.internal:host-gateway \
-  -v ylog-images:/var/lib/ylog/images \
-  -e SPRING_PROFILES_ACTIVE=prod \
-  -e PORT="$INNER_PORT" \
-  -e DB_URL="$DB_URL" \
-  -e DB_SCHEMA="$DB_SCHEMA" \
-  -e DB_USERNAME="$DB_USERNAME" \
-  -e DB_PASSWORD="$DB_PASSWORD" \
-  -e REDIS_HOST="$REDIS" \
-  -e MAIL_MODE="${MAIL_MODE:-log}" \
-  -e SHOW_CODE_ON_SCREEN="${SHOW_CODE_ON_SCREEN:-true}" \
-  -e COOKIE_SECURE="${COOKIE_SECURE:-true}" \
-  -e SMTP_HOST="${SMTP_HOST:-}" \
-  -e SMTP_PORT="${SMTP_PORT:-587}" \
-  -e SMTP_USERNAME="${SMTP_USERNAME:-}" \
-  -e SMTP_PASSWORD="${SMTP_PASSWORD:-}" \
-  -e SMTP_FROM="${SMTP_FROM:-no-reply@ylog.local}" \
-  -e ADMIN_EMAIL="${ADMIN_EMAIL:-}" \
-  -e ADMIN_PASSWORD="${ADMIN_PASSWORD:-}" \
-  -e PUBLIC_URL="${PUBLIC_URL:-}" \
-  -e GITHUB_CLIENT_ID="${GITHUB_CLIENT_ID:-}" \
-  -e GITHUB_CLIENT_SECRET="${GITHUB_CLIENT_SECRET:-}" \
-  -e KAKAO_CLIENT_ID="${KAKAO_CLIENT_ID:-}" \
-  -e KAKAO_CLIENT_SECRET="${KAKAO_CLIENT_SECRET:-}" \
-  "$IMAGE"
-
-echo "▶ 새 컨테이너가 응답할 때까지 기다리기"
-NEW_IP=""
-healthy=false
-for i in $(seq 1 90); do
-  NEW_IP="$(d inspect -f "{{(index .NetworkSettings.Networks \"$NETWORK\").IPAddress}}" "$NEW_APP" 2>/dev/null || true)"
-  # 서버에서 컨테이너 주소로 직접 묻고, 안 되면 Nginx 컨테이너 안에서 컨테이너 이름으로 묻는다
-  if [ -n "$NEW_IP" ] && curl -fs --max-time 2 "http://$NEW_IP:$INNER_PORT/api/config/limits" >/dev/null 2>&1; then
-    healthy=true
-    break
-  fi
-  if running "$PROXY" && d exec "$PROXY" wget -q -T 2 -O /dev/null "http://$NEW_APP:$INNER_PORT/api/config/limits" >/dev/null 2>&1; then
-    healthy=true
-    break
-  fi
-  sleep 2
-done
-if [ "$healthy" != true ]; then
-  echo "❌ 새 컨테이너가 3분 안에 켜지지 않았습니다. 새 컨테이너만 지우고, 사이트는 지금 버전으로 계속 동작합니다. 최근 로그:"
-  d logs --tail 100 "$NEW_APP" || true
-  d rm -f "$NEW_APP" >/dev/null 2>&1 || true
-  exit 1
+# 색마다 띄우는 앱 개수. Nginx가 이 앱들에 요청을 나눠 보낸다(로드 밸런싱). 1로 바꾸면 다시 앱 하나로 돈다
+APP_COUNT="${APP_COUNT:-2}"
+NEW_APPS=()
+for n in $(seq 1 "$APP_COUNT"); do NEW_APPS+=("$APP_PREFIX-$NEXT-$n"); done
+# 지금 서비스 중인 색의 앱들(예전 이름 ylog-app-blue 처럼 번호 없는 것도 포함)
+OLD_APPS=()
+if [ -n "$CURRENT" ]; then
+  while read -r name; do [ -n "$name" ] && OLD_APPS+=("$name"); done \
+    < <(d ps -a --format '{{.Names}}' | grep -E "^$APP_PREFIX-$CURRENT(-[0-9]+)?$" || true)
 fi
 
-echo "▶ Nginx를 $NEW_APP 쪽으로 바꾸기"
+run_app() {
+  local name="$1"
+  d rm -f "$name" >/dev/null 2>&1 || true
+  # 학교 공용 서버라 앱 하나가 메모리를 너무 쓰지 않게 2GB로 묶는다(평소 약 0.7GB)
+  d run -d --name "$name" --hostname "$name" --network "$NETWORK" --restart unless-stopped \
+    --memory 2g -e JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=50" \
+    --add-host host.docker.internal:host-gateway \
+    -v ylog-images:/var/lib/ylog/images \
+    -e SPRING_PROFILES_ACTIVE=prod \
+    -e PORT="$INNER_PORT" \
+    -e INSTANCE_NAME="$name" \
+    -e DB_URL="$DB_URL" \
+    -e DB_SCHEMA="$DB_SCHEMA" \
+    -e DB_USERNAME="$DB_USERNAME" \
+    -e DB_PASSWORD="$DB_PASSWORD" \
+    -e REDIS_HOST="$REDIS" \
+    -e MAIL_MODE="${MAIL_MODE:-log}" \
+    -e SHOW_CODE_ON_SCREEN="${SHOW_CODE_ON_SCREEN:-true}" \
+    -e COOKIE_SECURE="${COOKIE_SECURE:-true}" \
+    -e SMTP_HOST="${SMTP_HOST:-}" \
+    -e SMTP_PORT="${SMTP_PORT:-587}" \
+    -e SMTP_USERNAME="${SMTP_USERNAME:-}" \
+    -e SMTP_PASSWORD="${SMTP_PASSWORD:-}" \
+    -e SMTP_FROM="${SMTP_FROM:-no-reply@ylog.local}" \
+    -e ADMIN_EMAIL="${ADMIN_EMAIL:-}" \
+    -e ADMIN_PASSWORD="${ADMIN_PASSWORD:-}" \
+    -e PUBLIC_URL="${PUBLIC_URL:-}" \
+    -e GITHUB_CLIENT_ID="${GITHUB_CLIENT_ID:-}" \
+    -e GITHUB_CLIENT_SECRET="${GITHUB_CLIENT_SECRET:-}" \
+    -e KAKAO_CLIENT_ID="${KAKAO_CLIENT_ID:-}" \
+    -e KAKAO_CLIENT_SECRET="${KAKAO_CLIENT_SECRET:-}" \
+    "$IMAGE" >/dev/null
+}
+
+wait_healthy() {
+  local name="$1" ip
+  for i in $(seq 1 90); do
+    ip="$(d inspect -f "{{(index .NetworkSettings.Networks \"$NETWORK\").IPAddress}}" "$name" 2>/dev/null || true)"
+    # 서버에서 컨테이너 주소로 직접 묻고, 안 되면 Nginx 컨테이너 안에서 컨테이너 이름으로 묻는다
+    if [ -n "$ip" ] && curl -fs --max-time 2 "http://$ip:$INNER_PORT/api/config/limits" >/dev/null 2>&1; then
+      return 0
+    fi
+    if running "$PROXY" && d exec "$PROXY" wget -q -T 2 -O /dev/null "http://$name:$INNER_PORT/api/config/limits" >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 2
+  done
+  return 1
+}
+
+echo "▶ 새 앱 ${#NEW_APPS[@]}개 실행: ${NEW_APPS[*]} (지금 서비스 중: ${OLD_APPS[*]:-$LEGACY_APP})"
+# 하나씩 띄우고 응답을 확인한 뒤 다음 것을 띄운다(DB 마이그레이션·관리자 계정 만들기가 겹치지 않게)
+for name in "${NEW_APPS[@]}"; do
+  run_app "$name"
+  if ! wait_healthy "$name"; then
+    echo "❌ $name 이(가) 3분 안에 켜지지 않았습니다. 새 앱만 지우고, 사이트는 지금 버전으로 계속 동작합니다. 최근 로그:"
+    d logs --tail 100 "$name" || true
+    for n in "${NEW_APPS[@]}"; do d rm -f "$n" >/dev/null 2>&1 || true; done
+    exit 1
+  fi
+  echo "  ✓ $name 응답 확인"
+done
+
+echo "▶ Nginx를 ${NEXT} 쪽 앱 ${#NEW_APPS[@]}개로 바꾸기"
+UPSTREAM=""
+for name in "${NEW_APPS[@]}"; do UPSTREAM+="    server $name:$INNER_PORT max_fails=3 fail_timeout=10s;"$'\n'; done
 mkdir -p "$NGINX_DIR"
 cat > "$NGINX_DIR/default.conf" <<CONF
-# deploy.sh가 배포할 때마다 새로 쓴다. 지금 서비스 중인 앱: $NEW_APP
+# deploy.sh가 배포할 때마다 새로 쓴다. 지금 서비스 중인 앱: ${NEW_APPS[*]}
 # 바깥에 또 프록시(도메인·HTTPS)가 있으면 그쪽이 보낸 원래 주소 정보를 그대로 넘기고, 없으면 이 서버 기준으로 채운다
 map \$http_x_forwarded_proto \$ylog_proto {
     default \$http_x_forwarded_proto;
     ""      \$scheme;
 }
+# 요청을 앱들에 차례로 나눠 보낸다(라운드 로빈). 하나가 응답하지 않으면 잠시 빼고 나머지로 보낸다
+upstream ylog_app {
+$UPSTREAM}
 server {
     listen 80;
     client_max_body_size 6m;
     location / {
-        proxy_pass http://$NEW_APP:$INNER_PORT;
+        proxy_pass http://ylog_app;
+        proxy_next_upstream error timeout http_502 http_503;
         proxy_http_version 1.1;
         proxy_set_header Host \$http_host;
         proxy_set_header X-Real-IP \$remote_addr;
@@ -174,13 +199,15 @@ for i in $(seq 1 15); do
   sleep 1
 done
 
-if [ -n "$OLD_APP" ] && exists "$OLD_APP"; then
-  echo "▶ 옛 컨테이너 끄기: $OLD_APP (처리 중인 요청을 마치고 꺼짐)"
+if [ "${#OLD_APPS[@]}" -gt 0 ]; then
+  echo "▶ 옛 앱 끄기: ${OLD_APPS[*]} (처리 중인 요청을 마치고 꺼짐)"
   sleep 5
-  d stop -t 30 "$OLD_APP" >/dev/null || true
-  d rm -f "$OLD_APP" >/dev/null 2>&1 || true
+  for name in "${OLD_APPS[@]}"; do
+    d stop -t 30 "$name" >/dev/null || true
+    d rm -f "$name" >/dev/null 2>&1 || true
+  done
 fi
 
 d image prune -f >/dev/null 2>&1 || true
 rm -f ylog-image.tar.gz proxy-image.tar.gz
-echo "✅ 배포 완료: $NEW_APP (http://<서버 주소>:$APP_PORT)"
+echo "✅ 배포 완료: ${NEW_APPS[*]} (http://<서버 주소>:$APP_PORT)"
