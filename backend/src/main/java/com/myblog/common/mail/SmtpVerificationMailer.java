@@ -25,9 +25,9 @@ public class SmtpVerificationMailer implements VerificationMailer {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(from);
         message.setTo(email);
-        message.setSubject("[내 블로그] " + usage + " 인증번호");
+        message.setSubject("[Ylog] " + usage + " 인증번호");
         message.setText("""
-                내 블로그 %s 인증번호입니다.
+                Ylog %s 인증번호입니다.
 
                 인증번호: %s
                 유효 시간: 10분
