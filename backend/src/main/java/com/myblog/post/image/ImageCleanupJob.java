@@ -40,7 +40,9 @@ public class ImageCleanupJob {
         stale.forEach(storage::delete);
 
         Set<String> known = new HashSet<>(jdbc.queryForList("select storage_key from post_image", Map.of(), String.class));
-        long orphans = storage.keys().filter(key -> !known.contains(key)).peek(storage::delete).count();
+        List<String> orphanKeys = storage.keys().filter(key -> !known.contains(key)).toList();
+        orphanKeys.forEach(storage::delete);
+        long orphans = orphanKeys.size();
         log.info("이미지 정리: 연결 안 된 이미지 {}개, 기록 없는 파일 {}개 삭제", stale.size(), orphans);
     }
 }

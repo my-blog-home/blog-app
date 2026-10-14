@@ -17,6 +17,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class TagService {
 
+    private static final String POST_ID = "postId";
+
     private final NamedParameterJdbcTemplate jdbc;
     private final BlogLimits limits;
 
@@ -50,14 +52,14 @@ public class TagService {
 
     /** 글의 태그 연결을 통째로 바꾼다 (CF-20-4) */
     public void replace(long postId, List<String> tags) {
-        jdbc.update("delete from post_tag where post_id = :postId", Map.of("postId", postId));
+        jdbc.update("delete from post_tag where post_id = :postId", Map.of(POST_ID, postId));
         for (String tag : tags) {
             jdbc.update("insert into tag (name) values (:name) on conflict (lower(name)) do nothing", Map.of("name", tag));
             jdbc.update("""
                     insert into post_tag (post_id, tag_id)
                     select :postId, id from tag where lower(name) = lower(:name)
                     on conflict do nothing
-                    """, Map.of("postId", postId, "name", tag));
+                    """, Map.of(POST_ID, postId, "name", tag));
         }
     }
 
@@ -65,6 +67,6 @@ public class TagService {
         return jdbc.queryForList("""
                 select t.name from post_tag pt join tag t on t.id = pt.tag_id
                 where pt.post_id = :postId order by t.name
-                """, Map.of("postId", postId), String.class);
+                """, Map.of(POST_ID, postId), String.class);
     }
 }

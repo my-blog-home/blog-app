@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -88,6 +89,9 @@ public class AdminReportService {
                         || ':' || md5(r.target_text) end)
              || '|' || r.status || '|' || coalesce(cast(extract(epoch from r.handled_at) as varchar), ''))""";
 
+    private static final String STATUS = "status";
+    private static final String SUSPEND = "suspend";
+
     private static final String FILTER = " (cast(:status as varchar) = 'ALL' or r.status = :status) ";
 
     private final NamedParameterJdbcTemplate jdbc;
@@ -121,7 +125,7 @@ public class AdminReportService {
 
     private ReportPage list(Status status, int requestedPage, int size) {
         Map<String, Object> params = new HashMap<>();
-        params.put("status", status.name());
+        params.put(STATUS, status.name());
         long total = jdbc.queryForObject("select count(distinct " + GROUP_KEY + ") from report r where" + FILTER,
                 params, Long.class);
         int totalPages = (int) Math.max(1, (total + size - 1) / size);
@@ -142,10 +146,9 @@ public class AdminReportService {
         for (Status s : Status.values()) {
             counts.put(s.name(), 0L);
         }
-        jdbc.query("select status, count(*) as cnt from report group by status", Map.of(), rs -> {
-            counts.put(rs.getString("status"), rs.getLong("cnt"));
-        });
-        counts.put(Status.ALL.name(), counts.get("PENDING") + counts.get("RESOLVED") + counts.get("REJECTED"));
+        jdbc.query("select status, count(*) as cnt from report group by status", Map.of(),
+                (RowCallbackHandler) rs -> counts.put(rs.getString(STATUS), rs.getLong("cnt")));
+        counts.put(Status.ALL.name(), counts.get(Status.PENDING.name()) + counts.get("RESOLVED") + counts.get("REJECTED"));
         return counts;
     }
 
@@ -161,7 +164,7 @@ public class AdminReportService {
             return List.of();
         }
         Map<String, Object> params = new HashMap<>();
-        params.put("status", status.name());
+        params.put(STATUS, status.name());
         params.put("keys", keys);
         params.put("now", Timestamp.from(clock.instant()));
         List<Row> rows = jdbc.query("""
@@ -185,7 +188,7 @@ public class AdminReportService {
                             rs.getObject("post_id", Long.class), rs.getObject("comment_id", Long.class),
                             rs.getString("target_text"), rs.getObject("target_author_id", Long.class),
                             rs.getString("reason"), rs.getString("detail"), rs.getTimestamp("created_at").toInstant(),
-                            rs.getString("status"), handled == null ? null : handled.toInstant(),
+                            rs.getString(STATUS), handled == null ? null : handled.toInstant(),
                             rs.getString("handle_note"),
                             rs.getBoolean("reporter_withdrawn") ? Messages.WITHDRAWN_USER : rs.getString("reporter_nickname"),
                             rs.getString("author_nickname"), rs.getBoolean("author_withdrawn"),
@@ -232,7 +235,7 @@ public class AdminReportService {
                 .map(r -> new ReportEntry(r.id(), r.reporterNickname(), r.reason(),
                         REASON_LABELS.getOrDefault(r.reason(), r.reason()), r.detail(), r.createdAt()))
                 .toList();
-        boolean pending = "PENDING".equals(first.status());
+        boolean pending = Status.PENDING.name().equals(first.status());
         boolean canSuspend = pending && !author.withdrawn() && !author.admin();
         return new ReportGroup(key, first.targetType(), exists, first.postId(), isPost ? null : first.commentId(),
                 isPost ? null : first.postTitle(), first.targetText(), author, first.status(), rows.size(),
@@ -248,54 +251,101 @@ public class AdminReportService {
     @Transactional
     public ProcessResult process(long adminId, List<Long> rawIds, String rawAction, String rawNote,
                                  SuspendRequest suspend) {
+        List<Long> ids = requireIds(rawIds);
+        Action action = parseAction(rawAction);
+        String note = parseNote(rawNote);
+        AdminSuspensionService.Input suspendInput = suspendInput(suspend, action);
+
+        List<Target> targets = lockPendingTargets(ids);
+        Long suspendTarget = null;
+        if (suspendInput != null) {
+            suspendTarget = suspendTarget(targets);
+        }
+
+        int handled = markHandled(adminId, ids, action, note);
+
+        Deleted deleted = action == Action.RESOLVE ? deleteTargets(targets) : new Deleted(0, 0);
+
+        Long suspended = null;
+        String suffix = "";
+        if (suspendInput != null) {
+            suspensions.suspend(adminId, suspendTarget, suspendInput.days(), suspendInput.reason(), ids.get(0));
+            suspended = suspendTarget;
+            suffix = suspendInput.days() == null ? ". 작성자를 영구 정지했습니다"
+                    : ". 작성자를 " + suspendInput.days() + "일 정지했습니다";
+        }
+        return new ProcessResult(handled, deleted.posts() + deleted.comments(), suspended,
+                message(action, handled, deleted.posts(), deleted.comments()) + suffix);
+    }
+
+    /** 신고 번호 목록. 비었거나 빈 번호가 있으면 400, 겹친 번호는 하나로 */
+    private static List<Long> requireIds(List<Long> rawIds) {
         if (rawIds == null || rawIds.isEmpty() || rawIds.stream().anyMatch(Objects::isNull)) {
             throw ApiException.field("reportIds", Messages.REPORT_IDS_REQUIRED);
         }
-        List<Long> ids = List.copyOf(new LinkedHashSet<>(rawIds));
-        Action action;
+        return List.copyOf(new LinkedHashSet<>(rawIds));
+    }
+
+    private static Action parseAction(String rawAction) {
         try {
-            action = Action.valueOf(rawAction == null ? "" : rawAction.strip().toUpperCase(Locale.ROOT));
+            return Action.valueOf(rawAction == null ? "" : rawAction.strip().toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException e) {
             throw ApiException.field("action", Messages.REPORT_ACTION);
         }
+    }
+
+    private String parseNote(String rawNote) {
         String note = rawNote == null || rawNote.isBlank() ? null : rawNote.strip();
         if (note != null && note.codePointCount(0, note.length()) > limits.handleNoteMax()) {
             throw ApiException.field("note", Messages.HANDLE_NOTE_TOO_LONG.formatted(limits.handleNoteMax()));
         }
-        AdminSuspensionService.Input suspendInput = null;
-        if (suspend != null) {
-            if (action != Action.RESOLVE) {
-                throw ApiException.field("suspend", Messages.SUSPEND_ONLY_WITH_RESOLVE);
-            }
-            suspendInput = suspensions.validate(suspend.days(), suspend.reason());
-        }
+        return note;
+    }
 
+    /** 정지는 처리 완료와 함께만 할 수 있다 */
+    private AdminSuspensionService.Input suspendInput(SuspendRequest suspend, Action action) {
+        if (suspend == null) {
+            return null;
+        }
+        if (action != Action.RESOLVE) {
+            throw ApiException.field(SUSPEND, Messages.SUSPEND_ONLY_WITH_RESOLVE);
+        }
+        return suspensions.validate(suspend.days(), suspend.reason());
+    }
+
+    /** 신고를 잠그고 읽는다. 없는 번호가 있으면 404, 이미 처리된 것이 있으면 409 */
+    private List<Target> lockPendingTargets(List<Long> ids) {
         List<Target> targets = jdbc.query("""
                 select id, status, target_type, post_id, comment_id, target_author_id
                 from report where id in (:ids) order by id for update
-                """, Map.of("ids", ids), (rs, n) -> new Target(rs.getLong("id"), rs.getString("status"),
+                """, Map.of("ids", ids), (rs, n) -> new Target(rs.getLong("id"), rs.getString(STATUS),
                 rs.getString("target_type"), rs.getObject("post_id", Long.class),
                 rs.getObject("comment_id", Long.class), rs.getObject("target_author_id", Long.class)));
         if (targets.size() != ids.size()) {
             throw ApiException.notFound(Messages.REPORT_NOT_FOUND);
         }
-        if (targets.stream().anyMatch(t -> !"PENDING".equals(t.status()))) {
+        if (targets.stream().anyMatch(t -> !Status.PENDING.name().equals(t.status()))) {
             throw new ApiException(ErrorCode.ALREADY_HANDLED, Messages.REPORT_ALREADY_HANDLED);
         }
-        Long suspendTarget = null;
-        if (suspendInput != null) {
-            Set<Long> authors = targets.stream().map(Target::authorId).filter(Objects::nonNull)
-                    .collect(Collectors.toSet());
-            if (authors.size() > 1) {
-                throw ApiException.field("suspend", Messages.SUSPEND_ONE_AUTHOR);
-            }
-            suspendTarget = authors.isEmpty() ? null : authors.iterator().next();
-            suspensions.requireSuspendable(suspendTarget);
-        }
+        return targets;
+    }
 
+    /** 정지할 작성자. 작성자가 여럿이면 400, 정지할 수 없는 회원이면 409 */
+    private Long suspendTarget(List<Target> targets) {
+        Set<Long> authors = targets.stream().map(Target::authorId).filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        if (authors.size() > 1) {
+            throw ApiException.field(SUSPEND, Messages.SUSPEND_ONE_AUTHOR);
+        }
+        Long suspendTarget = authors.isEmpty() ? null : authors.iterator().next();
+        suspensions.requireSuspendable(suspendTarget);
+        return suspendTarget;
+    }
+
+    private int markHandled(long adminId, List<Long> ids, Action action, String note) {
         Map<String, Object> params = new HashMap<>();
         params.put("ids", ids);
-        params.put("status", action == Action.RESOLVE ? "RESOLVED" : "REJECTED");
+        params.put(STATUS, action == Action.RESOLVE ? "RESOLVED" : "REJECTED");
         params.put("admin", adminId);
         params.put("now", Timestamp.from(clock.instant()));
         params.put("note", note);
@@ -306,33 +356,25 @@ public class AdminReportService {
         if (handled != ids.size()) {
             throw new ApiException(ErrorCode.ALREADY_HANDLED, Messages.REPORT_ALREADY_HANDLED);
         }
+        return handled;
+    }
 
+    /** 처리 완료: 신고된 글·댓글을 지운다 */
+    private Deleted deleteTargets(List<Target> targets) {
         int deletedPosts = 0;
         int deletedComments = 0;
-        if (action == Action.RESOLVE) {
-            List<Long> commentIds = targets.stream().filter(t -> "COMMENT".equals(t.type()) && t.commentId() != null)
-                    .map(Target::commentId).distinct().toList();
-            List<Long> postIds = targets.stream().filter(t -> "POST".equals(t.type()) && t.postId() != null)
-                    .map(Target::postId).distinct().toList();
-            // 답글·좋아요·태그 등은 표의 ON DELETE 규칙으로 함께 지워지고, 신고의 글·댓글 번호는 비워진다
-            if (!commentIds.isEmpty()) {
-                deletedComments = jdbc.update("delete from comment where id in (:ids)", Map.of("ids", commentIds));
-            }
-            if (!postIds.isEmpty()) {
-                deletedPosts = jdbc.update("delete from post where id in (:ids)", Map.of("ids", postIds));
-            }
+        List<Long> commentIds = targets.stream().filter(t -> "COMMENT".equals(t.type()) && t.commentId() != null)
+                .map(Target::commentId).distinct().toList();
+        List<Long> postIds = targets.stream().filter(t -> "POST".equals(t.type()) && t.postId() != null)
+                .map(Target::postId).distinct().toList();
+        // 답글·좋아요·태그 등은 표의 ON DELETE 규칙으로 함께 지워지고, 신고의 글·댓글 번호는 비워진다
+        if (!commentIds.isEmpty()) {
+            deletedComments = jdbc.update("delete from comment where id in (:ids)", Map.of("ids", commentIds));
         }
-
-        Long suspended = null;
-        String suffix = "";
-        if (suspendInput != null) {
-            suspensions.suspend(adminId, suspendTarget, suspendInput.days(), suspendInput.reason(), ids.get(0));
-            suspended = suspendTarget;
-            suffix = suspendInput.days() == null ? ". 작성자를 영구 정지했습니다"
-                    : ". 작성자를 " + suspendInput.days() + "일 정지했습니다";
+        if (!postIds.isEmpty()) {
+            deletedPosts = jdbc.update("delete from post where id in (:ids)", Map.of("ids", postIds));
         }
-        return new ProcessResult(handled, deletedPosts + deletedComments, suspended,
-                message(action, handled, deletedPosts, deletedComments) + suffix);
+        return new Deleted(deletedPosts, deletedComments);
     }
 
     private static String message(Action action, int handled, int posts, int comments) {
@@ -342,8 +384,17 @@ public class AdminReportService {
         if (posts == 0 && comments == 0) {
             return "신고 " + handled + "건을 처리했습니다. 대상은 이미 삭제되었습니다";
         }
-        String what = posts > 0 && comments > 0 ? "글과 댓글을" : posts > 0 ? "글을" : "댓글을";
-        return "신고 " + handled + "건을 처리하고 " + what + " 삭제했습니다";
+        return "신고 " + handled + "건을 처리하고 " + deletedWhat(posts, comments) + " 삭제했습니다";
+    }
+
+    private static String deletedWhat(int posts, int comments) {
+        if (posts > 0 && comments > 0) {
+            return "글과 댓글을";
+        }
+        return posts > 0 ? "글을" : "댓글을";
+    }
+
+    private record Deleted(int posts, int comments) {
     }
 
     private record Target(long id, String status, String type, Long postId, Long commentId, Long authorId) {

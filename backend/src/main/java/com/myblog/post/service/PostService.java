@@ -133,18 +133,22 @@ public class PostService {
         if (body.codePointCount(0, body.length()) > limits.postBodyMax()) {
             throw ApiException.field("body", "본문은 " + limits.postBodyMax() + "자 이하로 입력해 주세요");
         }
-        Long categoryId = input.categoryId();
-        if (categoryId == null) {
-            categoryId = categories.findFirstByBlogIdAndIsDefaultTrue(blogId).map(Category::getId).orElseThrow();
-        } else {
-            Category category = categories.findById(categoryId).orElse(null);
-            if (category == null || !category.getBlogId().equals(blogId)) {
-                throw ApiException.field("categoryId", "분류를 다시 골라 주세요");
-            }
-        }
+        Long categoryId = categoryOf(blogId, input.categoryId());
         long topicId = input.topicId() == null ? defaultTopic : topics.check(input.topicId());
         Visibility visibility = input.visibility() == null ? Visibility.PUBLIC : input.visibility();
         return new Valid(title, body, categoryId, topicId, visibility);
+    }
+
+    /** 분류를 고르지 않으면 기본 분류, 고르면 이 블로그의 분류인지 확인한다 */
+    private Long categoryOf(long blogId, Long categoryId) {
+        if (categoryId == null) {
+            return categories.findFirstByBlogIdAndIsDefaultTrue(blogId).map(Category::getId).orElseThrow();
+        }
+        Category category = categories.findById(categoryId).orElse(null);
+        if (category == null || !category.getBlogId().equals(blogId)) {
+            throw ApiException.field("categoryId", "분류를 다시 골라 주세요");
+        }
+        return categoryId;
     }
 
     private record Valid(String title, String body, long categoryId, long topicId, Visibility visibility) {

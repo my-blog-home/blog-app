@@ -31,6 +31,7 @@ public class ManageCommentService {
     public record NewCount(Long blogId, long count) {
     }
 
+    private static final String BLOG_ID = "blogId";
     private static final String IS_NEW = """
             (c.created_at > coalesce(b.comments_last_viewed_at, b.created_at)
              and (c.author_id is null or c.author_id <> b.owner_id))
@@ -56,7 +57,7 @@ public class ManageCommentService {
     public Page list(long blogId, long memberId, int requestedPage) {
         blogService.getOwned(blogId, memberId);
         Map<String, Object> params = new HashMap<>();
-        params.put("blogId", blogId);
+        params.put(BLOG_ID, blogId);
         long total = jdbc.queryForObject("""
                 select count(*) from comment c join post p on p.id = c.post_id where p.blog_id = :blogId
                 """, params, Long.class);
@@ -88,7 +89,7 @@ public class ManageCommentService {
     public void markRead(long blogId, long memberId) {
         blogService.getOwned(blogId, memberId);
         jdbc.update("update blog set comments_last_viewed_at = :now where id = :blogId",
-                Map.of("now", Timestamp.from(clock.instant()), "blogId", blogId));
+                Map.of("now", Timestamp.from(clock.instant()), BLOG_ID, blogId));
     }
 
     /** 메뉴·사용자 메뉴·대시보드에 보여 줄 새 댓글 수 (BM-05-5) */
@@ -103,7 +104,7 @@ public class ManageCommentService {
         return jdbc.queryForObject("""
                 select count(*) from comment c join post p on p.id = c.post_id join blog b on b.id = p.blog_id
                 where p.blog_id = :blogId and
-                """ + IS_NEW, Map.of("blogId", blogId), Long.class);
+                """ + IS_NEW, Map.of(BLOG_ID, blogId), Long.class);
     }
 
     static String excerpt(String content) {

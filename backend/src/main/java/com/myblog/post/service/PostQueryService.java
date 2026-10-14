@@ -51,9 +51,14 @@ public class PostQueryService {
         }
 
         public static Sort from(String raw) {
-            return "popular".equalsIgnoreCase(raw == null ? "" : raw.strip()) ? POPULAR : LATEST;
+            if (raw != null && "popular".equalsIgnoreCase(raw.strip())) {
+                return POPULAR;
+            }
+            return LATEST;
         }
     }
+
+    private static final String INCLUDE_PRIVATE = "includePrivate";
 
     /** 본문의 첫 이미지(직접 올린 이미지 또는 http(s) 이미지 주소)를 목록 썸네일로 쓴다 */
     private static final java.util.regex.Pattern FIRST_IMAGE = java.util.regex.Pattern.compile(
@@ -142,13 +147,13 @@ public class PostQueryService {
         }
         Map<String, Object> params = new HashMap<>();
         params.put("blogId", blogId);
-        params.put("includePrivate", owner);
+        params.put(INCLUDE_PRIVATE, owner);
         params.put("categoryId", categoryId);
         String where = """
                 where p.blog_id = :blogId
                   and %s
                   and (cast(:categoryId as bigint) is null or p.category_id = :categoryId)
-                """.formatted(PostVisibilitySql.visibleTo("p", "includePrivate"));
+                """.formatted(PostVisibilitySql.visibleTo("p", INCLUDE_PRIVATE));
         if (q != null) {
             where += SearchWords.conditions(SearchWords.check(q, limits), "p", true, params);
         }
@@ -162,11 +167,11 @@ public class PostQueryService {
     public PageResult authorPosts(long memberId, int page, Long viewerId) {
         Map<String, Object> params = new HashMap<>();
         params.put("memberId", memberId);
-        params.put("includePrivate", viewerId != null && viewerId == memberId);
+        params.put(INCLUDE_PRIVATE, viewerId != null && viewerId == memberId);
         String where = """
                 where p.blog_id in (select ab.id from blog ab where ab.owner_id = :memberId)
                   and %s
-                """.formatted(PostVisibilitySql.visibleTo("p", "includePrivate"));
+                """.formatted(PostVisibilitySql.visibleTo("p", INCLUDE_PRIVATE));
         return page(where, params, page);
     }
 

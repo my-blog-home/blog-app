@@ -44,6 +44,8 @@ public class CommentService {
     public record Readable(Comment comment, Post post, Blog blog) {
     }
 
+    private static final String CONTENT = "content";
+
     private final CommentRepository comments;
     private final PostService postService;
     private final BlogService blogService;
@@ -84,7 +86,7 @@ public class CommentService {
                 order by c.created_at asc, c.id asc
                 """, params, (rs, n) -> new Row(rs.getLong("id"), rs.getObject("parent_id", Long.class),
                 rs.getObject("author_id", Long.class), rs.getString("nickname"), rs.getString("profile_color"),
-                rs.getString("content"), rs.getBoolean("is_secret"), rs.getTimestamp("created_at").toInstant(),
+                rs.getString(CONTENT), rs.getBoolean("is_secret"), rs.getTimestamp("created_at").toInstant(),
                 rs.getObject("parent_author_id", Long.class), rs.getBoolean("reported"),
                 rs.getBoolean("author_withdrawn")));
 
@@ -170,10 +172,10 @@ public class CommentService {
         }
         String content = rawContent == null ? "" : rawContent.strip();
         if (content.isEmpty()) {
-            throw ApiException.field("content", Messages.COMMENT_REQUIRED);
+            throw ApiException.field(CONTENT, Messages.COMMENT_REQUIRED);
         }
         if (content.codePointCount(0, content.length()) > limits.commentMax()) {
-            throw ApiException.field("content", "댓글은 " + limits.commentMax() + "자 이하로 입력해 주세요");
+            throw ApiException.field(CONTENT, "댓글은 " + limits.commentMax() + "자 이하로 입력해 주세요");
         }
         Boolean first = redis.opsForValue().setIfAbsent("comment-cooldown:" + memberId, "1", limits.commentInterval());
         if (!Boolean.TRUE.equals(first)) {

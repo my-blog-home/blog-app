@@ -31,6 +31,9 @@ public class SubscriptionService {
     public record MySubscriptions(long totalCount, List<SubscribedBlog> items) {
     }
 
+    private static final String BLOG_ID = "blogId";
+    private static final String MEMBER_ID = "memberId";
+
     private final BlogService blogService;
     private final NamedParameterJdbcTemplate jdbc;
     private final BlogLimits limits;
@@ -53,7 +56,7 @@ public class SubscriptionService {
         jdbc.update("""
                 insert into subscription (member_id, blog_id, created_at) values (:memberId, :blogId, :now)
                 on conflict do nothing
-                """, Map.of("memberId", memberId, "blogId", blogId, "now", Timestamp.from(clock.instant())));
+                """, Map.of(MEMBER_ID, memberId, BLOG_ID, blogId, "now", Timestamp.from(clock.instant())));
         return state(blogId, memberId);
     }
 
@@ -61,13 +64,13 @@ public class SubscriptionService {
     public SubscriptionState unsubscribe(long blogId, long memberId) {
         blogService.get(blogId);
         jdbc.update("delete from subscription where member_id = :memberId and blog_id = :blogId",
-                Map.of("memberId", memberId, "blogId", blogId));
+                Map.of(MEMBER_ID, memberId, BLOG_ID, blogId));
         return state(blogId, memberId);
     }
 
     public SubscriptionState state(long blogId, Long viewerId) {
         Map<String, Object> params = new HashMap<>();
-        params.put("blogId", blogId);
+        params.put(BLOG_ID, blogId);
         params.put("viewer", viewerId);
         return jdbc.queryForObject("""
                 select count(*) as cnt,
@@ -81,7 +84,7 @@ public class SubscriptionService {
     public MySubscriptions mine(long memberId, Integer requestedLimit) {
         int max = limits.drawerSubscriptionMax();
         int limit = requestedLimit == null ? max : Math.min(Math.max(1, requestedLimit), max);
-        Map<String, Object> params = Map.of("memberId", memberId, "limit", limit);
+        Map<String, Object> params = Map.of(MEMBER_ID, memberId, "limit", limit);
         long total = jdbc.queryForObject("select count(*) from subscription where member_id = :memberId",
                 params, Long.class);
         List<SubscribedBlog> items = jdbc.query("""

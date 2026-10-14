@@ -116,7 +116,7 @@ public class HomeRankingService {
         Map<String, Object> params = new HashMap<>();
         String windowed = windowedPosts(limits.hotBloggerDays(), params, topicId);
         params.put("limit", limits.hotBloggerCount());
-        List<HotBlogger> rows = jdbc.query("""
+        return jdbc.query("""
                 with w as (%s),
                      per_blog as (
                          select w.blog_id, sum(w.like_count + :weight * w.comment_count) as score,
@@ -133,6 +133,5 @@ public class HomeRankingService {
                 """.formatted(windowed), params, (rs, row) -> new HotBlogger(row + 1, rs.getLong("blog_id"),
                 rs.getString("blog_name"), rs.getLong("owner_id"), rs.getString("nickname"),
                 rs.getString("profile_color"), rs.getLong("subscriber_count"), rs.getLong("score")));
-        return rows;
     }
 }

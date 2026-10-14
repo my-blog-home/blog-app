@@ -72,7 +72,7 @@ public class SocialUserService extends DefaultOAuth2UserService {
     private SocialProfile kakao(OAuth2User user) {
         String id = String.valueOf(user.getAttributes().get("id"));
         Map<String, Object> account = (Map<String, Object>) user.getAttributes().getOrDefault("kakao_account", Map.of());
-        Map<String, Object> profile = (Map<String, Object>) account.getOrDefault("profile", Map.of());
+        Map<String, Object> profile = (Map<String, Object>) account.getOrDefault(PROFILE, Map.of());
         String email = (String) account.get("email");
         boolean verified = Boolean.TRUE.equals(account.get("is_email_verified"))
                 && Boolean.TRUE.equals(account.get("is_email_valid"));

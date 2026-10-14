@@ -7,9 +7,11 @@ import com.myblog.post.service.PostService;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.time.Clock;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -31,8 +33,26 @@ public class ImageService {
     }
 
     public record ImageFile(byte[] bytes, String contentType) {
+
+        // 배열은 내용으로 비교한다
+        @Override
+        public boolean equals(Object o) {
+            return o instanceof ImageFile other && Arrays.equals(bytes, other.bytes)
+                    && Objects.equals(contentType, other.contentType);
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * Arrays.hashCode(bytes) + Objects.hashCode(contentType);
+        }
+
+        @Override
+        public String toString() {
+            return "ImageFile[bytes=" + Arrays.toString(bytes) + ", contentType=" + contentType + "]";
+        }
     }
 
+    private static final String POST_ID = "postId";
     private static final Pattern IMAGE_URL = Pattern.compile("/images/([0-9a-f\\-]{36}\\.(?:jpg|png|gif|webp))");
 
     private final ImageStorage storage;
@@ -87,19 +107,19 @@ public class ImageService {
             throw ApiException.field("body", Messages.IMAGE_TOO_MANY);
         }
         jdbc.update("update post_image set post_id = null where post_id = :postId",
-                Map.of("postId", postId));
+                Map.of(POST_ID, postId));
         if (!keys.isEmpty()) {
             jdbc.update("""
                     update post_image set post_id = :postId
                     where storage_key in (:keys) and uploader_id = :memberId and (post_id is null or post_id = :postId)
-                    """, Map.of("postId", postId, "keys", keys, "memberId", memberId));
+                    """, Map.of(POST_ID, postId, "keys", keys, "memberId", memberId));
         }
     }
 
     /** 글을 지우기 전에 그 글의 파일을 모아 두었다가 커밋 뒤 지운다 */
     public void deleteFilesAfterCommit(long postId) {
         List<String> keys = jdbc.queryForList("select storage_key from post_image where post_id = :postId",
-                Map.of("postId", postId), String.class);
+                Map.of(POST_ID, postId), String.class);
         deleteAfterCommit(keys);
     }
 

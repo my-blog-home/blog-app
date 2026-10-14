@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class ReportService {
 
+    private static final String REASON = "reason";
     private static final Set<String> REASONS = Set.of("SPAM", "ABUSE", "ADULT", "ETC");
 
     private final NamedParameterJdbcTemplate jdbc;
@@ -45,7 +46,7 @@ public class ReportService {
         Post post = postService.getVisible(postId, memberId);
         long ownerId = blogService.get(post.getBlogId()).getOwnerId();
         if (ownerId == memberId) {
-            throw ApiException.field("reason", Messages.REPORT_OWN_POST);
+            throw ApiException.field(REASON, Messages.REPORT_OWN_POST);
         }
         save(new Target(TargetType.POST, post.getId(), null, post.getTitle(), ownerId), memberId, reason, rawDetail,
                 Messages.REPORT_DUPLICATE);
@@ -66,7 +67,7 @@ public class ReportService {
     @Transactional
     public void save(Target target, long memberId, String reason, String rawDetail, String duplicateMessage) {
         if (reason == null || !REASONS.contains(reason)) {
-            throw ApiException.field("reason", Messages.REPORT_REASON);
+            throw ApiException.field(REASON, Messages.REPORT_REASON);
         }
         String detail = "ETC".equals(reason) && rawDetail != null && !rawDetail.isBlank() ? rawDetail.strip() : null;
         if (detail != null && detail.codePointCount(0, detail.length()) > limits.reportDetailMax()) {
@@ -79,7 +80,7 @@ public class ReportService {
         params.put("text", target.text());
         params.put("authorId", target.authorId());
         params.put("memberId", memberId);
-        params.put("reason", reason);
+        params.put(REASON, reason);
         params.put("detail", detail);
         params.put("now", Timestamp.from(clock.instant()));
         try {
