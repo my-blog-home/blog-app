@@ -104,6 +104,49 @@ function FeedTab({
   )
 }
 
+/** 첫 화면 머리: 제목, 고른 주제 안내, 주제 버튼 */
+function HomeHero({ topics, topicId, current, go }: Readonly<{
+  topics: Topic[]
+  topicId: string | null
+  current: Topic | undefined
+  go: (next: HomeQuery) => void
+}>) {
+  return (
+    <div className="hero">
+      <div className="hero-head">
+        <div>
+          <p className="hero-kicker">Ylog</p>
+          <h1>오늘의 이야기</h1>
+        </div>
+        {topicId && (
+          <button type="button" className="link" onClick={() => go({ topic: null })}>
+            전체 보기
+          </button>
+        )}
+      </div>
+      <p>{current ? `'${current.name}' 주제의 글만 모아 보고 있어요.` : 'Ylog에 올라온 새 글을 관심 있는 주제로 골라 만나 보세요.'}</p>
+      {topics.length > 0 && (
+        <fieldset className="topic-chips" aria-label="주제">
+          <button type="button" className={!topicId ? 'current' : ''} aria-pressed={!topicId} onClick={() => go({ topic: null, tab: 'all' })}>
+            전체
+          </button>
+          {topics.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              className={String(t.id) === topicId ? 'current' : ''}
+              aria-pressed={String(t.id) === topicId}
+              onClick={() => go({ topic: String(t.id), tab: 'all' })}
+            >
+              {t.name}
+            </button>
+          ))}
+        </fieldset>
+      )}
+    </div>
+  )
+}
+
 /**
  * 첫 화면: 주제 버튼(글의 주제로 모아 보기)과 새 글 썸네일 줄, 아래에 전체 글을 카드로.
  * 주제(?topic=)와 정렬(?sort=)은 주소에 남는다 (FR-34, BR-07, CR-37)
@@ -172,38 +215,7 @@ export default function HomePage() {
     <div className="home-layout">
       <div className="home-main">
       {notice && <p className="notice">{notice}</p>}
-      <div className="hero">
-        <div className="hero-head">
-          <div>
-            <p className="hero-kicker">Ylog</p>
-            <h1>오늘의 이야기</h1>
-          </div>
-          {topicId && (
-            <button type="button" className="link" onClick={() => go({ topic: null })}>
-              전체 보기
-            </button>
-          )}
-        </div>
-        <p>{current ? `'${current.name}' 주제의 글만 모아 보고 있어요.` : 'Ylog에 올라온 새 글을 관심 있는 주제로 골라 만나 보세요.'}</p>
-        {topics.length > 0 && (
-          <fieldset className="topic-chips" aria-label="주제">
-            <button type="button" className={!topicId ? 'current' : ''} aria-pressed={!topicId} onClick={() => go({ topic: null, tab: 'all' })}>
-              전체
-            </button>
-            {topics.map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                className={String(t.id) === topicId ? 'current' : ''}
-                aria-pressed={String(t.id) === topicId}
-                onClick={() => go({ topic: String(t.id), tab: 'all' })}
-              >
-                {t.name}
-              </button>
-            ))}
-          </fieldset>
-        )}
-      </div>
+      <HomeHero topics={topics} topicId={topicId} current={current} go={go} />
 
       {latest.items.length > 0 && (
         <section className="section">
