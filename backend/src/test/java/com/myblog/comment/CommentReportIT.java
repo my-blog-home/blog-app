@@ -92,8 +92,8 @@ class CommentReportIT extends IntegrationTestBase {
         assertThat(((Number) row.get("post_id")).longValue()).isEqualTo(postId);
         assertThat(row).containsEntry("target_text", "지워질 댓글");
         assertThat(((Number) row.get("target_author_id")).longValue()).isEqualTo(writer.memberId());
-        assertThat(row).containsEntry("status", "PENDING");
-        assertThat(row).containsEntry("detail", "설명");
+        assertThat(row).containsEntry("status", "PENDING")
+                .containsEntry("detail", "설명");
     }
 
     @Test

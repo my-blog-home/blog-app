@@ -67,8 +67,8 @@ class SocialLoginIT extends IntegrationTestBase {
                 .andExpect(status().isOk()).andReturn(), session);
 
         Map<String, Object> row = jdbc.queryForMap("select id, email, password_hash from member where nickname = '깃허브'");
-        assertThat(row).containsEntry("email", "new@example.com");
-        assertThat(row).containsEntry("password_hash", "!");
+        assertThat(row).containsEntry("email", "new@example.com")
+                .containsEntry("password_hash", "!");
         assertThat(jdbc.queryForObject("select count(*) from blog where owner_id = ?", Long.class, row.get("id"))).isEqualTo(1);
         mvc.perform(get("/api/auth/me").cookie(session))
                 .andExpect(jsonPath("$.nickname").value("깃허브"))
