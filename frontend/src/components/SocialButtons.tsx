@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react'
 import { get } from '../api/client'
 
-/** 늘 보이는 소셜 로그인 버튼. 구글은 HTTPS 도메인을 붙인 뒤에 켤 수 있다 */
+/** 늘 보이는 소셜 로그인 버튼 */
 const ALL = [
   { id: 'github', label: 'GitHub로 계속하기' },
   { id: 'kakao', label: '카카오로 계속하기' },
-  { id: 'google', label: 'Google로 계속하기' },
 ]
 
 const PREPARING = '준비 중입니다'
