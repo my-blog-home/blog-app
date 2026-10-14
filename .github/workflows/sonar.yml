@@ -40,7 +40,7 @@ jobs:
       - name: 서버 테스트와 커버리지
         if: env.SONAR_TOKEN != ''
         working-directory: backend
-        run: ./gradlew test jacocoTestReport --no-daemon
+        run: ./gradlew test jacocoTestReport sonarLibs --no-daemon
       - name: SonarQube 검사
         if: env.SONAR_TOKEN != ''
         uses: SonarSource/sonarqube-scan-action@v4
