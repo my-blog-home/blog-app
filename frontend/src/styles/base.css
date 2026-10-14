@@ -143,12 +143,11 @@ input[type="checkbox"], input[type="radio"] { width: 16px; height: 16px; accent-
 
 /* ===== 첫 화면 ===== */
 .hero { padding: 32px 36px; margin-bottom: 36px; background: var(--gradient); border-radius: 20px; }
-.hero h1 { margin: 0 0 6px; font-size: 28px; }
+.hero h1 { margin: 0 0 6px; font-size: 32px; letter-spacing: -0.64px; }
 .hero p { margin: 0; color: var(--text-sub); }
 
 /* ===== 섹션 (요즘것들 느낌: 굵고 큰 제목, 위에 짧은 설명) ===== */
 .hero-kicker { margin: 0 0 4px !important; font-size: 13px; font-weight: 700; letter-spacing: 0.08em; color: var(--primary) !important; text-transform: uppercase; }
-.hero h1 { font-size: 32px; letter-spacing: -0.64px; }
 .section { margin-bottom: 56px; }
 .section-head { margin-bottom: 20px; }
 .section-head p { margin: 0 0 2px; font-size: 15px; color: var(--text-sub); }
@@ -258,16 +257,15 @@ input[type="checkbox"], input[type="radio"] { width: 16px; height: 16px; accent-
 .avatar {
   display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
   width: 88px; height: 88px; border-radius: 50%; background: var(--surface); box-shadow: 0 0 0 4px var(--surface);
-  color: var(--primary); font-weight: 800; font-size: 32px;
+  color: #2b2d42; font-weight: 800; font-size: 32px;
 }
-.avatar { color: #2b2d42; }
 .avatar.sm { width: 28px; height: 28px; font-size: 12px; box-shadow: none; background: var(--primary-soft); }
 .blog-cover h1 { margin: 0 0 4px; font-size: 28px; }
 .blog-cover p { margin: 0; color: var(--text-sub); }
 .blog-cover .stats { margin-top: 6px; font-size: 14px; color: var(--text-faint); }
 .blog-cover .actions { margin-left: auto; display: flex; gap: 8px; }
 .blog-layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 48px; align-items: start; }
-.sidebar h4 { margin: 0 0 12px; font-size: 13px; color: var(--text-faint); font-weight: 600; }
+.sidebar h4 { margin: 16px 0 12px; font-size: 13px; color: var(--text-faint); font-weight: 600; }
 .categories { list-style: none; margin: 0 0 24px; padding: 0; display: flex; flex-direction: column; gap: 2px; }
 .categories button {
   width: 100%; height: auto; justify-content: space-between; padding: 8px 12px; border: 0; border-radius: var(--radius-sm);
@@ -307,7 +305,7 @@ input[type="checkbox"], input[type="radio"] { width: 16px; height: 16px; accent-
   background: var(--bg-soft); color: var(--text-sub); font-size: 13px;
 }
 a.tag:hover { background: var(--primary-soft); color: var(--primary); }
-.reactions { display: flex; justify-content: center; align-items: center; gap: 12px; padding: 24px 0 32px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+.reactions { display: flex; justify-content: center; align-items: center; gap: 12px; padding: 24px 0 32px; border-bottom: 1px solid var(--border); margin-bottom: 24px; flex-wrap: wrap; }
 .like.on { color: var(--primary); border-color: var(--primary); background: var(--primary-soft); }
 .like.bookmark-on { color: #b7791f; border-color: #e9c46a; background: #fff8e6; }
 .prev-next { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
@@ -332,7 +330,7 @@ a.tag:hover { background: var(--primary-soft); color: var(--primary); }
 .comment-body { margin: 4px 0 0; font-size: 15px; white-space: pre-wrap; overflow-wrap: anywhere; }
 .comment-form { display: flex; flex-direction: column; gap: 8px; }
 .comment-form textarea { border-radius: var(--radius); padding: 14px 16px; }
-.comment-form .row { justify-content: space-between; }
+.comment-form .row { justify-content: space-between; flex-wrap: wrap; }
 .comment-login { padding: 24px; border-radius: var(--radius); background: var(--bg-soft); text-align: center; color: var(--text-sub); display: flex; flex-direction: column; align-items: center; gap: 12px; }
 .comment-login p { margin: 0; }
 
@@ -369,7 +367,10 @@ a.tag:hover { background: var(--primary-soft); color: var(--primary); }
 
 /* ===== 모달 ===== */
 .modal-backdrop { position: fixed; inset: 0; z-index: 100; background: rgba(43, 45, 66, 0.35); display: flex; align-items: center; justify-content: center; padding: 16px; }
-.modal { background: var(--surface); border-radius: 16px; width: 100%; max-width: 440px; padding: 28px; }
+/* 창 바깥을 누르면 닫는 판. 보이지 않고 .modal-backdrop 전체를 덮는다 */
+.modal-scrim, .modal-scrim:hover { position: absolute; inset: 0; height: auto; padding: 0; border: 0; border-radius: 0; background: none; cursor: default; }
+/* <dialog open>의 기본 모양(위치·여백·테두리·글자색)은 지우고 예전 div와 같게 보인다 */
+.modal { position: relative; inset: auto; height: auto; margin: 0; border: 0; color: inherit; background: var(--surface); border-radius: 16px; width: 100%; max-width: 440px; padding: 28px; }
 .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .modal-head h2 { margin: 0; font-size: 20px; }
 .modal .form > label.check {
@@ -416,7 +417,7 @@ a.tag:hover { background: var(--primary-soft); color: var(--primary); }
 .actions-cell { display: flex; gap: 12px; }
 .category-manager { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
 .category-manager ul { list-style: none; margin: 0; padding: 0; }
-.category-manager li { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.category-manager li { position: relative; display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--surface); }
 .category-manager li .grow { font-weight: 600; }
 .category-manager li .count { color: var(--text-faint); font-size: 13px; font-weight: 400; }
 .category-manager form { padding: 12px 16px; }
@@ -487,6 +488,8 @@ a.tag:hover { background: var(--primary-soft); color: var(--primary); }
 /* ===== 주제·정렬·임시저장·분류 공개 범위·프로필 색 ===== */
 .hero-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .hero-head .link { font-size: 14px; }
+/* 버튼 묶음은 <fieldset>이다. 기본 테두리·여백만 지우고(:where라 아래 규칙이 이긴다) 예전 div와 같게 보인다 */
+:where(fieldset.topic-chips, fieldset.sort-toggle) { min-width: auto; margin: 0; padding: 0; border: 0; }
 .topic-chips { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin-top: 18px; }
 .topic-chips button {
   height: 38px; padding: 0 10px; border: 1px solid transparent; border-radius: var(--radius-sm);
@@ -533,7 +536,6 @@ a.tag:hover { background: var(--primary-soft); color: var(--primary); }
 .badge.owner { background: var(--primary-soft); color: var(--primary); }
 .badge.secret { background: var(--bg-soft); color: var(--text-sub); }
 .hidden-comment { color: var(--text-faint); font-style: italic; }
-.comment-form .row { flex-wrap: wrap; }
 .comment-form-left, .comment-form-right { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .comment-form-left .check { font-size: 14px; }
 .reply-form { margin-top: 12px; }
@@ -725,8 +727,7 @@ button.link:disabled { color: var(--text-faint); text-decoration: none; }
 .author-link { font-weight: 600; }
 
 /* 글 상세: 링크 복사·글쓴이 상자 (FR-076) */
-.reactions { flex-wrap: wrap; }
-.copy-toast { min-height: 20px; margin: -16px 0 8px; text-align: center; font-size: 13px; color: var(--ok); }
+.copy-toast { display: block; min-height: 20px; margin: -16px 0 8px; text-align: center; font-size: 13px; color: var(--ok); }
 .author-box {
   display: flex; align-items: center; gap: 16px; padding: 24px; margin: 40px 0 24px;
   background: var(--gradient); border-radius: var(--radius);
@@ -743,7 +744,6 @@ button.link:disabled { color: var(--text-faint); text-decoration: none; }
 .blog-search input { height: 36px; font-size: 14px; }
 .blog-search button { flex-shrink: 0; height: 36px; border-radius: var(--radius-sm); }
 .sidebar .error { margin: 0 0 8px; }
-.sidebar h4 { margin-top: 16px; }
 
 /* 작성자 프로필 (FR-075) */
 .me-badge { margin-left: 10px; vertical-align: middle; background: var(--surface); color: var(--primary); }
@@ -827,7 +827,6 @@ button.link:disabled { color: var(--text-faint); text-decoration: none; }
 }
 
 /* ===== 분류 순서 끌기 (FR-17, CR-31) ===== */
-.category-manager li { position: relative; background: var(--surface); }
 .drag-handle {
   flex-shrink: 0; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 6px; background: none;
   display: inline-flex; align-items: center; justify-content: center; color: var(--text-faint);

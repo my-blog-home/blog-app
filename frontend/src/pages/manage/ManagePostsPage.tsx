@@ -15,6 +15,13 @@ export const STATUS_TABS = [
 ]
 
 /** 글 관리: 비공개·임시저장 포함 내 글 전체, 상태(전체·공개·비공개·임시저장)·분류로 거르기 (BM-03, FR-32) */
+/** 상태 칸: 임시저장이면 표시, 아니면 공개 여부 */
+function PostStatus({ post }: Readonly<{ post: ManagedPostPage['items'][number] }>) {
+  if (post.status === 'DRAFT') return <span className="badge">임시저장</span>
+  if (post.visibility === 'PUBLIC') return <>공개</>
+  return <span className="badge">비공개</span>
+}
+
 export default function ManagePostsPage() {
   const { blog, reloadBlog } = useManage()
   const [params, setParams] = useSearchParams()
@@ -109,13 +116,7 @@ export default function ManagePostsPage() {
                     </td>
                     <td>{formatDate(p.createdAt)}</td>
                     <td>
-                      {p.status === 'DRAFT' ? (
-                        <span className="badge">임시저장</span>
-                      ) : p.visibility === 'PUBLIC' ? (
-                        '공개'
-                      ) : (
-                        <span className="badge">비공개</span>
-                      )}
+                      <PostStatus post={p} />
                     </td>
                     <td>{p.viewCount.toLocaleString()}</td>
                     <td>{p.commentCount}</td>

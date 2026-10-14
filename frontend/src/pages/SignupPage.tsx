@@ -144,12 +144,15 @@ export default function SignupPage() {
     }
   }
 
+  // 인증번호를 받은 뒤에는 다시 받기, 기다리는 동안은 남은 초를 보인다
+  const resendLabel = cooldown > 0 ? `다시 받기 (${cooldown}초)` : '인증번호 다시 받기'
+
   return (
     <section className="narrow">
       <h1>회원가입</h1>
       <form className="form" onSubmit={submit} noValidate>
         <label>
-          닉네임
+          {'닉네임'}
           <input ref={refs.nickname} value={nickname} onChange={(e) => setNickname(e.target.value)} maxLength={10} />
           {nickname && !nicknameOk && <span className="hint error">{M.nicknameRule}</span>}
           {errors.nickname && <span className="hint error">{errors.nickname}</span>}
@@ -172,7 +175,7 @@ export default function SignupPage() {
               </button>
             ) : (
               <button type="button" onClick={requestCode} disabled={!nicknameOk || !emailOk || cooldown > 0 || busy}>
-                {codeSent ? (cooldown > 0 ? `다시 받기 (${cooldown}초)` : '인증번호 다시 받기') : '인증번호 받기'}
+                {codeSent ? resendLabel : '인증번호 받기'}
               </button>
             )}
           </div>
@@ -200,7 +203,7 @@ export default function SignupPage() {
         )}
 
         <label>
-          비밀번호
+          {'비밀번호'}
           <input ref={refs.password} type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" />
           <span className="checks">
             {checks.map((c) => (
@@ -213,7 +216,7 @@ export default function SignupPage() {
         </label>
 
         <label>
-          비밀번호 확인
+          {'비밀번호 확인'}
           <input
             ref={refs.passwordConfirm}
             type="password"

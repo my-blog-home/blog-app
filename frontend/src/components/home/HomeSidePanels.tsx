@@ -75,7 +75,7 @@ export function MyInfoPanel() {
 }
 
 /** 순위 변동: 오르면 ▲n, 내리면 ▼n, 같으면 -, 새로 들어오면 NEW (BR-31) */
-export function ChangeMark({ change, isNew }: { change: number; isNew: boolean }) {
+export function ChangeMark({ change, isNew }: Readonly<{ change: number; isNew: boolean }>) {
   if (isNew) return <span className="chg new" aria-label="새로 순위에 들어옴">NEW</span>
   if (change > 0) return <span className="chg up" aria-label={`${change}단계 상승`}>▲{change}</span>
   if (change < 0) return <span className="chg down" aria-label={`${-change}단계 하락`}>▼{-change}</span>
@@ -117,7 +117,7 @@ export function PopularKeywordsPanel() {
 }
 
 /** 이번 주 인기 블로거: 최근 7일 글의 좋아요·댓글 점수를 블로그마다 더한 상위 5개 (FR-074, BR-45) */
-export function HotBloggersPanel({ topicId }: { topicId: string | null }) {
+export function HotBloggersPanel({ topicId }: Readonly<{ topicId: string | null }>) {
   const [items, setItems] = useState<HotBlogger[] | null>(null)
 
   useEffect(() => {

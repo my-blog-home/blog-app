@@ -3,7 +3,7 @@ import { ApiError, put } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 
 /** 좋아요: 누르면 켜지고 다시 누르면 꺼진다. 자기 글에는 누를 수 없다 (CF-19) */
-export default function LikeButton({ postId, initialCount, initialLiked, isMine }: { postId: number; initialCount: number; initialLiked: boolean; isMine: boolean }) {
+export default function LikeButton({ postId, initialCount, initialLiked, isMine }: Readonly<{ postId: number; initialCount: number; initialLiked: boolean; isMine: boolean }>) {
   const { requireLogin } = useAuth()
   const [count, setCount] = useState(initialCount)
   const [liked, setLiked] = useState(initialLiked)

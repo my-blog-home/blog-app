@@ -24,12 +24,12 @@ export function targetHref(g: ReportGroup): string | null {
   return g.targetType === 'COMMENT' && g.commentId != null ? `/posts/${g.postId}#comment-${g.commentId}` : `/posts/${g.postId}`
 }
 
-export function StatusBadge({ status }: { status: ReportStatus }) {
+export function StatusBadge({ status }: Readonly<{ status: ReportStatus }>) {
   return <span className={`badge status-${status.toLowerCase()}`}>{REPORT_STATUS_LABEL[status]}</span>
 }
 
 /** 신고된 내용: 링크(대상이 남아 있을 때)와 "삭제됨" 표시 */
-export function TargetText({ group, max = 60 }: { group: ReportGroup; max?: number }) {
+export function TargetText({ group, max = 60 }: Readonly<{ group: ReportGroup; max?: number }>) {
   const href = targetHref(group)
   const text = short(group.targetText || '(내용 없음)', max)
   return (
@@ -41,12 +41,13 @@ export function TargetText({ group, max = 60 }: { group: ReportGroup; max?: numb
 }
 
 /** 관리자 화면의 창. 바깥을 누르거나 ESC로 닫고, 닫으면 초점을 되돌린다 (NFR-08) */
-export function AdminModal({ title, wide, onClose, children }: { title: string; wide?: boolean; onClose: () => void; children: ReactNode }) {
-  const ref = useDialog<HTMLDivElement>(onClose)
+export function AdminModal({ title, wide, onClose, children }: Readonly<{ title: string; wide?: boolean; onClose: () => void; children: ReactNode }>) {
+  const ref = useDialog<HTMLDialogElement>(onClose)
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div ref={ref} className={wide ? 'modal wide' : 'modal'} role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()}>
+    <div className="modal-backdrop">
+      <button type="button" className="modal-scrim" tabIndex={-1} aria-hidden="true" onClick={onClose} />
+      <dialog ref={ref} className={wide ? 'modal wide' : 'modal'} open aria-modal="true" aria-label={title}>
         <div className="modal-head">
           <h2>{title}</h2>
           <button type="button" className="link" onClick={onClose} aria-label="닫기">
@@ -54,7 +55,7 @@ export function AdminModal({ title, wide, onClose, children }: { title: string; 
           </button>
         </div>
         {children}
-      </div>
+      </dialog>
     </div>
   )
 }
@@ -67,14 +68,14 @@ export function CountTabs<K extends string>({
   current,
   onChange,
   label,
-}: {
+}: Readonly<{
   keys: K[]
   labels: Record<K, string>
   counts: Record<K, number> | null
   current: K
   onChange: (key: K) => void
   label: string
-}) {
+}>) {
   return (
     <div className="tabs" role="tablist" aria-label={label}>
       {keys.map((k) => (
