@@ -75,7 +75,7 @@ Crowfoot에서 발급한 PostgreSQL을 쓰므로 `DB_NAME`에는 발급받은 **
 
 **선택 시크릿**(없으면 괄호 안 기본값): `DB_DATABASE`(nhnacademy), `DB_SCHEMA`(`DB_NAME` 값), `SMTP_USERNAME`, `SMTP_PASSWORD`(둘 다 있어야 인증 메일을 보낸다. 없으면 가입 인증이 안 된다), `SMTP_HOST`(smtp.gmail.com), `SMTP_PORT`(587), `SMTP_FROM`(Ylog <SMTP_USERNAME>), `MAIL_MODE`(SMTP 계정이 있으면 smtp), `SHOW_CODE_ON_SCREEN`(false), `COOKIE_SECURE`(true), `ADMIN_EMAIL`, `ADMIN_PASSWORD`(둘 다 등록하면 처음 켤 때 관리자 계정을 만든다. 없으면 관리자 없이 켜진다)
 
-**코드 검사 시크릿**(선택): `SONAR_HOST_URL`(SonarQube 주소), `SONAR_TOKEN`(SonarQube에서 만든 토큰). 둘 다 있으면 PR과 develop 커밋마다 `sonar.yml`이 테스트 커버리지와 함께 SonarQube 프로젝트 `ylogdi`로 결과를 올린다. 배포와는 따로 돌고 PR을 막지 않는다.
+**코드 검사 시크릿**(선택): `SONAR_HOST_URL`(SonarQube 주소), `SONAR_TOKEN`(SonarQube에서 만든 토큰). 둘 다 있으면 PR과 develop 커밋마다 `sonar.yml`이 테스트 커버리지와 함께 SonarQube 프로젝트 `log`로 결과를 올린다. 배포와는 따로 돌고 PR을 막지 않는다.
 
 서버 조건: Docker가 설치돼 있어야 한다. SSH 계정이 docker를 바로 못 쓰면 `SSH_PASSWORD`로 sudo를 쓴다. DB가 같은 서버에 있으면(`DB_ADDRESS`가 localhost) 컨테이너가 `host.docker.internal`로 접속하므로 PostgreSQL이 도커 네트워크(172.x)에서 오는 접속도 받아야 한다.
 
