@@ -69,8 +69,13 @@ public class AdminAccountInitializer implements ApplicationRunner {
         for (int i = 1; members.existsByNickname(nickname); i++) {
             nickname = NICKNAME + i;
         }
-        members.saveAndFlush(new Member(normalized, nickname, passwordEncoder.encode(rawPassword), MemberRole.ADMIN,
-                clock.instant()));
+        try {
+            members.saveAndFlush(new Member(normalized, nickname, passwordEncoder.encode(rawPassword), MemberRole.ADMIN,
+                    clock.instant()));
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            // 앱 여러 개가 거의 동시에 켜질 때 다른 앱이 먼저 만든 경우
+            return false;
+        }
         log.info("관리자 계정을 만들었습니다: {}", normalized);
         return true;
     }
