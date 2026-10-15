@@ -9,6 +9,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -72,7 +73,8 @@ public class ManagePostQueryService {
                   and %s
                   and (cast(:categoryId as bigint) is null or p.category_id = :categoryId)
                 """.formatted(statusCondition);
-        long total = jdbc.queryForObject("select count(*) from post p " + where, params, Long.class);
+        long total = Objects.requireNonNullElse(
+                jdbc.queryForObject("select count(*) from post p " + where, params, Long.class), 0L);
         int size = limits.pageSize();
         int totalPages = (int) Math.max(1, (total + size - 1) / size);
         int page = Math.min(Math.max(1, requestedPage), totalPages);

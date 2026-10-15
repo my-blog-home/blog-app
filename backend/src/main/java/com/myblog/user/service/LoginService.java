@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -57,7 +58,8 @@ public class LoginService {
         this.limits = limits;
         this.jdbc = jdbc;
         this.clock = clock;
-        this.dummyHash = passwordEncoder.encode("dummy-password-for-timing");
+        // 시간을 맞추는 데만 쓰는 해시라 값은 아무거나 된다. 서버가 켜질 때마다 무작위로 만든다
+        this.dummyHash = passwordEncoder.encode(UUID.randomUUID().toString());
     }
 
     @Transactional

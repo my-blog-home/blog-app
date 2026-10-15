@@ -4,7 +4,7 @@ import { formatDateTime, formatPostDate } from '../format'
 import Thumb from './Thumb'
 
 /** 글 아래의 좋아요 수와 댓글 수(답글 포함) (FR-085, BR-05) */
-export function Reactions({ post }: { post: PostItem }) {
+export function Reactions({ post }: Readonly<{ post: PostItem }>) {
   return (
     <p className="reactions-line" aria-label={`좋아요 ${post.likeCount}개, 댓글 ${post.commentCount}개`}>
       <span aria-hidden="true">♥</span> 좋아요 {post.likeCount.toLocaleString()} · 댓글 {post.commentCount.toLocaleString()}
@@ -13,7 +13,7 @@ export function Reactions({ post }: { post: PostItem }) {
 }
 
 /** 블로그·검색·태그 화면의 한 줄 목록 */
-export default function PostList({ items, showBlog = false }: { items: PostItem[]; showBlog?: boolean }) {
+export default function PostList({ items, showBlog = false }: Readonly<{ items: PostItem[]; showBlog?: boolean }>) {
   return (
     <ul className="post-list">
       {items.map((post) => (
@@ -46,7 +46,7 @@ export default function PostList({ items, showBlog = false }: { items: PostItem[
  * 첫 화면의 글 목록: 네이버 블로그·티스토리처럼 한 줄씩 놓고, 이미지가 있으면 오른쪽에 첫 이미지를 둔다.
  * 줄 어디를 눌러도 글로, 블로그·작성자 이름만 따로 그쪽으로 간다
  */
-export function PostCards({ items }: { items: PostItem[] }) {
+export function PostCards({ items }: Readonly<{ items: PostItem[] }>) {
   return (
     <ul className="feed-list">
       {items.map((post) => (
@@ -94,7 +94,7 @@ export function PostCards({ items }: { items: PostItem[] }) {
  * 첫 화면의 피드형 목록: 네이버 블로그 피드처럼 글 하나를 크게.
  * 위에 블로그·작성자·시간, 그 아래 첫 이미지를 넓게(이미지가 없으면 생략), 제목, 내용 몇 줄, 주제와 좋아요·댓글 수
  */
-export function PostFeed({ items }: { items: PostItem[] }) {
+export function PostFeed({ items }: Readonly<{ items: PostItem[] }>) {
   return (
     <ul className="feed-view">
       {items.map((post) => (
@@ -136,7 +136,7 @@ export function PostFeed({ items }: { items: PostItem[] }) {
 }
 
 /** 요즘것들처럼 정사각 썸네일 카드를 가로로 넘겨 보는 줄 */
-export function ThumbRow({ items }: { items: PostItem[] }) {
+export function ThumbRow({ items }: Readonly<{ items: PostItem[] }>) {
   return (
     <ul className="thumb-row">
       {items.map((post) => (

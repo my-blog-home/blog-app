@@ -40,6 +40,8 @@ public class AdminSuspensionService {
     public record Input(Integer days, String reason) {
     }
 
+    private static final String REASON = "reason";
+
     private final NamedParameterJdbcTemplate jdbc;
     private final SessionTerminator sessions;
     private final BlogLimits limits;
@@ -61,7 +63,7 @@ public class AdminSuspensionService {
         }
         String reason = rawReason == null ? "" : rawReason.strip();
         if (reason.codePointCount(0, reason.length()) > limits.suspensionReasonMax()) {
-            throw ApiException.field("reason", Messages.SUSPEND_REASON_TOO_LONG.formatted(limits.suspensionReasonMax()));
+            throw ApiException.field(REASON, Messages.SUSPEND_REASON_TOO_LONG.formatted(limits.suspensionReasonMax()));
         }
         return new Input(days, reason);
     }
@@ -90,7 +92,7 @@ public class AdminSuspensionService {
         Instant ends = input.days() == null ? null : now.plus(Duration.ofDays(input.days()));
         Map<String, Object> params = new HashMap<>();
         params.put("memberId", memberId);
-        params.put("reason", input.reason());
+        params.put(REASON, input.reason());
         params.put("startsAt", Timestamp.from(now));
         params.put("endsAt", ends == null ? null : Timestamp.from(ends));
         params.put("reportId", reportId);
@@ -123,7 +125,7 @@ public class AdminSuspensionService {
                 Map.of("id", memberId, "now", Timestamp.from(clock.instant())), (rs, n) -> {
                     Timestamp ends = rs.getTimestamp("ends_at");
                     Timestamp lifted = rs.getTimestamp("lifted_at");
-                    return new HistoryEntry(rs.getLong("id"), rs.getString("reason"),
+                    return new HistoryEntry(rs.getLong("id"), rs.getString(REASON),
                             rs.getTimestamp("starts_at").toInstant(), ends == null ? null : ends.toInstant(),
                             ends == null, rs.getBoolean("active"), lifted == null ? null : lifted.toInstant(),
                             rs.getString("created_by"), rs.getString("lifted_by"),

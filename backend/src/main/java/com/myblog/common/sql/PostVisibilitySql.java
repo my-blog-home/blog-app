@@ -11,18 +11,18 @@ public final class PostVisibilitySql {
     public static final String PUBLIC = publicPost("p");
 
     /** 별칭이 p인 post 표: 작성완료한 글 (블로그 주인의 목록·글 수에 쓴다. 임시저장 글은 어디에도 나오지 않는다) */
-    public static final String PUBLISHED = published("p");
+    public static final String PUBLISHED = publishedPost("p");
 
     private PostVisibilitySql() {
     }
 
     public static String publicPost(String alias) {
-        return "(" + published(alias) + " and " + alias + ".visibility = 'PUBLIC'"
+        return "(" + publishedPost(alias) + " and " + alias + ".visibility = 'PUBLIC'"
                 + " and exists (select 1 from category vis_c where vis_c.id = " + alias + ".category_id"
                 + " and vis_c.visibility = 'PUBLIC'))";
     }
 
-    public static String published(String alias) {
+    public static String publishedPost(String alias) {
         return "(" + alias + ".status = 'PUBLISHED')";
     }
 
@@ -31,7 +31,7 @@ public final class PostVisibilitySql {
      * includePrivate는 boolean 이름 붙은 파라미터 이름이다.
      */
     public static String visibleTo(String alias, String includePrivateParam) {
-        return "(" + published(alias) + " and (:" + includePrivateParam + " or " + publicPost(alias) + "))";
+        return "(" + publishedPost(alias) + " and (:" + includePrivateParam + " or " + publicPost(alias) + "))";
     }
 
     /**
@@ -39,6 +39,6 @@ public final class PostVisibilitySql {
      * ownerIdExpr는 글이 속한 블로그 주인 id를 가리키는 SQL 식, viewerParam은 회원 id 파라미터 이름이다 (FR-069, BR-32).
      */
     public static String readableBy(String alias, String ownerIdExpr, String viewerParam) {
-        return "(" + published(alias) + " and (" + ownerIdExpr + " = :" + viewerParam + " or " + publicPost(alias) + "))";
+        return "(" + publishedPost(alias) + " and (" + ownerIdExpr + " = :" + viewerParam + " or " + publicPost(alias) + "))";
     }
 }

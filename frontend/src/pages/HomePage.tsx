@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ComponentType } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { get } from '../api/client'
 import { loadTopics } from '../api/topics'
-import type { MySubscriptions, PageResult, Topic } from '../api/types'
+import type { Me, MySubscriptions, PageResult, PostItem, Topic } from '../api/types'
 import { useAuth } from '../auth/AuthContext'
 import Pagination from '../components/Pagination'
 import HotPostsSlider from '../components/home/HotPostsSlider'
@@ -48,6 +48,102 @@ function FeedIcon() {
       <rect x="2.2" y="2" width="11.6" height="7.2" rx="1.4" />
       <path d="M2.5 11.8h11M2.5 14.2h7" />
     </svg>
+  )
+}
+
+type HomeQuery = { topic?: string | null; sort?: Sort; page?: number; tab?: Tab }
+
+/** 첫 화면 주소의 쿼리. next에 없는 값은 지금 값(current)을 쓴다 */
+function homeQuery(next: HomeQuery, current: { tab: Tab; topic: string | null; sort: Sort }) {
+  const q = new URLSearchParams()
+  const nextTab = next.tab ?? current.tab
+  // 구독 피드는 주제로 거르지 않는다. 주제를 고르면 전체 글로 돌아간다
+  const nextTopic = next.topic === undefined ? current.topic : next.topic
+  const t = nextTab === 'feed' ? null : nextTopic
+  const s = next.sort ?? current.sort
+  if (nextTab === 'feed') q.set('tab', 'feed')
+  if (t) q.set('topic', t)
+  if (s !== 'latest') q.set('sort', s)
+  if (next.page && next.page > 1) q.set('page', String(next.page))
+  return q
+}
+
+/** 구독 피드 탭의 목록. 비회원에게는 로그인 안내(확인 중이면 아무것도), 구독이 없으면 구독 안내 */
+function FeedTab({
+  me,
+  loading,
+  feed,
+  hasSubscriptions,
+  Posts,
+  onLogin,
+  onPage,
+}: Readonly<{
+  me: Me | null
+  loading: boolean
+  feed: PageResult | null
+  hasSubscriptions: boolean
+  Posts: ComponentType<{ items: PostItem[] }>
+  onLogin: () => void
+  onPage: (page: number) => void
+}>) {
+  if (!me) {
+    if (loading) return null
+    return (
+      <div className="comment-login">
+        <p>{M.feedLoginRequired}</p>
+        <button onClick={onLogin}>로그인</button>
+      </div>
+    )
+  }
+  if (!feed) return null
+  return (
+    <>
+      {feed.items.length === 0 ? <p className="empty">{hasSubscriptions ? M.emptyList : M.feedEmpty}</p> : <Posts items={feed.items} />}
+      <Pagination page={feed.page} totalPages={feed.totalPages} onChange={onPage} />
+    </>
+  )
+}
+
+/** 첫 화면 머리: 제목, 고른 주제 안내, 주제 버튼 */
+function HomeHero({ topics, topicId, current, go }: Readonly<{
+  topics: Topic[]
+  topicId: string | null
+  current: Topic | undefined
+  go: (next: HomeQuery) => void
+}>) {
+  return (
+    <div className="hero">
+      <div className="hero-head">
+        <div>
+          <p className="hero-kicker">Ylog</p>
+          <h1>오늘의 이야기</h1>
+        </div>
+        {topicId && (
+          <button type="button" className="link" onClick={() => go({ topic: null })}>
+            전체 보기
+          </button>
+        )}
+      </div>
+      <p>{current ? `'${current.name}' 주제의 글만 모아 보고 있어요.` : 'Ylog에 올라온 새 글을 관심 있는 주제로 골라 만나 보세요.'}</p>
+      {topics.length > 0 && (
+        <fieldset className="topic-chips" aria-label="주제">
+          <button type="button" className={!topicId ? 'current' : ''} aria-pressed={!topicId} onClick={() => go({ topic: null, tab: 'all' })}>
+            전체
+          </button>
+          {topics.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              className={String(t.id) === topicId ? 'current' : ''}
+              aria-pressed={String(t.id) === topicId}
+              onClick={() => go({ topic: String(t.id), tab: 'all' })}
+            >
+              {t.name}
+            </button>
+          ))}
+        </fieldset>
+      )}
+    </div>
   )
 }
 
@@ -110,18 +206,7 @@ export default function HomePage() {
     })
   }, [tab, page, sort, me, loading])
 
-  const go = (next: { topic?: string | null; sort?: Sort; page?: number; tab?: Tab }) => {
-    const q = new URLSearchParams()
-    const nextTab = next.tab ?? tab
-    // 구독 피드는 주제로 거르지 않는다. 주제를 고르면 전체 글로 돌아간다
-    const t = nextTab === 'feed' ? null : next.topic !== undefined ? next.topic : topicId
-    const s = next.sort ?? sort
-    if (nextTab === 'feed') q.set('tab', 'feed')
-    if (t) q.set('topic', t)
-    if (s !== 'latest') q.set('sort', s)
-    if (next.page && next.page > 1) q.set('page', String(next.page))
-    setParams(q)
-  }
+  const go = (next: HomeQuery) => setParams(homeQuery(next, { tab, topic: topicId, sort }))
 
   if (!latest || (tab === 'all' && !result)) return null
   const current = topics.find((t) => String(t.id) === topicId)
@@ -130,38 +215,7 @@ export default function HomePage() {
     <div className="home-layout">
       <div className="home-main">
       {notice && <p className="notice">{notice}</p>}
-      <div className="hero">
-        <div className="hero-head">
-          <div>
-            <p className="hero-kicker">Ylog</p>
-            <h1>오늘의 이야기</h1>
-          </div>
-          {topicId && (
-            <button type="button" className="link" onClick={() => go({ topic: null })}>
-              전체 보기
-            </button>
-          )}
-        </div>
-        <p>{current ? `'${current.name}' 주제의 글만 모아 보고 있어요.` : 'Ylog에 올라온 새 글을 관심 있는 주제로 골라 만나 보세요.'}</p>
-        {topics.length > 0 && (
-          <div className="topic-chips" role="group" aria-label="주제">
-            <button type="button" className={!topicId ? 'current' : ''} aria-pressed={!topicId} onClick={() => go({ topic: null, tab: 'all' })}>
-              전체
-            </button>
-            {topics.map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                className={String(t.id) === topicId ? 'current' : ''}
-                aria-pressed={String(t.id) === topicId}
-                onClick={() => go({ topic: String(t.id), tab: 'all' })}
-              >
-                {t.name}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+      <HomeHero topics={topics} topicId={topicId} current={current} go={go} />
 
       {latest.items.length > 0 && (
         <section className="section">
@@ -187,23 +241,23 @@ export default function HomePage() {
             {/* 글 수는 늘어나면 의미가 없어 보이지 않는다 */}
             <h2>{tab === 'all' ? '전체 글' : '구독 피드'}</h2>
           </div>
-          <div className="sort-toggle" role="group" aria-label="정렬">
+          <fieldset className="sort-toggle" aria-label="정렬">
             <button type="button" className={sort === 'latest' ? 'current' : ''} aria-pressed={sort === 'latest'} onClick={() => go({ sort: 'latest' })}>
               최신순
             </button>
             <button type="button" className={sort === 'popular' ? 'current' : ''} aria-pressed={sort === 'popular'} onClick={() => go({ sort: 'popular' })}>
               인기순
             </button>
-          </div>
+          </fieldset>
           {/* 목록형(기본)과 피드형 전환 */}
-          <div className="sort-toggle view-toggle" role="group" aria-label="보기 방식">
+          <fieldset className="sort-toggle view-toggle" aria-label="보기 방식">
             <button type="button" className={view === 'list' ? 'current' : ''} aria-pressed={view === 'list'} aria-label="목록형" title="목록형" onClick={() => changeView('list')}>
               <ListIcon />
             </button>
             <button type="button" className={view === 'feed' ? 'current' : ''} aria-pressed={view === 'feed'} aria-label="피드형" title="피드형" onClick={() => changeView('feed')}>
               <FeedIcon />
             </button>
-          </div>
+          </fieldset>
         </div>
         {tab === 'all' && result && (
           <>
@@ -211,26 +265,17 @@ export default function HomePage() {
             <Pagination page={result.page} totalPages={result.totalPages} onChange={(p) => go({ page: p })} />
           </>
         )}
-        {tab === 'feed' &&
-          (!me ? (
-            !loading && (
-              <div className="comment-login">
-                <p>{M.feedLoginRequired}</p>
-                <button onClick={() => requireLogin()}>로그인</button>
-              </div>
-            )
-          ) : (
-            feed && (
-              <>
-                {feed.items.length === 0 ? (
-                  <p className="empty">{hasSubscriptions ? M.emptyList : M.feedEmpty}</p>
-                ) : (
-                  <Posts items={feed.items} />
-                )}
-                <Pagination page={feed.page} totalPages={feed.totalPages} onChange={(p) => go({ page: p })} />
-              </>
-            )
-          ))}
+        {tab === 'feed' && (
+          <FeedTab
+            me={me}
+            loading={loading}
+            feed={feed}
+            hasSubscriptions={hasSubscriptions}
+            Posts={Posts}
+            onLogin={() => requireLogin()}
+            onPage={(p) => go({ page: p })}
+          />
+        )}
       </section>
       </div>
       <aside className="home-side" aria-label="안내">

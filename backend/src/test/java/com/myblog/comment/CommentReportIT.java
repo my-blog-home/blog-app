@@ -87,13 +87,13 @@ class CommentReportIT extends IntegrationTestBase {
                 .andExpect(status().isNoContent());
 
         Map<String, Object> row = jdbc.queryForMap("select * from report where reporter_id = ?", reporter.memberId());
-        assertThat(row.get("target_type")).isEqualTo("COMMENT");
+        assertThat(row).containsEntry("target_type", "COMMENT");
         assertThat(row.get("comment_id")).isNull();
         assertThat(((Number) row.get("post_id")).longValue()).isEqualTo(postId);
-        assertThat(row.get("target_text")).isEqualTo("지워질 댓글");
+        assertThat(row).containsEntry("target_text", "지워질 댓글");
         assertThat(((Number) row.get("target_author_id")).longValue()).isEqualTo(writer.memberId());
-        assertThat(row.get("status")).isEqualTo("PENDING");
-        assertThat(row.get("detail")).isEqualTo("설명");
+        assertThat(row).containsEntry("status", "PENDING")
+                .containsEntry("detail", "설명");
     }
 
     @Test
@@ -107,9 +107,9 @@ class CommentReportIT extends IntegrationTestBase {
                 .andExpect(status().isOk());
 
         Map<String, Object> row = jdbc.queryForMap("select * from report where reporter_id = ?", reporter.memberId());
-        assertThat(row.get("target_type")).isEqualTo("POST");
+        assertThat(row).containsEntry("target_type", "POST");
         assertThat(row.get("post_id")).isNull();
-        assertThat(row.get("target_text")).isEqualTo("글");
+        assertThat(row).containsEntry("target_text", "글");
         assertThat(((Number) row.get("target_author_id")).longValue()).isEqualTo(owner.memberId());
     }
 }

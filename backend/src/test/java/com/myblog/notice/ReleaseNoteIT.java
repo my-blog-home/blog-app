@@ -28,7 +28,7 @@ class ReleaseNoteIT extends IntegrationTestBase {
     void 릴리스_노트는_버전마다_한_번만_공지로_올라간다() {
         int first = publisher.publishAll();
         int second = publisher.publishAll();
-        assertThat(first).isGreaterThanOrEqualTo(1);
+        assertThat(first).isPositive();
         assertThat(second).isZero();
         assertThat(jdbc.queryForObject("select title from notice where release_version = '1.0.0'", String.class))
                 .isEqualTo("[v1.0.0] Ylog 1.0.0 출시");

@@ -35,7 +35,7 @@ public class SearchController {
                                               @RequestParam(defaultValue = "1") int page,
                                               HttpServletRequest request, HttpServletResponse response) {
         PostQueryService.PageResult result = searchService.search(q, page);
-        popularKeywords.record(q, searcherKey(request, response));
+        popularKeywords.recordSearch(q, searcherKey(request, response));
         return result;
     }
 

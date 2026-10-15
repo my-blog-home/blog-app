@@ -10,7 +10,7 @@ export interface Series {
  * 일별 선 그래프. 2px 선, 한 축, 마우스를 올리면 그날의 숫자를 보여 준다 (BM-02-2, BM-06-2).
  * 색은 dataviz 기준 팔레트의 범주 1·2번 (파랑, 주황), 글자는 글자 색으로만 쓴다.
  */
-export default function LineChart({ labels, series, height = 200 }: { labels: string[]; series: Series[]; height?: number }) {
+export default function LineChart({ labels, series, height = 200 }: Readonly<{ labels: string[]; series: Series[]; height?: number }>) {
   const [hover, setHover] = useState<number | null>(null)
   const [showTable, setShowTable] = useState(false)
   const titleId = useId()
@@ -21,7 +21,8 @@ export default function LineChart({ labels, series, height = 200 }: { labels: st
     // 눈금이 정수가 되도록 짝수로 올린다
     const step = Math.pow(10, Math.floor(Math.log10(max)))
     const nice = Math.ceil(max / step) * step
-    return nice % 2 === 0 ? nice : nice + (step >= 1 ? step : 1)
+    const bump = step >= 1 ? step : 1
+    return nice % 2 === 0 ? nice : nice + bump
   }, [max])
   const innerW = width - pad.left - pad.right
   const innerH = height - pad.top - pad.bottom

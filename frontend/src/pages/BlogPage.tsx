@@ -16,6 +16,24 @@ import { useDocumentMeta } from '../meta'
  * 블로그 화면: 분류 목록과 글 목록. 분류 선택은 페이지를 넘겨도 유지된다 (CF-10)
  * 왼쪽 검색창으로 이 블로그의 제목·본문·태그를 찾는다(?q=). 주인은 비공개 글까지 (FR-070, BR-10)
  */
+/** 블로그 글 목록. 검색 결과가 없을 때와 글이 없을 때의 안내가 다르다 */
+function BlogPosts({ posts, searching, owner }: Readonly<{ posts: PageResult; searching: boolean; owner: boolean }>) {
+  if (posts.items.length === 0 && searching) return <p className="empty">{M.noResults}</p>
+  if (posts.items.length === 0) {
+    return (
+      <div className="empty">
+        <p>{M.emptyList}</p>
+        {owner && (
+          <p>
+            {M.firstPost} <Link to="/write">글쓰기</Link>
+          </p>
+        )}
+      </div>
+    )
+  }
+  return <PostList items={posts.items} />
+}
+
 export default function BlogPage() {
   const { blogId } = useParams()
   const [params, setParams] = useSearchParams()
@@ -215,20 +233,7 @@ export default function BlogPage() {
           </div>
           {/* 분류를 열면 이름 아래에 그 분류의 소개글을 한 줄로 보인다. 없으면 칸을 만들지 않는다 (BR-34) */}
           {selected?.description && <p className="category-intro">{selected.description}</p>}
-          {posts.items.length === 0 && q ? (
-            <p className="empty">{M.noResults}</p>
-          ) : posts.items.length === 0 ? (
-            <div className="empty">
-              <p>{M.emptyList}</p>
-              {blog.owner && (
-                <p>
-                  {M.firstPost} <Link to="/write">글쓰기</Link>
-                </p>
-              )}
-            </div>
-          ) : (
-            <PostList items={posts.items} />
-          )}
+          <BlogPosts posts={posts} searching={!!q} owner={blog.owner} />
           <Pagination
             page={posts.page}
             totalPages={posts.totalPages}

@@ -6,8 +6,8 @@ import java.util.Map;
 public class ApiException extends RuntimeException {
 
     private final ErrorCode code;
-    private final List<ErrorResponse.FieldError> fieldErrors;
-    private final Map<String, Object> details;
+    private final transient List<ErrorResponse.FieldError> fieldErrors;
+    private final transient Map<String, Object> details;
 
     public ApiException(ErrorCode code, String message) {
         this(code, message, List.of(), Map.of());

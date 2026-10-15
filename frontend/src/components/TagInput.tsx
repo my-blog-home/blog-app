@@ -1,7 +1,7 @@
 import { useState, type KeyboardEvent } from 'react'
 
 /** 태그 입력: Enter나 쉼표로 추가, 글마다 5개까지 (CF-20) */
-export default function TagInput({ tags, onChange }: { tags: string[]; onChange: (tags: string[]) => void }) {
+export default function TagInput({ tags, onChange }: Readonly<{ tags: string[]; onChange: (tags: string[]) => void }>) {
   const [input, setInput] = useState('')
   const [error, setError] = useState<string | null>(null)
 

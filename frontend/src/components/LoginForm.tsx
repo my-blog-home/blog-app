@@ -5,7 +5,7 @@ import { useAuth } from '../auth/AuthContext'
 import SocialButtons from './SocialButtons'
 
 /** 로그인 화면과 로그인 창이 함께 쓰는 입력 폼 (CF-02) */
-export default function LoginForm({ onSuccess }: { onSuccess: () => void }) {
+export default function LoginForm({ onSuccess }: Readonly<{ onSuccess: () => void }>) {
   const { login } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -31,11 +31,11 @@ export default function LoginForm({ onSuccess }: { onSuccess: () => void }) {
   return (
     <form className="form" onSubmit={submit}>
       <label>
-        이메일
+        {'이메일'}
         <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" required />
       </label>
       <label>
-        비밀번호
+        {'비밀번호'}
         <input
           type="password"
           value={password}

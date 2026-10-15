@@ -8,6 +8,7 @@ import com.myblog.common.sql.PostVisibilitySql;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +35,8 @@ public class BlogQueryService {
                            Long lastUsedCategoryId, Long lastUsedTopicId, List<CategoryView> categories,
                            long subscriberCount, boolean subscribedByMe) {
     }
+
+    private static final String CATEGORY_ID = "category_id";
 
     private final BlogService blogService;
     private final CategoryRepository categories;
@@ -63,9 +66,8 @@ public class BlogQueryService {
                 from post p
                 where p.blog_id = :blogId and %s
                 group by p.category_id
-                """.formatted(PostVisibilitySql.visibleTo("p", "includePrivate")), params, rs -> {
-            counts.put(rs.getLong("category_id"), new long[] {rs.getLong("cnt"), rs.getLong("public_cnt")});
-        });
+                """.formatted(PostVisibilitySql.visibleTo("p", "includePrivate")), params,
+                (RowCallbackHandler) rs -> counts.put(rs.getLong(CATEGORY_ID), new long[] {rs.getLong("cnt"), rs.getLong("public_cnt")}));
 
         Map<Long, Long> drafts = new HashMap<>();
         if (owner) {
@@ -73,9 +75,7 @@ public class BlogQueryService {
                     select category_id, count(*) as cnt from post
                     where blog_id = :blogId and status = 'DRAFT'
                     group by category_id
-                    """, params, rs -> {
-                drafts.put(rs.getLong("category_id"), rs.getLong("cnt"));
-            });
+                    """, params, (RowCallbackHandler) rs -> drafts.put(rs.getLong(CATEGORY_ID), rs.getLong("cnt")));
         }
 
         List<CategoryView> categoryViews = categories.findOrdered(blogId).stream()
@@ -100,7 +100,7 @@ public class BlogQueryService {
                     order by created_at desc, id desc limit 1
                     """, params);
             if (!last.isEmpty()) {
-                lastUsedCategoryId = ((Number) last.get(0).get("category_id")).longValue();
+                lastUsedCategoryId = ((Number) last.get(0).get(CATEGORY_ID)).longValue();
                 lastUsedTopicId = ((Number) last.get(0).get("topic_id")).longValue();
             }
         }

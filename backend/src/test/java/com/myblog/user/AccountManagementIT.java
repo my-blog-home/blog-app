@@ -87,11 +87,11 @@ class AccountManagementIT extends IntegrationTestBase {
 
         Map<String, Object> row = jdbc.queryForMap("select * from member where id = ?", me.memberId());
         assertThat(row.get("withdrawn_at")).isNotNull();
-        assertThat(row.get("email")).isEqualTo("del_" + me.memberId() + "_" + EMAIL);
-        assertThat(row.get("original_email")).isEqualTo(EMAIL);
-        assertThat(row.get("nickname")).isEqualTo("탈퇴" + me.memberId());
+        assertThat(row).containsEntry("email", "del_" + me.memberId() + "_" + EMAIL)
+                .containsEntry("original_email", EMAIL)
+                .containsEntry("nickname", "탈퇴" + me.memberId());
         assertThat(row.get("bio")).isNull();
-        assertThat(row.get("password_hash")).isEqualTo("!");
+        assertThat(row).containsEntry("password_hash", "!");
         assertThat(jdbc.queryForObject("select count(*) from blog where owner_id = ?", Long.class, me.memberId())).isZero();
         assertThat(jdbc.queryForObject("select count(*) from post where title = '내 글'", Long.class)).isZero();
         assertThat(jdbc.queryForObject("select count(*) from post_like where member_id = ?", Long.class, me.memberId())).isZero();

@@ -2,6 +2,8 @@ package com.myblog.admin;
 
 import com.myblog.common.config.BlogLimits;
 import com.myblog.common.sql.SuspensionSql;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Clock;
 import java.time.Instant;
@@ -76,18 +78,8 @@ public class AdminMemberService {
     public MemberPage list(Status status, String rawQuery, int requestedPage) {
         Map<String, Object> params = new HashMap<>();
         params.put("now", Timestamp.from(clock.instant()));
-        String search = "true";
-        if (rawQuery != null && !rawQuery.isBlank()) {
-            String escaped = rawQuery.strip().toLowerCase(Locale.ROOT)
-                    .replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
-            params.put("q", "%" + escaped + "%");
-            search = "(m.withdrawn_at is null and (lower(m.nickname) like :q escape '\\' or lower(m.email) like :q escape '\\'))";
-        }
-        Map<String, Long> counts = new LinkedHashMap<>();
-        for (Status s : Status.values()) {
-            counts.put(s.name(), jdbc.queryForObject("select count(*) from member m where " + condition(s) + " and "
-                    + search, params, Long.class));
-        }
+        String search = searchCondition(rawQuery, params);
+        Map<String, Long> counts = counts(search, params);
         String where = " where " + condition(status) + " and " + search;
         long total = counts.get(status.name());
         int size = limits.pageSize();
@@ -113,25 +105,60 @@ public class AdminMemberService {
                 order by m.created_at desc, m.id desc
                 limit :limit offset :offset
                 """.formatted(SuspensionSql.active("s", "now"), SuspensionSql.LONGEST_FIRST, where), params,
-                (rs, n) -> {
-                    boolean withdrawn = rs.getTimestamp("withdrawn_at") != null;
-                    boolean suspended = rs.getObject("suspended_id") != null;
-                    boolean admin = "ADMIN".equals(rs.getString("role"));
-                    Timestamp ends = rs.getTimestamp("ends_at");
-                    Long blogId = rs.getObject("blog_id", Long.class);
-                    return new MemberRow(rs.getLong("id"),
-                            withdrawn ? null : rs.getString("nickname"), withdrawn || rs.getString("email").endsWith(com.myblog.user.domain.Member.NO_EMAIL_DOMAIN) ? null : rs.getString("email"),
-                            rs.getTimestamp("created_at").toInstant(),
-                            withdrawn ? rs.getTimestamp("withdrawn_at").toInstant() : null,
-                            rs.getString("role"),
-                            withdrawn ? Status.WITHDRAWN.name() : suspended ? Status.SUSPENDED.name() : Status.ACTIVE.name(),
-                            blogId == null ? null : new BlogRef(blogId, rs.getString("blog_name")),
-                            rs.getLong("post_count"), rs.getLong("report_count"), rs.getLong("resolved_count"),
-                            rs.getLong("suspension_count"),
-                            suspended ? new CurrentSuspension(rs.getTimestamp("starts_at").toInstant(),
-                                    ends == null ? null : ends.toInstant(), rs.getString("reason")) : null,
-                            !withdrawn && !admin);
-                });
+                (rs, n) -> memberRow(rs));
         return new MemberPage(counts, total, page, totalPages, items);
+    }
+
+    /** 검색어가 있으면 :q 값을 넣고 닉네임·이메일 조건을, 없으면 "true"를 돌려준다 */
+    private static String searchCondition(String rawQuery, Map<String, Object> params) {
+        if (rawQuery == null || rawQuery.isBlank()) {
+            return "true";
+        }
+        String escaped = rawQuery.strip().toLowerCase(Locale.ROOT)
+                .replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+        params.put("q", "%" + escaped + "%");
+        return "(m.withdrawn_at is null and (lower(m.nickname) like :q escape '\\' or lower(m.email) like :q escape '\\'))";
+    }
+
+    /** 상태 탭마다 검색 조건에 맞는 회원 수 */
+    private Map<String, Long> counts(String search, Map<String, Object> params) {
+        Map<String, Long> counts = new LinkedHashMap<>();
+        for (Status s : Status.values()) {
+            counts.put(s.name(), jdbc.queryForObject("select count(*) from member m where " + condition(s) + " and "
+                    + search, params, Long.class));
+        }
+        return counts;
+    }
+
+    private static MemberRow memberRow(ResultSet rs) throws SQLException {
+        boolean withdrawn = rs.getTimestamp("withdrawn_at") != null;
+        boolean suspended = rs.getObject("suspended_id") != null;
+        boolean admin = "ADMIN".equals(rs.getString("role"));
+        Long blogId = rs.getObject("blog_id", Long.class);
+        return new MemberRow(rs.getLong("id"),
+                withdrawn ? null : rs.getString("nickname"), withdrawn || rs.getString("email").endsWith(com.myblog.user.domain.Member.NO_EMAIL_DOMAIN) ? null : rs.getString("email"),
+                rs.getTimestamp("created_at").toInstant(),
+                withdrawn ? rs.getTimestamp("withdrawn_at").toInstant() : null,
+                rs.getString("role"),
+                rowStatus(withdrawn, suspended).name(),
+                blogId == null ? null : new BlogRef(blogId, rs.getString("blog_name")),
+                rs.getLong("post_count"), rs.getLong("report_count"), rs.getLong("resolved_count"),
+                rs.getLong("suspension_count"),
+                suspended ? currentSuspension(rs) : null,
+                !withdrawn && !admin);
+    }
+
+    /** 탈퇴가 정지보다 앞선다 */
+    private static Status rowStatus(boolean withdrawn, boolean suspended) {
+        if (withdrawn) {
+            return Status.WITHDRAWN;
+        }
+        return suspended ? Status.SUSPENDED : Status.ACTIVE;
+    }
+
+    private static CurrentSuspension currentSuspension(ResultSet rs) throws SQLException {
+        Timestamp ends = rs.getTimestamp("ends_at");
+        return new CurrentSuspension(rs.getTimestamp("starts_at").toInstant(),
+                ends == null ? null : ends.toInstant(), rs.getString("reason"));
     }
 }

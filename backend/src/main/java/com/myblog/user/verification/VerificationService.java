@@ -17,6 +17,9 @@ import org.springframework.stereotype.Service;
 @Service
 public class VerificationService {
 
+    private static final String COOLDOWN = "cooldown";
+    private static final String VERIFIED = "verified";
+
     private final StringRedisTemplate redis;
     private final CodeGenerator codes;
     private final VerificationMailer mailer;
@@ -35,7 +38,7 @@ public class VerificationService {
      */
     public String issue(VerificationPurpose purpose, String email, boolean deliver) {
         try {
-            if (Boolean.TRUE.equals(redis.hasKey(key(purpose, email, "cooldown")))) {
+            if (Boolean.TRUE.equals(redis.hasKey(key(purpose, email, COOLDOWN)))) {
                 throw new ApiException(ErrorCode.TOO_MANY_REQUESTS, Messages.RESEND_TOO_SOON);
             }
             String dailyKey = key(purpose, email, "daily");
@@ -44,7 +47,7 @@ public class VerificationService {
                 throw new ApiException(ErrorCode.TOO_MANY_REQUESTS, Messages.RESEND_DAILY_LIMIT);
             }
 
-            redis.opsForValue().set(key(purpose, email, "cooldown"), "1", limits.verificationResendInterval());
+            redis.opsForValue().set(key(purpose, email, COOLDOWN), "1", limits.verificationResendInterval());
             Long count = redis.opsForValue().increment(dailyKey);
             if (count != null && count == 1) {
                 redis.expire(dailyKey, Duration.ofDays(1));
@@ -53,20 +56,25 @@ public class VerificationService {
             String code = codes.next();
             redis.opsForValue().set(key(purpose, email, "code"), code, limits.verificationCodeTtl());
             redis.delete(key(purpose, email, "fail"));
-            redis.delete(key(purpose, email, "verified"));
+            redis.delete(key(purpose, email, VERIFIED));
 
             if (deliver) {
-                try {
-                    mailer.sendCode(email, code, purpose.mailPurpose());
-                } catch (VerificationMailer.MailDeliveryException e) {
-                    redis.delete(key(purpose, email, "code"));
-                    redis.delete(key(purpose, email, "cooldown"));
-                    throw new ApiException(ErrorCode.SERVICE_UNAVAILABLE, Messages.MAIL_FAILED);
-                }
+                sendCode(purpose, email, code);
             }
             return code;
         } catch (DataAccessException e) {
             throw new ApiException(ErrorCode.SERVICE_UNAVAILABLE, Messages.TRY_LATER);
+        }
+    }
+
+    /** 메일을 못 보내면 번호와 재발송 제한을 지워 바로 다시 받을 수 있게 한다 */
+    private void sendCode(VerificationPurpose purpose, String email, String code) {
+        try {
+            mailer.sendCode(email, code, purpose.mailPurpose());
+        } catch (VerificationMailer.MailDeliveryException e) {
+            redis.delete(key(purpose, email, "code"));
+            redis.delete(key(purpose, email, COOLDOWN));
+            throw new ApiException(ErrorCode.SERVICE_UNAVAILABLE, Messages.MAIL_FAILED);
         }
     }
 
@@ -94,18 +102,18 @@ public class VerificationService {
         }
         redis.delete(codeKey);
         redis.delete(failKey);
-        redis.opsForValue().set(key(purpose, email, "verified"), "1", limits.verifiedTtl());
+        redis.opsForValue().set(key(purpose, email, VERIFIED), "1", limits.verifiedTtl());
     }
 
     /** 가입·변경 직전에 서버가 인증을 다시 확인한다 (CF-01-20) */
     public void requireVerified(VerificationPurpose purpose, String email) {
-        if (!Boolean.TRUE.equals(redis.hasKey(key(purpose, email, "verified")))) {
+        if (!Boolean.TRUE.equals(redis.hasKey(key(purpose, email, VERIFIED)))) {
             throw new ApiException(ErrorCode.NOT_VERIFIED, Messages.VERIFY_FIRST);
         }
     }
 
     public void clearVerified(VerificationPurpose purpose, String email) {
-        redis.delete(key(purpose, email, "verified"));
+        redis.delete(key(purpose, email, VERIFIED));
     }
 
     static String key(VerificationPurpose purpose, String email, String suffix) {

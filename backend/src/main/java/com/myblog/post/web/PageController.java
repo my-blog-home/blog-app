@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 /**
@@ -32,6 +33,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 @Controller
 public class PageController {
 
+    private static final String PROPERTY = "property";
     private static final String START = "<!--meta:start-->";
     private static final String END = "<!--meta:end-->";
     private static final String SITE = "Ylog";
@@ -54,7 +56,9 @@ public class PageController {
     }
 
     @GetMapping({"/", "/{path:^(?!api$|images$|assets$|oauth2$)[^.]*}", "/{path:^(?!api$|images$|assets$|oauth2$)[^.]*}/**"})
-    public ResponseEntity<String> page(HttpServletRequest request) throws IOException {
+    public ResponseEntity<String> page(HttpServletRequest request,
+                                       @PathVariable(required = false) String path) throws IOException {
+        // 경로 변수 path는 주소를 고르는 데만 쓴다(첫 칸만 담긴다). 미리보기에 쓸 경로는 요청 주소 전체에서 읽는다
         String html = template();
         if (html == null) {
             // 화면을 빌드하지 않고 서버만 켠 개발 환경(화면은 Vite 개발 서버가 내려 줌)
@@ -62,21 +66,21 @@ public class PageController {
         }
         String base = publicUrl.isBlank()
                 ? ServletUriComponentsBuilder.fromCurrentContextPath().build().toUriString() : publicUrl;
-        String path = request.getRequestURI().substring(request.getContextPath().length());
-        Meta meta = metaFor(path);
-        String url = base + path;
+        String pagePath = request.getRequestURI().substring(request.getContextPath().length());
+        Meta meta = metaFor(pagePath);
+        String url = base + pagePath;
         String image = absolute(base, meta.image());
         StringBuilder tags = new StringBuilder();
         tags.append(tag("name", "description", meta.description()));
-        tags.append(tag("property", "og:site_name", SITE));
-        tags.append(tag("property", "og:type", meta.type()));
-        tags.append(tag("property", "og:url", url));
-        tags.append(tag("property", "og:title", meta.title()));
-        tags.append(tag("property", "og:description", meta.description()));
-        tags.append(tag("property", "og:image", image));
+        tags.append(tag(PROPERTY, "og:site_name", SITE));
+        tags.append(tag(PROPERTY, "og:type", meta.type()));
+        tags.append(tag(PROPERTY, "og:url", url));
+        tags.append(tag(PROPERTY, "og:title", meta.title()));
+        tags.append(tag(PROPERTY, "og:description", meta.description()));
+        tags.append(tag(PROPERTY, "og:image", image));
         if (meta.image().equals(DEFAULT_IMAGE)) {
-            tags.append(tag("property", "og:image:width", "1200"));
-            tags.append(tag("property", "og:image:height", "630"));
+            tags.append(tag(PROPERTY, "og:image:width", "1200"));
+            tags.append(tag(PROPERTY, "og:image:height", "630"));
         }
         tags.append(tag("name", "twitter:card", "summary_large_image"));
         tags.append(tag("name", "twitter:title", meta.title()));
@@ -96,40 +100,47 @@ public class PageController {
 
     private Meta metaFor(String path) {
         String[] parts = path.split("/");
+        Meta found = null;
         if (parts.length == 3 && parts[2].matches("\\d{1,18}")) {
             long id = Long.parseLong(parts[2]);
             if (parts[1].equals("posts")) {
-                List<Meta> found = jdbc.query("select p.title, p.body from post p where p.id = :id and "
-                                + PostVisibilitySql.PUBLIC, Map.of("id", id),
-                        (rs, row) -> {
-                            String body = rs.getString("body");
-                            String summary = Excerpts.of(body, SUMMARY_LENGTH);
-                            String image = PostQueryService.thumbnail(body);
-                            return new Meta("article", rs.getString("title"),
-                                    summary.isBlank() ? SITE_DESCRIPTION : summary,
-                                    image == null ? DEFAULT_IMAGE : image);
-                        });
-                if (!found.isEmpty()) {
-                    return found.get(0);
-                }
+                found = postMeta(id);
             } else if (parts[1].equals("blogs")) {
-                List<Meta> found = jdbc.query("""
-                                select b.name, b.description, m.nickname from blog b join member m on m.id = b.owner_id
-                                where b.id = :id and m.withdrawn_at is null
-                                """, Map.of("id", id),
-                        (rs, row) -> {
-                            String description = rs.getString("description");
-                            return new Meta("website", rs.getString("name"),
-                                    description == null || description.isBlank()
-                                            ? rs.getString("nickname") + "님의 블로그" : description,
-                                    DEFAULT_IMAGE);
-                        });
-                if (!found.isEmpty()) {
-                    return found.get(0);
-                }
+                found = blogMeta(id);
             }
         }
-        return new Meta("website", SITE, SITE_DESCRIPTION, DEFAULT_IMAGE);
+        return found != null ? found : new Meta("website", SITE, SITE_DESCRIPTION, DEFAULT_IMAGE);
+    }
+
+    /** 공개된 글이면 글 제목·요약·첫 이미지, 아니면 null */
+    private Meta postMeta(long id) {
+        List<Meta> found = jdbc.query("select p.title, p.body from post p where p.id = :id and "
+                        + PostVisibilitySql.PUBLIC, Map.of("id", id),
+                (rs, row) -> {
+                    String body = rs.getString("body");
+                    String summary = Excerpts.of(body, SUMMARY_LENGTH);
+                    String image = PostQueryService.thumbnail(body);
+                    return new Meta("article", rs.getString("title"),
+                            summary.isBlank() ? SITE_DESCRIPTION : summary,
+                            image == null ? DEFAULT_IMAGE : image);
+                });
+        return found.isEmpty() ? null : found.get(0);
+    }
+
+    /** 탈퇴하지 않은 회원의 블로그면 블로그 이름·소개, 아니면 null */
+    private Meta blogMeta(long id) {
+        List<Meta> found = jdbc.query("""
+                        select b.name, b.description, m.nickname from blog b join member m on m.id = b.owner_id
+                        where b.id = :id and m.withdrawn_at is null
+                        """, Map.of("id", id),
+                (rs, row) -> {
+                    String description = rs.getString("description");
+                    return new Meta("website", rs.getString("name"),
+                            description == null || description.isBlank()
+                                    ? rs.getString("nickname") + "님의 블로그" : description,
+                            DEFAULT_IMAGE);
+                });
+        return found.isEmpty() ? null : found.get(0);
     }
 
     private String template() throws IOException {

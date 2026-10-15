@@ -66,7 +66,7 @@ public class PostService {
      */
     @Transactional
     public Post update(long postId, long memberId, PostInput input) {
-        Post post = getOwned(postId, memberId);
+        Post post = owned(postId, memberId);
         boolean publishing = post.isPublished() || !input.draft();
         Valid valid = validate(post.getBlogId(), input, publishing, post.getTopicId());
         Instant now = clock.instant();
@@ -80,7 +80,7 @@ public class PostService {
     /** 댓글·좋아요·태그·이미지는 표의 ON DELETE CASCADE로 함께 지워진다 (CF-05-15) */
     @Transactional
     public long delete(long postId, long memberId) {
-        Post post = getOwned(postId, memberId);
+        Post post = owned(postId, memberId);
         posts.delete(post);
         return post.getBlogId();
     }
@@ -88,6 +88,10 @@ public class PostService {
     /** 작성자 본인의 글만 돌려준다. 아니면 "존재하지 않는 글입니다" (CF-05-12) */
     @Transactional(readOnly = true)
     public Post getOwned(long postId, long memberId) {
+        return owned(postId, memberId);
+    }
+
+    private Post owned(long postId, long memberId) {
         Post post = posts.findById(postId).orElseThrow(PostService::notFound);
         Blog blog = blogService.get(post.getBlogId());
         if (!blog.isOwnedBy(memberId)) {
@@ -133,18 +137,22 @@ public class PostService {
         if (body.codePointCount(0, body.length()) > limits.postBodyMax()) {
             throw ApiException.field("body", "본문은 " + limits.postBodyMax() + "자 이하로 입력해 주세요");
         }
-        Long categoryId = input.categoryId();
-        if (categoryId == null) {
-            categoryId = categories.findFirstByBlogIdAndIsDefaultTrue(blogId).map(Category::getId).orElseThrow();
-        } else {
-            Category category = categories.findById(categoryId).orElse(null);
-            if (category == null || !category.getBlogId().equals(blogId)) {
-                throw ApiException.field("categoryId", "분류를 다시 골라 주세요");
-            }
-        }
+        Long categoryId = categoryOf(blogId, input.categoryId());
         long topicId = input.topicId() == null ? defaultTopic : topics.check(input.topicId());
         Visibility visibility = input.visibility() == null ? Visibility.PUBLIC : input.visibility();
         return new Valid(title, body, categoryId, topicId, visibility);
+    }
+
+    /** 분류를 고르지 않으면 기본 분류, 고르면 이 블로그의 분류인지 확인한다 */
+    private Long categoryOf(long blogId, Long categoryId) {
+        if (categoryId == null) {
+            return categories.findFirstByBlogIdAndIsDefaultTrue(blogId).map(Category::getId).orElseThrow();
+        }
+        Category category = categories.findById(categoryId).orElse(null);
+        if (category == null || !category.getBlogId().equals(blogId)) {
+            throw ApiException.field("categoryId", "분류를 다시 골라 주세요");
+        }
+        return categoryId;
     }
 
     private record Valid(String title, String body, long categoryId, long topicId, Visibility visibility) {

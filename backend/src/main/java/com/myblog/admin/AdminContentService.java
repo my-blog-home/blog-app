@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,7 +44,8 @@ public class AdminContentService {
         String where = " where p.status = 'PUBLISHED'" + search(rawQuery, params,
                 "lower(p.title) like :q escape '\\' or lower(b.name) like :q escape '\\' or lower(m.nickname) like :q escape '\\'");
         String from = " from post p join blog b on b.id = p.blog_id left join member m on m.id = b.owner_id";
-        long total = jdbc.queryForObject("select count(*)" + from + where, params, Long.class);
+        long total = Objects.requireNonNullElse(
+                jdbc.queryForObject("select count(*)" + from + where, params, Long.class), 0L);
         int page = paging(total, requestedPage, params);
         List<PostRow> items = jdbc.query("""
                 select p.id, p.title, p.visibility, p.published_at, b.id as blog_id, b.name as blog_name,
@@ -64,7 +66,8 @@ public class AdminContentService {
         String where = " where true" + search(rawQuery, params,
                 "(not c.is_secret and lower(c.content) like :q escape '\\') or lower(m.nickname) like :q escape '\\'");
         String from = " from comment c join post p on p.id = c.post_id left join member m on m.id = c.author_id";
-        long total = jdbc.queryForObject("select count(*)" + from + where, params, Long.class);
+        long total = Objects.requireNonNullElse(
+                jdbc.queryForObject("select count(*)" + from + where, params, Long.class), 0L);
         int page = paging(total, requestedPage, params);
         List<CommentRow> items = jdbc.query("""
                 select c.id, c.content, c.is_secret, c.parent_id, c.created_at, p.id as post_id, p.title as post_title,

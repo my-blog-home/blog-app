@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 
 // 지금 보고 있는 블로그. 블로그 화면과 글 상세가 알려 주고, 햄버거 메뉴가 그 블로그의 분류를 보여 준다 (FR-068)
 interface CurrentBlogState {
@@ -8,9 +8,10 @@ interface CurrentBlogState {
 
 const CurrentBlogContext = createContext<CurrentBlogState>({ blogId: null, setBlogId: () => {} })
 
-export function CurrentBlogProvider({ children }: { children: ReactNode }) {
+export function CurrentBlogProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [blogId, setBlogId] = useState<number | null>(null)
-  return <CurrentBlogContext.Provider value={{ blogId, setBlogId }}>{children}</CurrentBlogContext.Provider>
+  const value = useMemo(() => ({ blogId, setBlogId }), [blogId])
+  return <CurrentBlogContext.Provider value={value}>{children}</CurrentBlogContext.Provider>
 }
 
 export function useCurrentBlog(): number | null {

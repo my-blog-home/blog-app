@@ -11,11 +11,12 @@ export default function LoginModal() {
 
 function LoginDialog() {
   const { loginPrompt, closeLoginPrompt } = useAuth()
-  const ref = useDialog<HTMLDivElement>(closeLoginPrompt)
+  const ref = useDialog<HTMLDialogElement>(closeLoginPrompt)
   const then = loginPrompt.then
   return (
-    <div className="modal-backdrop" onClick={closeLoginPrompt}>
-      <div ref={ref} className="modal" role="dialog" aria-modal="true" aria-label="로그인" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-backdrop">
+      <button type="button" className="modal-scrim" tabIndex={-1} aria-hidden="true" onClick={closeLoginPrompt} />
+      <dialog ref={ref} className="modal" open aria-modal="true" aria-label="로그인">
         <div className="modal-head">
           <h2>로그인</h2>
           <button type="button" className="link" onClick={closeLoginPrompt} aria-label="닫기">
@@ -28,7 +29,7 @@ function LoginDialog() {
             then?.()
           }}
         />
-      </div>
+      </dialog>
     </div>
   )
 }

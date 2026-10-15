@@ -152,18 +152,54 @@ export default function AdminReportsPage() {
   )
 }
 
+/** 처리 결과 아래의 설명 */
+function actionHint(action: 'RESOLVE' | 'REJECT', group: ReportGroup, kind: string) {
+  if (action === 'REJECT') return `${kind}은(는) 그대로 두고 신고 ${group.reportCount}건을 모두 반려합니다.`
+  if (group.exists) return `이 ${kind}을(를) 삭제하고 신고 ${group.reportCount}건을 모두 처리 완료로 바꿉니다.`
+  return `${kind}은(는) 이미 삭제되었습니다. 신고 ${group.reportCount}건을 처리 완료로 기록합니다.`
+}
+
+/** 정지 이력 옆에 붙이는 가장 최근 정지 */
+function latestSuspension(history: SuspensionHistory[]) {
+  const latest = history[0]
+  if (!latest) return ''
+  return ` · 최근 ${formatDate(latest.startsAt)} ${latest.permanent ? '영구' : ''}`
+}
+
+/** 작성자를 정지할 수 없는 까닭 */
+function cannotSuspendReason(group: ReportGroup) {
+  if (group.targetAuthor.withdrawn) return '탈퇴한 회원은 정지할 수 없습니다'
+  if (group.targetAuthor.admin) return '관리자는 정지할 수 없습니다'
+  return '정지할 수 없는 작성자입니다'
+}
+
+/** 보내기 전에 글자 수를 확인한다. 정지 사유는 정지할 때만 넘긴다 */
+function inputErrors(note: string, reason: string) {
+  const errors: Record<string, string> = {}
+  if (charCount(note.trim()) > NOTE_MAX) errors.note = `메모는 ${NOTE_MAX}자 이하로 입력해 주세요`
+  if (charCount(reason.trim()) > REASON_MAX) errors.reason = `정지 사유는 ${REASON_MAX}자 이하로 입력해 주세요`
+  return errors
+}
+
+/** 서버가 돌려준 오류를 칸별로 나눈다. 칸에 붙지 않는 오류는 form에 */
+function processErrors(err: unknown): Record<string, string> {
+  const noteError = fieldError(err, 'note')
+  const reasonError = fieldError(err, 'reason') ?? fieldError(err, 'days')
+  return { note: noteError ?? '', reason: reasonError ?? '', form: noteError || reasonError ? '' : errorOf(err) }
+}
+
 /** 신고 처리 창: 처리 완료(대상 삭제)·반려, 처리 메모, 작성자 정지(처리 완료일 때만, 선택) */
 function ProcessDialog({
   group,
   onClose,
   onDone,
   onStale,
-}: {
+}: Readonly<{
   group: ReportGroup
   onClose: () => void
   onDone: (message: string) => void
   onStale: (message: string) => void
-}) {
+}>) {
   const kind = targetKind(group)
   const [action, setAction] = useState<'RESOLVE' | 'REJECT'>('RESOLVE')
   const [note, setNote] = useState('')
@@ -183,9 +219,7 @@ function ProcessDialog({
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
-    const next: Record<string, string> = {}
-    if (charCount(note.trim()) > NOTE_MAX) next.note = `메모는 ${NOTE_MAX}자 이하로 입력해 주세요`
-    if (canSuspend && suspend && charCount(reason.trim()) > REASON_MAX) next.reason = `정지 사유는 ${REASON_MAX}자 이하로 입력해 주세요`
+    const next = inputErrors(note, canSuspend && suspend ? reason : '')
     setErrors(next)
     if (Object.keys(next).length > 0) return
     if (action === 'RESOLVE' && group.exists && !confirm(`신고된 ${kind}을(를) 삭제합니다. 삭제하면 되돌릴 수 없습니다. 처리할까요?`)) return
@@ -201,9 +235,7 @@ function ProcessDialog({
         onStale(err.message)
         return
       }
-      const noteError = fieldError(err, 'note')
-      const reasonError = fieldError(err, 'reason') ?? fieldError(err, 'days')
-      setErrors({ note: noteError ?? '', reason: reasonError ?? '', form: noteError || reasonError ? '' : errorOf(err) })
+      setErrors(processErrors(err))
     } finally {
       setBusy(false)
     }
@@ -242,16 +274,10 @@ function ProcessDialog({
             </label>
             <label>
               <input type="radio" name="action" checked={action === 'REJECT'} onChange={() => setAction('REJECT')} />
-              반려 (문제 없음)
+              {'반려 (문제 없음)'}
             </label>
           </div>
-          <span className="muted small">
-            {action === 'RESOLVE'
-              ? group.exists
-                ? `이 ${kind}을(를) 삭제하고 신고 ${group.reportCount}건을 모두 처리 완료로 바꿉니다.`
-                : `${kind}은(는) 이미 삭제되었습니다. 신고 ${group.reportCount}건을 처리 완료로 기록합니다.`
-              : `${kind}은(는) 그대로 두고 신고 ${group.reportCount}건을 모두 반려합니다.`}
-          </span>
+          <span className="muted small">{actionHint(action, group, kind)}</span>
         </div>
 
         {action === 'RESOLVE' && (
@@ -264,7 +290,7 @@ function ProcessDialog({
                 {history && (
                   <span className="muted small">
                     {group.targetAuthor.nickname}님의 정지 이력 {history.length}회
-                    {history[0] ? ` · 최근 ${formatDate(history[0].startsAt)} ${history[0].permanent ? '영구' : ''}` : ''}
+                    {latestSuspension(history)}
                   </span>
                 )}
                 <select value={suspend} onChange={(e) => setSuspend(e.target.value)} aria-label="작성자 정지 기간">
@@ -286,19 +312,13 @@ function ProcessDialog({
                 {errors.reason && <p className="error">{errors.reason}</p>}
               </>
             ) : (
-              <span className="muted small">
-                {group.targetAuthor.withdrawn
-                  ? '탈퇴한 회원은 정지할 수 없습니다'
-                  : group.targetAuthor.admin
-                    ? '관리자는 정지할 수 없습니다'
-                    : '정지할 수 없는 작성자입니다'}
-              </span>
+              <span className="muted small">{cannotSuspendReason(group)}</span>
             )}
           </div>
         )}
 
         <label>
-          처리 메모 (선택)
+          {'처리 메모 (선택)'}
           <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} placeholder="예: 광고 댓글이라 삭제함" />
           <span className={`field-count ${charCount(note.trim()) > NOTE_MAX ? 'over' : ''}`}>
             {charCount(note.trim())} / {NOTE_MAX}

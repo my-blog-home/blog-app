@@ -6,7 +6,7 @@ import ProfileMenu from './ProfileMenu'
 import ThemeToggle from './ThemeToggle'
 
 // 로그인해야 쓰는 화면
-const MEMBER_ONLY = /^\/(write|me(\/activity|\/blog)?|manage(\/.*)?|admin(\/.*)?|posts\/\d+\/edit)$/
+const MEMBER_ONLY = /^\/(write|me(\/activity|\/blog)?|(manage|admin)(\/.*)?|posts\/\d+\/edit)$/
 
 export default function Header() {
   const { me, logout, requireLogin, newCommentCount } = useAuth()

@@ -14,7 +14,7 @@ const COMMENT_MAX = 500
  * 답글은 한 단계까지(FR-065), 비밀 댓글은 가려지면 "비밀 댓글입니다"만 보이고 버튼이 없다(FR-066), 댓글도 신고한다(FR-071).
  * 댓글 수는 답글을 포함한다.
  */
-export default function CommentSection({ postId, onCountChange }: { postId: number; onCountChange: (count: number) => void }) {
+export default function CommentSection({ postId, onCountChange }: Readonly<{ postId: number; onCountChange: (count: number) => void }>) {
   const { me, requireLogin } = useAuth()
   const location = useLocation()
   const [comments, setComments] = useState<CommentView[]>([])
@@ -143,12 +143,12 @@ function CommentForm({
   parent,
   onSaved,
   onCancel,
-}: {
+}: Readonly<{
   postId: number
   parent?: CommentView
   onSaved: () => Promise<void> | void
   onCancel?: () => void
-}) {
+}>) {
   const [content, setContent] = useState('')
   const [secret, setSecret] = useState(false)
   const [error, setError] = useState<string | null>(null)

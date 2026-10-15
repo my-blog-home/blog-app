@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,7 +59,8 @@ public class NoticeService {
         Map<String, Object> params = new HashMap<>();
         params.put("type", type == null ? null : type.name());
         String where = " where not hidden and (cast(:type as varchar) is null or type = :type)";
-        long total = jdbc.queryForObject("select count(*) from notice" + where, params, Long.class);
+        long total = Objects.requireNonNullElse(
+                jdbc.queryForObject("select count(*) from notice" + where, params, Long.class), 0L);
         int totalPages = (int) Math.max(1, (total + size - 1) / size);
         int page = Math.min(Math.max(1, requestedPage), totalPages);
         params.put("limit", size);

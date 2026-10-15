@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { ApiError, get, post } from '../api/client'
 import type { Me } from '../api/types'
 
@@ -21,7 +21,7 @@ export interface AuthState {
 
 export const AuthContext = createContext<AuthState | null>(null)
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [me, setMe] = useState<Me | null>(null)
   const [loading, setLoading] = useState(true)
   const [newCommentCount, setNewCommentCount] = useState(0)
@@ -56,16 +56,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshNewComments()
   }, [refreshNewComments])
 
-  const login = async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string) => {
     const result = await post<Me>('/api/auth/login', { email, password })
     setMe(result)
     return result
-  }
+  }, [])
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     await post('/api/auth/logout')
     setMe(null)
-  }
+  }, [])
 
   // 화면의 effect가 기대므로 me가 바뀔 때만 새로 만든다
   const requireLogin = useCallback(
@@ -77,25 +77,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [me],
   )
 
-  return (
-    <AuthContext.Provider
-      value={{
-        me,
-        sessionMe: me,
-        newCommentCount,
-        refreshNewComments,
-        loading,
-        refresh,
-        login,
-        logout,
-        requireLogin,
-        loginPrompt,
-        closeLoginPrompt: () => setLoginPrompt({ open: false }),
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+  const closeLoginPrompt = useCallback(() => setLoginPrompt({ open: false }), [])
+
+  const value = useMemo<AuthState>(
+    () => ({
+      me,
+      sessionMe: me,
+      newCommentCount,
+      refreshNewComments,
+      loading,
+      refresh,
+      login,
+      logout,
+      requireLogin,
+      loginPrompt,
+      closeLoginPrompt,
+    }),
+    [me, newCommentCount, refreshNewComments, loading, refresh, login, logout, requireLogin, loginPrompt, closeLoginPrompt],
   )
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
 export function useAuth(): AuthState {

@@ -40,6 +40,9 @@ public class StatsQueryService {
                             List<PopularPost> popular7, List<RecentPost> recent) {
     }
 
+    private static final String BLOG_ID = "blogId";
+    private static final String VIEWS = "views";
+
     private final NamedParameterJdbcTemplate jdbc;
     private final BlogService blogService;
     private final ManageCommentService comments;
@@ -63,12 +66,12 @@ public class StatsQueryService {
         Map<String, Object> totals = jdbc.queryForMap("""
                 select coalesce(sum(view_count), 0) as views, coalesce(sum(visitor_count), 0) as visitors
                 from daily_stats where blog_id = :blogId
-                """, Map.of("blogId", blogId));
+                """, Map.of(BLOG_ID, blogId));
         Daily t = daily30.get(daily30.size() - 1);
         Daily y = daily30.get(daily30.size() - 2);
 
         Map<String, Object> params = new HashMap<>();
-        params.put("blogId", blogId);
+        params.put(BLOG_ID, blogId);
         params.put("from", Date.valueOf(today.minusDays(6)));
         List<PopularPost> popular = jdbc.query("""
                 select p.id, p.title, sum(v.view_count) as views
@@ -77,7 +80,7 @@ public class StatsQueryService {
                 group by p.id, p.title
                 order by views desc, p.id desc
                 limit 5
-                """.formatted(PostVisibilitySql.PUBLIC), params, (rs, row) -> new PopularPost(rs.getLong("id"), rs.getString("title"), rs.getLong("views")));
+                """.formatted(PostVisibilitySql.PUBLIC), params, (rs, row) -> new PopularPost(rs.getLong("id"), rs.getString("title"), rs.getLong(VIEWS)));
         List<RecentPost> recent = jdbc.query("""
                 select p.id, p.title, p.published_at, p.visibility from post p
                 where p.blog_id = :blogId and %s
@@ -86,7 +89,7 @@ public class StatsQueryService {
                 rs.getString("title"), rs.getTimestamp("published_at").toInstant(), rs.getString("visibility")));
 
         return new Dashboard(
-                new Counts(t.views(), y.views(), ((Number) totals.get("views")).longValue()),
+                new Counts(t.views(), y.views(), ((Number) totals.get(VIEWS)).longValue()),
                 new Counts(t.visitors(), y.visitors(), ((Number) totals.get("visitors")).longValue()),
                 comments.countNew(blogId), daily30, popular, recent);
     }
@@ -103,9 +106,9 @@ public class StatsQueryService {
 
     /** 기록이 없는 날은 0으로 채운다. 댓글 수는 한국 시간 날짜로 센다 */
     private List<Daily> daily(long blogId, LocalDate today, int days) {
-        LocalDate from = today.minusDays(days - 1);
+        LocalDate from = today.minusDays(days - 1L);
         Map<String, Object> params = new HashMap<>();
-        params.put("blogId", blogId);
+        params.put(BLOG_ID, blogId);
         params.put("from", Date.valueOf(from));
         params.put("to", Date.valueOf(today));
         params.put("zone", zone.getId());
@@ -118,7 +121,7 @@ public class StatsQueryService {
                 from generate_series(cast(:from as date), cast(:to as date), interval '1 day') d
                 left join daily_stats s on s.blog_id = :blogId and s.stat_date = d::date
                 order by day
-                """, params, (rs, row) -> new Daily(rs.getDate("day").toLocalDate(), rs.getLong("views"),
+                """, params, (rs, row) -> new Daily(rs.getDate("day").toLocalDate(), rs.getLong(VIEWS),
                 rs.getLong("visitors"), rs.getLong("comments")));
     }
 }

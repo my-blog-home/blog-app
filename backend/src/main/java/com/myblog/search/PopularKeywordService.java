@@ -59,7 +59,7 @@ public class PopularKeywordService {
 
     /** searcherKey는 같은 사람을 알아보는 값(회원 id 또는 세션 쿠키). 비어 있으면 매번 센다 */
     @Transactional
-    public void record(String rawQuery, String searcherKey) {
+    public void recordSearch(String rawQuery, String searcherKey) {
         String trimmed = rawQuery == null ? "" : rawQuery.strip();
         if (trimmed.isEmpty()) {
             return;

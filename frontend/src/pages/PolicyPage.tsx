@@ -15,7 +15,7 @@ export const POLICIES = {
 export type PolicyKey = keyof typeof POLICIES
 
 /** 개인정보처리방침·이용약관·운영정책. 로그인하지 않아도 볼 수 있다 */
-export default function PolicyPage({ kind }: { kind: PolicyKey }) {
+export default function PolicyPage({ kind }: Readonly<{ kind: PolicyKey }>) {
   const policy = POLICIES[kind]
   useDocumentMeta(policy.title)
   return (

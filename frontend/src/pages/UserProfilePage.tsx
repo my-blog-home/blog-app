@@ -10,6 +10,13 @@ import { M } from '../messages'
 import NotFoundPage from './NotFoundPage'
 import { useDocumentMeta } from '../meta'
 
+/** 프로필의 글 수. 내 프로필이면 비공개 글까지 센다 */
+function postCountText(profile: UserProfile, privateCount: number) {
+  if (!profile.isMe) return `공개 글 ${profile.publicPostCount.toLocaleString()}개`
+  const privateNote = privateCount ? ` (비공개 ${privateCount.toLocaleString()}개 포함)` : ''
+  return `글 ${(profile.publicPostCount + privateCount).toLocaleString()}개${privateNote}`
+}
+
 /**
  * 작성자 프로필 (FR-075, BR-28): 닉네임·소개·공개 글 수, 블로그 카드, 글 목록.
  * 내 프로필을 내가 보면 "내 프로필" 표시와 비공개 글(개수 포함), 마이페이지·블로그 관리 버튼. 임시저장 글은 없다
@@ -55,11 +62,7 @@ export default function UserProfilePage() {
               {profile.isMe && <span className="badge me-badge">내 프로필</span>}
             </h1>
             <p>{profile.bio || '소개가 없습니다'}</p>
-            <p className="stats">
-              {profile.isMe
-                ? `글 ${(profile.publicPostCount + privateCount).toLocaleString()}개${privateCount ? ` (비공개 ${privateCount.toLocaleString()}개 포함)` : ''}`
-                : `공개 글 ${profile.publicPostCount.toLocaleString()}개`}
-            </p>
+            <p className="stats">{postCountText(profile, privateCount)}</p>
           </div>
           {profile.isMe && (
             <div className="actions">

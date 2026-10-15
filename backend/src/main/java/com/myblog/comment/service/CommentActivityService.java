@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -54,7 +55,8 @@ public class CommentActivityService {
     public Page commentedPosts(long memberId, int requestedPage) {
         Map<String, Object> params = new HashMap<>();
         params.put("me", memberId);
-        long total = jdbc.queryForObject(MINE + "select count(*) " + FROM, params, Long.class);
+        long total = Objects.requireNonNullElse(
+                jdbc.queryForObject(MINE + "select count(*) " + FROM, params, Long.class), 0L);
         int size = limits.pageSize();
         int totalPages = (int) Math.max(1, (total + size - 1) / size);
         int page = Math.min(Math.max(1, requestedPage), totalPages);

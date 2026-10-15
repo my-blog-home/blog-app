@@ -73,7 +73,7 @@ export function renderMarkdown(source: string): string {
   }
 }
 
-export default function MarkdownView({ source }: { source: string }) {
+export default function MarkdownView({ source }: Readonly<{ source: string }>) {
   const html = useMemo(() => renderMarkdown(source), [source])
   return <div className="markdown" dangerouslySetInnerHTML={{ __html: html }} />
 }

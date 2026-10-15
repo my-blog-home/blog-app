@@ -13,7 +13,7 @@ export default function LoginPage() {
   const notice = (useLocation().state as { notice?: string } | null)?.notice
   const redirect = params.get('redirect')
   const socialError = params.get('socialError')
-  const target = redirect && redirect.startsWith('/') && !redirect.startsWith('//') && redirect !== '/login' ? redirect : '/'
+  const target = redirect?.startsWith('/') && !redirect.startsWith('//') && redirect !== '/login' ? redirect : '/'
   if (me) return <Navigate to={target} replace />
   return (
     <section className="narrow">
