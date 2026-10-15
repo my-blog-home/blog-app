@@ -2,6 +2,8 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.5.6'
     id 'io.spring.dependency-management' version '1.1.7'
+    // 테스트 커버리지 (SonarQube가 읽는 XML 보고서)
+    id 'jacoco'
 }
 
 group = 'com.myblog'
@@ -55,4 +57,18 @@ springBoot {
 // 버전이 바뀌어도 배포 스크립트가 같은 이름으로 찾도록 jar 이름을 고정한다
 tasks.named('bootJar') {
     archiveFileName = 'myblog.jar'
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = false
+    }
+}
+
+// SonarQube가 Java 코드를 정확히 분석하도록 의존 라이브러리 jar를 한 폴더에 모은다 (sonar.java.libraries)
+tasks.register('sonarLibs', Copy) {
+    from configurations.compileClasspath, configurations.testCompileClasspath
+    into layout.buildDirectory.dir('sonar-libs')
 }
